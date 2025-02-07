@@ -1,0 +1,92 @@
+\chapter{Sviluppo del modulo 'nfproxy'}
+
+Descrizione breve del modulo nfproxy
+
+\section{Requisiti}
+
+Elenco e descrizione dei requisiti
+
+\section{Architettura}
+
+Breve descrizione dell'architettura del modulo
+
+\section{Elaborazione parallelizzata dei pacchetti}
+
+Descrizione delle varie problematiche riguardo la parallelizzazione
+
+\subsection{A Per-Interpreter GIL con python 3.12}
+
+PEP 684
+
+- https://peps.python.org/pep-0684/
+
+\subsection{limiti sulla paralelizzazione di nfqueue}
+
+- citazioni sul codice kernel per l'hash di ip
+
+\subsection{Implementazione finale}
+
+- citare parti di codice di nfproxy
+
+\section{Parsing dei pacchetti L3}
+
+Descrizione del parsing dei pacchetti L3 (libtins)
+
+- https://libtins.github.io/
+
+\section{Gestione dei pacchetti TCP}
+
+Descrizione del problema della gestione del flusso TCP e soluzione adottata
+
+\section{Modifica dei pacchetti}
+
+Descrizione della modifica dei pacchetti e delle problematiche riscontrate
+
+\subsection{Traduzione di ack e seq}
+
+Descrizione della traduzione di ack e seq
+
+\subsection{Modifica di segmenti non ordinati}
+
+Descrizione del problema dei segmenti non ordinati con elenco dei problemi e proposta di soluzione.
+Motivazione per l'incompletezza della soluzione.
+
+- Riferimento agli sviluppi futuri
+
+\section{Parsing dei pacchetti HTTP}
+
+Descrizione del parsing dei pacchetti HTTP e delle problematiche riscontrate
+
+Riferimento all'RFC
+
+- \url{https://github.com/domysh/pyllhttp}
+
+\subsection{Supporto agli algoritmi di compressione HTTP}
+
+Riferimento all'RFC
+
+- \url{https://github.com/domysh/brotli}
+
+- \url{https://github.com/domysh/python-zstd}
+    
+\subsection{Supporto alle websocket}
+
+Descrizione del supporto alle websocket
+
+- \url{https://websockets.readthedocs.io/en/stable/}
+
+\section{Sintassi e gestione dei filtri python}
+
+Gestione dei dati, e sintassi adottata per la scrittura dei filtri
+
+\subsection{Gestione dei buffer di memoria}
+
+Descrizione della gestione sull' 'accumulo' dei buffer in memoria
+
+\subsection{Gestione di encoding errati}
+
+Descrizioni delle opzioni di gestione degli encoding errati
+
+\section{Proxy di simulazione}
+
+Descrizione del proxy di simulazione (comando fgex)
