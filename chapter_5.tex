@@ -1,0 +1,339 @@
+\chapter{Implementazione del firmware}
+
+Il firmware è il software che controlla il funzionamento dei dispositivi embedded e permette loro di comunicare con il server federato.
+In fase di implementazione, si è cercato di mantenere il codice il più possibile modulare e 
+ben strutturato in modo da facilitare la manutenzione e l'estensione del sistema.
+
+\section{Toolchain}
+
+Per lo sviluppo del firmware è stato utilizzato il toolchain fornito da Rust che include il compilatore
+\texttt{rustc} e il package manager \texttt{cargo} tramite il quale è possibile gestire le dipendenze e compilare il codice.
+
+Per compilare il firmware adatto ai chip Espressif è stato aggiunto il target \texttt{riscv32imc-esp-espidf}~\cite{rust_on_esp} tramite il 
+tool \texttt{rustup}. Il target è adatto alla compilazione di codice Rust per i microcontrollori ESP32-C3 e ESP32-C2
+e si basa sul framework ESP-IDF~\cite{esp_idf}, fondato su FreeRTOS.
+
+L' utilizzo di un sistema operativo real-time completo come FreeRTOS~\cite{freertos} permette di gestire in modo efficiente i task e le code
+e, al tempo stesso, fornisce una serie di API che facilitano la gestione dei dispositivi e delle periferiche. È inoltre possibile ricorrere alla
+la libreria standard di Rust che si interfaccia con le API di FreeRTOS rendendo il codice più idiomatico e sicuro.
+
+\section{Struttura del progetto}
+
+Il progetto del firmware è stato organizzato in moduli, ognuno dei quali contiene le funzionalità 
+necessarie per il funzionamento di ogni singolo componente del sistema.
+
+\begin{itemize}
+    \item \texttt{main}: inizializza il sistema e avvia i task principali.
+    \item \texttt{wifi\_conn}: gestisce le connessioni wifi.
+    \item \texttt{ota}: gestisce l'aggiornamento del firmware tramite OTA (Over-The-Air).
+    \item \texttt{rgbw}: fornisce un' interfaccia per la gestione dei LED RGB.
+    \item \texttt{events}: gestisce gli eventi provenienti dai sensori.
+    \item \texttt{ws}: gestisce la comunicazione WebSocket con il server federato.
+\end{itemize}
+
+\section{Analisi dei moduli}
+
+Analizziamo di seguito il codice dei moduli principali del firmware.
+
+\subsection{Main}
+
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{rust}
+    let sys_loop = EspSystemEventLoop::take()?;
+    let mut peripherals = Peripherals::take().unwrap();
+    let r = LedcDriver::new(
+        peripherals.ledc.channel0,
+        unsafe { get_ledc_timer(peripherals.ledc.timer0.clone_unchecked())? },
+        peripherals.pins.gpio3,
+    )?;
+    ...
+    let led = Arc::new(Mutex::new(Rgbw { r, g, b, a }));
+\end{minted}
+\end{listing}
+
+Le prime righe del main creano un'istanza di \texttt{EspSystemEventLoop} e \texttt{Peripherals}
+che rappresentano rispettivamente il loop principale del sistema e le periferiche del microcontrollore.
+
+I pin GPIO corrispondenti ai singoli canali del LED RGB vengono inizializzati, accoppiati con i loro timer per 
+controllarne la luminosità e infine incapsulati in una struttura \texttt{Rgbw}.
+
+Per garantire la mutua esclusione nell'accesso ai dati condivisi, la struttura \texttt{Rgbw} è stata incapsulata in un Mutex e 
+condivisa tra i vari task tramite un Arc (Atomic Reference Counted).
+
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{rust}
+    let _wifi = wifi_conn::wifi(peripherals.modem, sys_loop.clone())?;
+
+    // Trigger reconnect when disconnected
+    let _ = sys_loop.subscribe::<IpEvent, _>(monitor_connection);
+\end{minted}
+\end{listing}
+
+In questa sezione viene stabilita la connessione wifi tramite il modulo \texttt{wifi\_conn}
+e viene sottoscritto un evento per monitorare lo stato del link ed eventualmente riconnettersi.
+
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{rust}
+    let _subscription = enable_events(
+        peripherals.pins.gpio4, // Interrupt-enabled pin
+        &sys_loop,
+        Duration::from_millis(200), // debounce timer
+        event_callback);
+
+    ws::ws_client(sys_loop.clone(), led.clone())?;
+    \end{minted}
+\end{listing}
+
+A questo punto viene abilitata la gestione degli eventi provenienti dai sensori
+e viene avviato il task per la comunicazione al server tramite WebSocket.
+
+\subsection{wifi\_conn}
+
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{rust}
+    ...
+    wifi.set_configuration(&wifi::Configuration::Client(ClientConfiguration {
+        ssid: SSID.try_into().unwrap(),
+        password: PASSWORD.try_into().unwrap(),
+        auth_method: wifi::AuthMethod::WPA2Personal,
+        ..Default::default()
+    }))?;
+
+    info!("Trying to connect to {} ...", SSID);
+    wifi.start()?;
+    \end{minted}
+\end{listing}
+
+Nel modulo \texttt{wifi\_conn} viene stabilita la connessione wifi con il router tramite il metodo \texttt{set\_configuration}
+fornito dalla libreria \texttt{esp\_idf\_svc} attraverso la configurazione dei parametri di connessione come SSID, password e metodo di autenticazione.
+
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{rust}
+    let connected = wifi
+    .connect()
+    .and_then(|_| wifi.wait_netif_up())
+    .and_then(|_| wifi.wifi().sta_netif().get_ip_info())
+    .map(|ip_info| info!("Wifi DHCP info: {:?}", ip_info))
+    .is_ok();
+
+    // If it can't find the wifi network, create our own network
+    if !connected {
+    wifi.stop()?;
+    wifi.set_configuration(&wifi::Configuration::AccessPoint(
+        AccessPointConfiguration {
+            ssid: SSID_AP.try_into().unwrap(),
+            password: PASSWORD_AP.try_into().unwrap(),
+            auth_method: wifi::AuthMethod::WPA2Personal,
+            ..Default::default()
+        },
+    ))?;
+    wifi.start()?;
+    }
+    \end{minted}
+\end{listing}
+
+Viene quindi avviata la connessione e, in caso di fallimento, viene creata una rete wifi di backup tramite 
+la quale il dispositivo può essere raggiunto per essere riconfigurato.
+
+\subsection{ota}
+
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{rust}
+    let mut ota = EspOta::new()?;
+    let mut work = ota.initiate_update()?;
+    let mut buffer = vec![0u8; CHUNK_SIZE];
+    let mut written: usize = 0;
+    let res = loop {
+        match stream.read(&mut buffer) {
+            Err(_) => break Err("Unable to read"),
+            Ok(0) => break Ok(()),
+            Ok(n) => {
+                if work.write(&buffer[..n]).is_err() {
+                    break Err("Unable to write");
+                }
+                written += n
+            }
+        }
+    };
+    \end{minted}
+\end{listing}
+
+Gli aggiornamenti OTA vengono gestiti tramite il modulo \texttt{ota} che riceve il file binario del firmware
+e lo scrive nella memoria flash. Il metodo \texttt{initiate\_update} inizializza l'aggiornamento e restituisce un'istanza di \texttt{EspOtaUpdate}
+che ci permette di scrivere in maniera incrementale il file binario ricevuto.
+
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{rust}
+    match res {
+        Ok(_) => {
+            if !(MIN_SIZE..=MAX_SIZE).contains(&written) {
+                stream
+                    .write_all(b"File size does not match with the expected file size")
+                    .unwrap();
+                work.abort().unwrap();
+                break;
+            }
+            work.complete().unwrap();
+            break;
+        }
+        Err(e) => {
+            stream.write_all(e.as_bytes()).unwrap();
+            work.abort().unwrap();
+        }
+    }
+    \end{minted}
+\end{listing}
+
+Alla fine del processo, se il file binario è stato scritto correttamente, l'aggiornamento viene completato e il dispositivo si riavvia con il nuovo firmware.
+Al riavvio il bootloader carica il nuovo firmware e, se l'aggiornamento è andato a buon fine, il dispositivo si connette al server federato.
+In caso di errore, l'aggiornamento viene annullato e il dispositivo ritorna in ascolto di un nuovo aggiornamento.
+
+\subsection{rgbw}
+
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{rust}
+    pub fn get_ledc_timer<'a, P, T>(timer: P) -> Result<LedcTimerDriver<'a, T>, EspError>
+    where
+        P: Peripheral<P = T> + 'a,
+        T: LedcTimer,
+    {
+        LedcTimerDriver::new(timer, &config::TimerConfig::new().frequency(Hertz(25000)))
+    }
+    \end{minted}
+\end{listing}
+
+Per controllare la luminosità dei singoli LED si ricorre della modulazione di ampiezza di impulso (PWM). 
+La funzione \texttt{get\_ledc\_timer} permette di ottenere un'istanza di \texttt{LedcTimerDriver} a partire da un timer passato come parametro,
+configurandolo con una frequenza di PWM pari a 25 kHz.
+
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{rust}
+    pub struct Rgbw<'a> {
+        pub r: LedcDriver<'a>,
+        pub g: LedcDriver<'a>,
+        pub b: LedcDriver<'a>,
+        pub a: LedcDriver<'a>,
+    }
+    \end{minted}
+\end{listing}
+
+La struttura \texttt{Rgbw} rappresenta un LED RGB con quattro canali di colore (rosso, verde, blu e bianco)
+che vengono controllati tramite quattro driver PWM. La lifetime notation \texttt{'a} garantisce che
+i driver siano validi fino a quando la struttura \texttt{Rgbw} sarà accessibile.
+
+\subsection{events}
+
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{rust}
+    #[derive(Copy, Clone, Debug)]
+    pub enum PattingEvent {
+        Pat,
+    }
+
+    unsafe impl EspEventSource for PattingEvent {
+        fn source() -> Option<&'static CStr> {
+            // String should be unique across the whole project and ESP IDF
+            Some(CStr::from_bytes_with_nul(b"PATTING-SERVICE\0").unwrap())
+        }
+    }
+    \end{minted}
+\end{listing}
+
+Il modulo \texttt{events} definisce gli eventi che possono essere generati dai sensori.
+L' enumerativo \texttt{PattingEvent} rappresenta l'evento di "tapping" e implementa il trait \texttt{EspEventSource}
+per specificare la sorgente dell'evento.
+
+\subsection{ws}
+
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{rust}
+      fn run_ws(uri: &str) -> (EspWebSocketClient, mpsc::Receiver<Vec<u8>>) {
+        // Connect to the socket
+        let config = EspWebSocketClientConfig {
+            network_timeout_ms: Duration::from_millis(500),
+            reconnect_timeout_ms: Duration::from_millis(10),
+            ..Default::default()
+        };
+        let (tx, rx) = mpsc::channel();
+        let client =
+            EspWebSocketClient::new(
+                uri,
+                &config,
+                Duration::from_secs(10),
+                move |event| match event {
+                    Ok(e) => match &e.event_type {
+                        WebSocketEventType::Binary(data) => {
+                            tx.send(data.to_vec()).unwrap();
+                        }
+                        e => {
+                            info!("WS Event: {:?}", e)
+                        }
+                    },
+                    Err(_) => todo!(),
+                },
+            )
+            .unwrap();
+    
+        (client, rx)
+    }
+    \end{minted}
+\end{listing}
+
+La funzione \texttt{run\_ws} si occupa di connettersi al server federato tramite WebSocket e di gestire gli eventi provenienti dal server.
+Viene inizializzato un canale di comunicazione \texttt{mpsc} per inviare i messaggi ricevuti dal server ai task principali e viene restituito un'istanza di \texttt{EspWebSocketClient} per 
+inviare messaggi al server.

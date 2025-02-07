@@ -1,0 +1,34 @@
+@startuml
+
+entity User {
+    *String username <<PK>>
+    *String password
+    *DeviceKeyList devices
+    *ProjectKeyList projects
+}
+
+entity Device {
+    *String name <<PK>>
+    *String pub_key
+    *Option<String> owner <<FK>> -- User.username
+    *Option<Configuration> config <<FK>> -- Configuration
+}
+
+entity Configuration {
+    *String executor
+    *Vec<u8> code
+}
+
+entity Project {
+    *String name
+    *String executor
+    *Vec<u8> code
+    *Vec<String> devices <<FK>> -- Device.name
+}
+
+User ||--o{ Device : "has"
+User ||--o{ Project : "works on"
+
+Device ||--o| Configuration : "uses"
+
+@enduml

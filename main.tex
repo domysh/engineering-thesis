@@ -1,0 +1,101 @@
+\PassOptionsToPackage{table, dvipsnames}{xcolor}
+\documentclass[a4paper,twoside,12pt]{vendor/toptesi}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[italian]{babel}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{float}
+\usetikzlibrary{positioning}
+\usepackage{pgfplots}
+\usepackage[newfloat,outputdir=build]{minted}
+\usepackage[font=small,skip=1pt]{caption}
+\captionsetup[listing]{position=top}
+\usepackage{subcaption}
+\usepackage{xspace}
+\pgfplotsset{compat=1.18}
+
+\SetupFloatingEnvironment{listing}{name=Codice}
+
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks = true,
+    allcolors=black
+}
+
+\hyphenation{di-spo-si-ti-vi}
+
+%%% workaround for listing
+% save the current meaning of \listing
+\let\savedlisting\listing
+% at the right spot, restore the meaning
+\AtBeginDocument{\let\listing\savedlisting}
+%%% end of workaround
+
+
+\def\dept{DIPARTIMENTO DI INGEGNERIA ELETTRICA E DELL'INFORMAZIONE}
+\def\course{Corso di Laurea triennale in Ingegneria Informatica e dell’Automazione}
+\def\title{Sviluppo di un sistema di comunicazione federato real-time per dispostivi embedded}
+\def\author{Nicola Guerrera}
+\def\prof{Prof.ssa Ing. Marina Mongiello}
+% \def\supervisor{Ing. Dell’Olio Giacomo Alberto }
+\def\subject{INGEGNERIA DEL SOFTWARE E FONDAMENTI WEB}
+\def\annoacc{2023 - 2024}
+\def\beforecandidate{Laureando}
+\def\beforetitle{Tesi di Laurea in}
+\def\beforeprof{Relatore}
+% \def\beforesupervisor{Correlatore}
+\def\beforeannoacc{Anno Accademico}
+
+\makeatletter
+\def\cleardoublepage{\clearpage\if@twoside \ifodd\c@page\else
+    \hbox{}
+    \vspace*{\fill}
+    \vspace{\fill}
+    \thispagestyle{empty}
+    \newpage
+    \if@twocolumn\hbox{}\newpage\fi\fi\fi}
+\makeatother
+
+
+\begin{document}
+
+%\maketitle
+
+
+\input{front}
+
+% \cleardoublepage
+% \input{dedica}
+
+% \cleardoublepage
+
+\pagenumbering{roman}
+
+\input{abstract}
+
+\cleardoublepage
+
+\tableofcontents
+
+\cleardoublepage
+
+\pagenumbering{arabic}
+\setcounter{page}{1}
+\include{introduction}
+\include{chapter_1}
+\include{chapter_2}
+\include{chapter_3}
+\include{chapter_4}
+\include{chapter_5}
+\include{chapter_6}
+\include{chapter_7}
+\include{chapter_8}
+\include{chapter_9}
+\include{acknoweldgements}
+
+
+\bibliographystyle{unsrt}  
+\bibliography{bibliografia}
+\end{document}

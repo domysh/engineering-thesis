@@ -1,0 +1,57 @@
+\chapter{Stato dell'arte}
+
+\section{Overview dei sistemi centralizzati}
+
+I sistemi centralizzati sono caratterizzati da un'architettura in cui le decisioni, il controllo 
+e l'elaborazione delle informazioni avvengono in un unico punto centrale. 
+
+Generalmente in un sistema centralizzato, i dispositivi embedded inviano i dati raccolti ad un server centrale
+che si occupa di processarli e fornire una risposta.
+
+\subsection{Vantaggi}
+
+Questi sistemi sono molto semplici da progettare e implementare poiché utilizzano un paradigma,
+quello client-server, ampiamente diffuso e ben conosciuto da sviluppatori e ingegneri. Tale paradigma è infatti impiegato
+sia in applicazioni web, dove il server centrale si occupa di fornire le pagine web ai client,
+sia nella gestione di banche dati e servizi.
+
+Inoltre, la centralizzazione dei dati facilita la manutenzione e l'aggiornamento del sistema, la distribuzione
+di nuove funzionalità e la risoluzione di problemi.
+
+\subsection{Svantaggi}
+
+Le debolezze di tali sistemi sono legate principalmente alla elevata dipendenza dal punto centrale:
+si crea così un singolo punto di fallimento che, se danneggiato, può portare al malfunzionamento dell'intero sistema.
+In aggiunta, una manomissione del server centrale conduce alla compromissione
+dei dati sensibili degli utenti con la conseguente violazione della loro privacy.
+
+Vi sono inoltre problemi legati alla scalabilità e alla latenza: all'aumentare del numero di dispositivi
+connessi, il server centrale deve essere in grado di gestire un carico di lavoro sempre maggiore, comportando dei costi di gestione più elevati.
+
+\section{Overview dei sistemi federati}
+
+I sistemi federati sono un'architettura in cui diverse entità indipendenti, chiamate nodi o membri,
+cooperano e condividono informazioni pur mantenendo la propria autonomia.
+
+A differenza dei sistemi centralizzati, dove un singolo ente detiene il controllo su tutto, nei sistemi federati
+ogni entità ha il controllo sui propri dati e decide con chi condividerli.
+
+\subsection{Vantaggi}
+
+Questi sistemi sono caratterizzati da una grande resilienza e autonomia: se un nodo fallisce,
+gli altri possono continuare a funzionare senza problemi - non c'è quindi un singolo punto di fallimento.
+
+Nonostante l'autonomia, le entità all'interno di un sistema federato possono comunque cooperare
+tra di loro grazie a protocolli e standard condivisi che facilitano l'interoperabilità.
+
+I sistemi federati sono inoltre molto scalabili: ogni entità può essere aggiunta o rimossa senza influenzare
+l'intero sistema.
+
+\subsection{Svantaggi}
+
+Attualmente esistono pochi standard e protocolli che regolamentano la comunicazione tra i nodi, ciò rende
+questo tipo di architettura molto più complessa da progettare e implementare rispetto a quella centralizzata.
+
+In particolare, lo standard più diffuso, ActivityPub, permette la creazione di una rete federata 
+tipica dei social network, ma presenta diverse limitazioni e risulta inadatto a diversi tipi di applicazioni. In particolare,
+non è adeguato a sistemi real-time, dove la latenza è un fattore critico e la comunicazione deve avvenire in tempo reale.

@@ -1,0 +1,144 @@
+\chapter{Analisi dei requisiti}
+
+L'analisi dei requisiti software secondo lo standard IEEE Std 830-1993~\cite{iee_std} e il modello FURPS
+(Functionality, Usability, Reliability, Performance, Supportability) fornisce un framework 
+completo per la creazione della Software Requirements Specification (SRS).
+Lo standard IEEE fornisce la struttura per documentare i requisiti, mentre FURPS aiuta 
+a classificarli e valutarne la qualità~\cite{fischer1989comparing}. In un SRS basato su IEEE, i requisiti funzionali (F di FURPS) verranno 
+dettagliati nelle specifiche tecniche, mentre i requisiti non funzionali (URPS) verranno 
+trattati nelle sezioni dedicate a usabilità, affidabilità, prestazioni e manutenibilità.
+Questa combinazione garantisce che i requisiti siano completi e che il software soddisfi 
+le aspettative sia funzionali che qualitative.
+
+\section{Introduzione}
+
+\subsection{Propositi}
+
+Il proposito di questo documento è quello di definire i requisiti del 
+sistema di comunicazione federato real-time per dispositivi embedded.
+Esso viene redatto seguendo le linee guida dello standard IEEE 830-1993.
+
+\subsection{Obiettivi}
+
+Si desidera fornire un framework che permetta ai dispositivi embedded di comunicare
+in modo diretto e sicuro, tramite un'architettura federata. Gli utenti 
+possono creare e gestire in maniera flessibile i propri device, personalizzando
+il comportamento del proprio dispositivo e aggiungendo nuove funzionalità 
+attraverso codice arbitrario.
+
+È quindi necessario fornire all'utente un'interfaccia intuitiva e facile da usare
+per la creazione e la gestione dei propri device, garantendo al contempo la sicurezza
+e la privacy dei dati scambiati.
+
+\subsection{Definizioni, acronimi e abbreviazioni}
+
+
+\subsection{Panoramica}
+
+La parte successiva di questo documento è organizzata come segue:
+\begin{itemize}
+    \item \textbf{Punto 2} - Descrizione generale: fornisce una panoramica del prodotto e delle sue funzionalità.
+    \item \textbf{Punto 3} - Requisiti specifici: fornisce una descrizione dettagliata dei requisiti del sistema.
+    \item \textbf{Punto 4} - Interfacce esterne: descrive le interfacce con le quali gli utenti interagiscono.
+\end{itemize}
+
+\section{Descrizione generale}
+
+\subsection{Prospettive del prodotto}
+
+Il sistema software è diviso in tre parti: il firmware, il server e l'interfaccia web.
+Il firmware è installato sui dispositivi embedded e si occupa di gestire le periferiche 
+hardware e di comunicare con il server. Il server è il cuore del sistema e si occupa di
+gestire le comunicazioni tra i dispositivi e gli altri nodi e di fornire le API per l'interfaccia web.
+L'interfaccia web è l'interfaccia utente del sistema e permette all'utente di creare e gestire i propri device.
+
+\subsection{Funzioni del prodotto}
+
+Il sistema permette all'utente di creare e gestire i propri device, personalizzando il comportamento
+del proprio dispositivo e aggiungendo nuove funzionalità attraverso codice arbitrario.
+Inoltre i dispositivi sono in grado di interagire in modo diretto e sicuro attraverso un'architettura federata.
+L'utente può creare regole complesse con un linguaggio di programmazione e scripting,
+automatizzando le azioni dei propri device, e monitorare il loro stato in tempo reale.
+
+\subsection{Caratteristiche degli utenti}
+
+Il sistema è rivolto a un'ampia gamma di utenti, dai principianti agli esperti. I principianti possono
+creare e gestire i propri device facilmente attraverso l'interfaccia web, mentre gli esperti possono
+personalizzare granularmente il comportamento dei propri device programmando interazioni complesse.
+
+\subsection{Vincoli generali}
+
+Il sistema deve essere in grado di gestire un gran numero di dispositivi e di comunicare con essi in tempo reale,
+con bassa latenza e alta affidabilità. Esso deve poter scalare orizzontalmente e verticalmente
+in modo da supportare un numero crescente di device e utenti. 
+Il firmware deve essere leggero ed efficiente per funzionare su dispositivi embedded con risorse limitate,
+a costi ridotti e a bassi consumi energetici.
+
+\subsection{Assunzioni e dipendenze}
+
+Il sistema dipende da una connessione Internet per comunicare con il server e dagli standard di sicurezza
+per garantire la privacy e la sicurezza dei dati scambiati. 
+
+\section{Requisiti specifici}
+
+\subsection{Requisiti hardware}
+
+Il progetto richiede un device embedded a basso costo, ridotto impatto energetico, capacità di calcolo 
+sufficiente, connettività' a internet tramite Wi-Fi e un'interfaccia per la connessione di sensori e dispositivi 
+esterni.
+
+\subsection{Interfacce esterne}
+
+\subsubsection{Interfaccia utente}
+
+La web app deve essere dotata di: 
+\begin{itemize}
+    \item un sistema di autenticazione (Signup/Login/Logout)
+    \item un'interfaccia per la creazione e la gestione dei device
+    \item un'interfaccia per la creazione e la gestione dei progetti
+    \item un emulatore per testare i progetti in locale
+\end{itemize}
+
+\subsubsection{Interfaccia di sviluppo}
+
+Il sistema deve fornire un'API agli sviluppatori per creare i propri applicativi e interagire con i device.
+Essa deve:
+\begin{itemize}
+    \item permettere di ricevere eventi dalla rete
+    \item mettere a disposizione i metodi per interagire con hardware e sensori
+    \item permettere l'interazione in tempo reale con i device
+\end{itemize}
+
+\subsection{Requisiti di performance}
+
+Il sistema deve risultare reattivo e veloce, con bassa latenza e alta affidabilità anche in caso di carichi elevati.
+La natura real-time del sistema richiede che le comunicazioni avvengano in tempo reale e che i dati siano aggiornati
+in modo continuo.
+
+\subsection{Requisiti non funzionali}
+
+L'interfaccia utente deve essere intuitiva e facile da usare, con un design moderno e accattivante al fine di garantire 
+un' ottimale user experience.
+
+L'attendibilità del sistema è fondamentale in quanto deve essere sempre disponibile e funzionante.
+
+Inoltre la supportabilità del sistema è un requisito importante poiché esso deve essere facilmente
+manutenibile e aggiornabile per rispondere alle esigenze del mercato.
+
+\subsection{Analisi di mercato}
+
+I segmenti di mercato sono stati analizzati nel capitolo precedente (vedi Capitolo 9)
+
+
+\section{Conclusioni}
+
+Il sistema si è dimostrato in grado di soddisfare i requisiti richiesti e nei test effettuati si è rivelato
+affidabile, performante e scalabile. L'interfaccia utente è stata apprezzata dai tester di tutte le età 
+e capacità tecniche per la sua intuitività e facilità d'uso. 
+
+\section{Sviluppi futuri}
+
+Il sistema potrebbe essere migliorato con l'aggiunta di nuove funzionalità quali il supporto per reti di 
+comunicazione di tipo mesh oppure quello per protocolli di comunicazione già esistenti come MQTT e CoAP.
+Inoltre, potrebbe essere interessante esplorare la possibilità di integrare il sistema con tecnologie emergenti
+come la blockchain per offrire un livello aggiuntivo di affidabilità e sicurezza.
