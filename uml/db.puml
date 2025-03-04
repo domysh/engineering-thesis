@@ -1,34 +1,25 @@
-@startuml
+@startuml nfproxydb
 
-entity User {
-    *String username <<PK>>
-    *String password
-    *DeviceKeyList devices
-    *ProjectKeyList projects
+
+entity Service {
+    *string **id** 
+    --
+    *string name
+    *enum status (start/stop)
+    *string proto (tcp/http)
+    *int port
+    *string ip_or_interface
 }
 
-entity Device {
-    *String name <<PK>>
-    *String pub_key
-    *Option<String> owner <<FK>> -- User.username
-    *Option<Configuration> config <<FK>> -- Configuration
+entity PyFilter {
+    *string **name**
+    --
+    *int blocked_packets
+    *int edited_packets
+    *string code??
 }
 
-entity Configuration {
-    *String executor
-    *Vec<u8> code
-}
 
-entity Project {
-    *String name
-    *String executor
-    *Vec<u8> code
-    *Vec<String> devices <<FK>> -- Device.name
-}
-
-User ||--o{ Device : "has"
-User ||--o{ Project : "works on"
-
-Device ||--o| Configuration : "uses"
+PyFilter }o--|| Service : "works on"
 
 @enduml

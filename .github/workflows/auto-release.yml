@@ -1,0 +1,72 @@
+name: Build and Release Thesis PDF
+
+on:
+  push:
+    branches:
+      - main  # Change if your default branch is different
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build thesis PDF
+        run: |
+          chmod +x run.sh
+          ./run.sh
+
+      - name: Check if PDF exists
+        run: |
+          if [ ! -f build/main.pdf ]; then
+            echo "PDF file not found! Build failed."
+            exit 1
+          fi
+
+      - name: Get latest release
+        id: get_release
+        uses: octokit/request-action@v2.x
+        with:
+          route: GET /repos/{owner}/{repo}/releases/latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Determine release action
+        id: release_action
+        run: |
+          if [[ "${{ steps.get_release.outputs.status }}" == "200" ]]; then
+            echo "release_exists=true" >> $GITHUB_ENV
+            echo "release_id=$(echo '${{ steps.get_release.outputs.data }}' | jq -r '.id')" >> $GITHUB_ENV
+          else
+            echo "release_exists=false" >> $GITHUB_ENV
+          fi
+
+      - name: Create new release if none exists
+        if: env.release_exists == 'false'
+        id: create_release
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const response = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: 'latest',
+              name: 'Latest Thesis PDF',
+              body: 'Automated release with the latest compiled thesis PDF.',
+              draft: false,
+              prerelease: false
+            });
+            console.log(response.data);
+            core.setOutput('release_id', response.data.id);
+
+      - name: Upload PDF to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          files: build/main.pdf
+          token: ${{ secrets.GITHUB_TOKEN }}
+          body: "Updated PDF from commit ${{ github.sha }}"
+
