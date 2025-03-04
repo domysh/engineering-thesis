@@ -5,6 +5,9 @@ on:
     branches:
       - main  # Change if your default branch is different
 
+permissions:
+  contents: write  # This is needed to create and update releases
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -12,7 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build thesis PDF
+      - name: Build thesis PDF using Docker
         run: |
           chmod +x run.sh
           ./run.sh
@@ -24,49 +27,29 @@ jobs:
             exit 1
           fi
 
-      - name: Get latest release
-        id: get_release
-        uses: octokit/request-action@v2.x
-        with:
-          route: GET /repos/{owner}/{repo}/releases/latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
-
-      - name: Determine release action
-        id: release_action
+      - name: Install GitHub CLI
         run: |
-          if [[ "${{ steps.get_release.outputs.status }}" == "200" ]]; then
-            echo "release_exists=true" >> $GITHUB_ENV
-            echo "release_id=$(echo '${{ steps.get_release.outputs.data }}' | jq -r '.id')" >> $GITHUB_ENV
-          else
-            echo "release_exists=false" >> $GITHUB_ENV
-          fi
+          sudo apt update
+          sudo apt install -y gh
+
+      - name: Authenticate GitHub CLI
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
+      - name: Get latest release ID (if exists)
+        id: get_release
+        run: |
+          RELEASE_ID=$(gh release view latest --json id -q '.id' || echo "")
+          echo "release_id=$RELEASE_ID" >> $GITHUB_ENV
 
       - name: Create new release if none exists
-        if: env.release_exists == 'false'
-        id: create_release
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const response = await github.rest.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: 'latest',
-              name: 'Latest Thesis PDF',
-              body: 'Automated release with the latest compiled thesis PDF.',
-              draft: false,
-              prerelease: false
-            });
-            console.log(response.data);
-            core.setOutput('release_id', response.data.id);
+        if: env.release_id == ''
+        run: |
+          gh release create latest build/main.pdf --title "Latest Thesis PDF" --notes "Automated release with the latest compiled thesis PDF."
 
-      - name: Upload PDF to release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: latest
-          files: build/main.pdf
-          token: ${{ secrets.GITHUB_TOKEN }}
-          body: "Updated PDF from commit ${{ github.sha }}"
+      - name: Update existing release
+        if: env.release_id != ''
+        run: |
+          gh release upload latest build/main.pdf --clobber
+          gh release edit latest --notes "Updated PDF from commit ${{ github.sha }}"
 
