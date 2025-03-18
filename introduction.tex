@@ -1,10 +1,46 @@
 \chapter{Introduzione}
 
+Questa tesi tratta lo sviluppo di un firewall progettato specificamente per competizioni
+\texttt{CTF} di tipologia attacco/difesa. Il sistema è stato concepito per adattarsi alle esigenze
+dinamiche e flessibili di tali competizioni. Verranno analizzate le funzionalità attualmente presenti
+nel progetto, i punti critici e le possibili migliorie per aumentarne l'efficienza e le prestazioni.
+In particolare, l'attenzione si concentrerà su una nuova funzionalità sviluppata che consente
+l'applicazione di filtri in modo totalmente trasparente dal punto di vista dell'applicativo.
+Questa soluzione minimizza l'impatto sulla rete e permette di definire le regole di filtraggio
+utilizzando istruzioni in linguaggio Python.
+
 \section{Contesto}
 
-Gamification in cybersecurity
-Firewall e CTF A/D
+Le competizioni \texttt{CTF} (Capture The Flag) sono eventi di cybersecurity in cui i partecipanti
+devono risolvere una serie di sfide di varia natura legate alla sicurezza informatica, coprendo
+diversi ambiti e specializzazioni. Tra le categorie più comuni si considerano: crittografia,
+steganografia, sicurezza web, sicurezza di rete, sicurezza mobile, reverse engineering,
+attacchi ad eseguibili, sicurezza hardware e molte altre.
+
+L'obiettivo di queste competizioni è rubare la \texttt{flag}, una stringa di testo segreta ma ben
+riconoscibile, sfruttando vulnerabilità volutamente esposte nei sistemi. La flag rappresenta la
+prova univoca che attesta la risoluzione della sfida da parte del partecipante.
+Queste competizioni coprono l'intero spettro della sicurezza informatica e costituiscono un ottimo
+strumento per testare e approfondire le proprie competenze nel settore. Inoltre,
+rappresentano un'opportunità innovativa per avvicinarsi al mondo della cybersecurity e acquisire
+esperienza pratica. \footcite{\url{https://www.hackthebox.com/blog/what-is-ctf/}}{hackthebox_ctf}
+
+Esistono diverse tipologie di competizioni CTF. Tra le più conosciute vi sono le competizioni
+di tipo Jeopardy, Boot to Root e Attack/Defense. Il firewall analizzato in questa tesi è stato
+sviluppato appositamente per le competizioni di tipo Attack/Defense, le quali presentano un livello
+elevato di complessità e sfida. In questo contesto, i partecipanti devono difendere i propri servizi
+e, al contempo, attaccare quelli degli avversari, in una gara altamente competitiva e stimolante.
 
 \section{Scopo e obiettivi della tesi}
 
-Sviluppo di nfproxy (in breve)
+Il firewall oggetto di questa tesi è
+Firegex\footcite{\url{https://github.com/Pwnzer0tt1/firegex}}{firegex_gh}, sviluppato per il team
+del \texttt{Politecnico di Bari} in occasione della competizione nazionale
+\texttt{Cyberchallenge}\footcite{\url{https://cyberchallenge.it/}}{cyberchallenge}
+del 2022. In tale contesto è nato lo stesso team CTF che ne ha supportato lo sviluppo,
+\texttt{Pwnzer0tt1}\footcite{\url{https://pwnzer0tt1.it/}}{pwnzer0tt1}.
+
+La nuova funzionalità implementata, denominata \texttt{nfproxy},
+simula il funzionamento di un proxy tradizionale per il filtraggio del traffico.
+Il suo funzionamento e caratteristiche tecniche saranno oggetto dei capitoli successivi.
+
