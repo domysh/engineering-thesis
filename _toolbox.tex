@@ -31,6 +31,8 @@ Più immagini insieme:
         \end{minipage}
 \end{figure}
 
+---
+
 \begin{figure}[H]
     \centering
     \begin{minipage}[b]{0.45\textwidth}
@@ -84,31 +86,54 @@ Reference to figure:
 
 Tabella:
 
+\renewcommand{\arraystretch}{2}
 \begin{table}[H]
     \centering
-    \begin{tabular}{|c|c|c|c|}
+    \setlength{\tabcolsep}{12pt}
+    \begin{tabular}{|c|c|c|c|c|c|}
         \hline
-        \textbf{Soluzione} & \textbf{Interoperabilità} & \textbf{Velocità} & \textbf{Semplicità d'uso} \\
+        \textbf{Firewall} & \textbf{0Conf} & \textbf{Easy use} & \textbf{Setup} & \textbf{Flexible} & \textbf{Trusted} \\
         \hline
-        \texttt{rvsim} & 
-        \begin{tabular}[c]{@{}c@{}}- Buona \\ - è possibile creare \\ syscall custom \end{tabular} & 
-        \begin{tabular}[c]{@{}c@{}}- Elevata \\ - codice compilato \end{tabular} & 
-        \begin{tabular}[c]{@{}c@{}}- Difficile \\ - Richiede compilazione \\ del codice\end{tabular} \\
+        \texttt{Firegex} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Green}\faIcon[solid]{check-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Green}\faIcon[solid]{check-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Green}\faIcon[solid]{check-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Green}\faIcon[solid]{check-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Green}\faIcon[solid]{check-circle} \end{tabular} \\
         \hline
-        \texttt{Micropython} & 
-        \begin{tabular}[c]{@{}c@{}}- Scarsa \\ - difficile da integrare \end{tabular} & 
-        \begin{tabular}[c]{@{}c@{}}- Buona \\ - utilizza bytecode \end{tabular} & 
-        \begin{tabular}[c]{@{}c@{}}- Semplice \\ - linguaggio semplice\\ molto diffuso \end{tabular} \\
+        \texttt{Nginx} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Red}\faIcon[solid]{times-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Orange}\faIcon[solid]{exclamation-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Green}\faIcon[solid]{check-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Orange}\faIcon[solid]{exclamation-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Green}\faIcon[solid]{check-circle} \end{tabular} \\
         \hline
-        \texttt{rhai} & 
-        \begin{tabular}[c]{@{}c@{}}- Elevata \\ - supporto a funzioni \\ e tipi custom \end{tabular} & 
-        \begin{tabular}[c]{@{}c@{}}- Scarsa \\ - poco ottimizzato \end{tabular} & 
-        \begin{tabular}[c]{@{}c@{}}- Semplice \\ - linguaggio minimale \end{tabular} \\
+        \texttt{CTF proxy} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Red}\faIcon[solid]{times-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Orange}\faIcon[solid]{exclamation-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Red}\faIcon[solid]{times-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Green}\faIcon[solid]{check-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Green}\faIcon[solid]{check-circle} \end{tabular} \\
+        \hline
+        \texttt{Fortinet} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Red}\faIcon[solid]{times-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Red}\faIcon[solid]{times-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Red}\faIcon[solid]{times-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Orange}\faIcon[solid]{exclamation-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Green}\faIcon[solid]{check-circle} \end{tabular} \\
+        \hline
+        \texttt{Suricata} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Orange}\faIcon[solid]{exclamation-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Orange}\faIcon[solid]{exclamation-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Red}\faIcon[solid]{times-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Orange}\faIcon[solid]{exclamation-circle} \end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}} \color{Green}\faIcon[solid]{check-circle} \end{tabular} \\
         \hline
     \end{tabular}
-    \caption{Confronto tra le soluzioni di sandboxing}
+    \caption{Confronto tra le soluzioni per il firewall}
     \label{tab:sandboxing_solutions}
 \end{table}
+\renewcommand{\arraystretch}{1}
 
 Testo in evidenza:
 
