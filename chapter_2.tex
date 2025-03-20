@@ -132,6 +132,13 @@ Inoltre per funzionare, firegex fa intenso utilizzo delle funzionalità di \text
 Firegex è basato su \texttt{docker}\footcite{\url{https://www.docker.com/}}{docker} che ne permette un avvio con 0 configurazione e immediato: \texttt{docker} è usualmente lo
 strumento principale per l'avvio di servizi in competizioni CTF, pertanto nella maggior parte dei casi è già presente e configurato correttamente.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.58\textwidth]{images/chapter2/FiregexInternals.png}
+    \caption{Schema generale dell'architettura di Firegex}
+    \label{fig:firegex_arch}
+\end{figure}
+
 \subsection{Frontend e Backend}
 \begin{itemize}
     \item \textbf{Frontend (React):} L'interfaccia utente è sviluppata in React, offrendo una piattaforma interattiva e intuitiva per la configurazione, il monitoraggio
@@ -141,13 +148,6 @@ strumento principale per l'avvio di servizi in competizioni CTF, pertanto nella 
     di eseguire operazioni critiche a velocità ottimali per essere integrate nei moduli per la gestione della rete. Il backend tuttavia svolge anche un ruolo attivo nell'applicazione
     delle regole di rete tramite il wrap python ufficiale di \texttt{libnftables}\footcite{\url{https://git.netfilter.org/nftables/tree/py}}{nftables_python}.
 \end{itemize}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{images/chapter2/FiregexFastapiSwagger.png}
-    \caption{Swagger Backend generato da FastAPI di Firegex}
-    \label{fig:firegex_backend}
-\end{figure}
 
 \subsection{Moduli C++}
 Il cuore delle funzionalità critiche di Firegex è implementato in C++. Questi moduli sono responsabili del filtraggio diretto a livello kernel per i moduli \texttt{nfregex} e \texttt{nfproxy},
