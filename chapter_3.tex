@@ -170,13 +170,111 @@ Si evidenzia come una possibile soluzione alternativa a questa potrebbe essere s
 che tuttavia è stata rilasciata come feature sperimentale non consigliata per l'utilizzo in produzione, e per altro con un calo netto di performance a causa
 del mancato supporto ad alcuni sistemi di ottimizzazione.
 
-\subsection{limiti sulla paralelizzazione di nfqueue}
+\subsection{Bilanciamento del carico}
 
-- citazioni sul codice kernel per l'hash di ip
+Per il bilanciamento del carico sui processi consumatori che eseguiranno i filtri, al fine di isolare questi processi e garantire un'equa distribuzione
+dei pacchetti, si è scelto di utilizzare un meccanismo basato su hashing su IP e porta sorgente e destinazione, che ne permettono un calcolo semplice e rapido
+da eseguire e allo stesso tempo garantisce che gli stessi flussi di pacchetti vengano sempre elaborati dallo stesso processo consumatore, evitando quindi che
+i vari consumatori debbano condividere risorse legate ai dati salvati riguardo quel specifico flusso.\\
 
-\subsection{Implementazione finale}
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{cpp}
+// Hash function for stream_id, valid for both IPv4 and IPv6
+uint32_t hash_stream_id(const stream_id &sid) {
+    uint32_t addr_hash = 0;
+    addr_hash ^= min_addr[0] ^ min_addr[1] ^ min_addr[2] ^ min_addr[3];
+    addr_hash ^= max_addr[0] ^ max_addr[1] ^ max_addr[2] ^ max_addr[3];
+    uint32_t ports = (static_cast<uint32_t>(sid.min_address_port) << 16) | sid.max_address_port;
+    uint32_t hash = addr_hash ^ ports;
+    hash *= 0x9e3779b9; // More randomness (multiplication with a prime)
+    return hash;
+}
 
-- citare parti di codice di nfproxy
+// Banacing function for the consumers (simplified)
+void __real_handler(PktRequest<Worker>* pkt) {
+    // Calculate the index of the consumer
+    const size_t idx = hash_stream_id(pkt->sid) % pkt->ctx->size();
+    // Put the packet in the queue
+    converted_pkt->ctx->queue.put(converted_pkt);
+}
+\end{minted}
+\end{listing}
+
+Si sottolinea come una tecnica simile sia anche utilizzata direttamente kernel space per il bilanciamento del carico dei pacchetti.
+La seguente gestione è stata fatta userspace e lasciata a nfqueue kernel space (come in una precedente implementazione usata per nfregex),
+poichè l'hashing eseguito nel kernel per motivi tecnici legati alla generalizzazione del modulo per protocolli diversi da quelli di cui
+si è interessati per lo sviluppo di nfproxy, nell'hashing eseguito lato kernel non viene utilizzata la porta.
+
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{cpp}
+static inline u32
+nfqueue_hash(const struct sk_buff *skb, u16 queue, u16 queues_total, u8 family,
+	     u32 initval)
+{
+	switch (family) {
+	case NFPROTO_IPV4:
+		queue += reciprocal_scale(hash_v4(ip_hdr(skb), initval),
+					  queues_total);
+		break;
+	case NFPROTO_IPV6:
+		queue += reciprocal_scale(hash_v6(ipv6_hdr(skb), initval),
+					  queues_total);
+		break;
+	case NFPROTO_BRIDGE:
+		queue += reciprocal_scale(hash_bridge(skb, initval),
+					  queues_total);
+		break;
+	}
+
+	return queue;
+}
+\end{minted}
+\end{listing}
+
+Il codice precedentemente citato viene estrapolato direttamente dal kernel linux, e 
+viene utilizzato nel bilanciamento di carico dei pacchetti\footnote{\url{https://web.git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/net/netfilter/xt_NFQUEUE.c?h=v6.14-rc7\#n86}},
+e il codice utilizzato per l'hashing\footnote{\url{https://web.git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/net/netfilter/nf_queue.h?h=v6.14-rc7\#n105}}
+come è possibile vedere non include la porta, che è stata aggiunta per il bilanciamento del carico in userspace.\\
+
+Questo rappresenta un limite importante per l'utilizzo di questo modulo in contesti come le competizioni Attack Defence dove
+troviamo traffico anonimizzato tramito l'ausilio di un NAT, che di per se pertanto porterebbe
+ad un bilanciamento del carico non esistente poichè 1 solo consumatore verrebbe impegnato nell'elaborazione di tutti i pacchetti
+se 1 solo ip è utilizzato nel NAT.\\
+Di seguito si riporta un benchmark del modulo \texttt{nfregex} che utilizza il nuovo sistema di bilanciamento del carico userspace,
+che simula del carico in elaborazione del traffico con il seguente codice:
+
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{cpp}
+volatile int x = 0;
+for (int i=0; i<50000; i++){
+    x+=1;
+}
+\end{minted}
+\end{listing}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.98\textwidth]{images/chapter3/Benchmark-chart-with-load.png}
+    \caption{NfProxy Benchmarks with load balancing on single and multi thread}
+    \label{fig:nfproxy_multithread_benchmark}
+\end{figure}
+
+Gli stessi benefici sono presenti in nfproxy, infatti la base di codice per il bilanciamento dei pacchetti e la medesima per entrambi i moduli.
 
 \section{Parsing dei pacchetti L3}
 
