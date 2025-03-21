@@ -66,17 +66,109 @@ Di seguito un diagramma dell'architettura del modulo nfproxy, le varie component
     \label{fig:firegex_arch}
 \end{figure}
 
-
-
 \section{Elaborazione parallelizzata dei pacchetti}
 
-Descrizione delle varie problematiche riguardo la parallelizzazione
+Uno dei principali ostacoli affrontati durante la progettazione è stata proprio la gestione della parallelizzazione dei processi di elaborazione, 
+a causa di una serie di problematiche descritte in seguito riguardo il funzionamento di \texttt{nfqueue}, alcune caratteristiche il linguaggio
+python, e anche la necessità di far interfacciare 2 linguaggi differenti in un unico modulo.\\
+Obiettivi principali della paralellizzazione sono stati:
+\begin{itemize}
+    \setlength{\itemsep}{5pt}
+    \setlength{\parskip}{5pt}
+    \item \texttt{Evitare la possibilità di conflitti di dati tra i processi}: Elemento critico nella progettazione per cui si devono evitare quanto possibile i conflitti
+    tra i vari processi di modo da evitare corruzione di dati, crash improvvisi e comportamenti inaspettati.
+    \item \texttt{Evitare l'utilizzo di elementi bloccanti quali le lock}: i lock spesso ricorrono utili nella gestione di risorse condivise, ma possono portare a problemi
+    di prestazioni e di deadlock: pertanto uno degli obiettivi fissati è ridurre il loro utilizzo al minimo indispensabile, strutturando il sistema appositamente per eviatre 
+    casistiche in cui è necessario il loro utilizzo.
+    \item \texttt{Evitare copie in memoria, e avvio di processi sovrabbondanti}: Evitando le copie in memoria dei pacchetti, riduciamo il
+    consumo di memoria ma soprattutto velociziamo il processo di analisi garantendo maggiori performance.
+\end{itemize}
+Per le motivazioni sopra citate, si è scelto un approccio alla parallelizzazione di tipo produttore-consumatore, che vede come produttore
+un processo ascoltatore, che riceve dal kernel i pacchetti da elaborare, il quale fa effettivamente il binding della \texttt{nfqueue},
+e diversi processi consumatori che hanno come uniche risorse comuni delle dequeue di pacchetti, che verranno distribuiti dal produttore.
+Il produttore quindi accoderà i pacchetti in queste code, che verranno prevelati dai relativi consumatori per essere elaborati.
+Il singolo consumatore si occupa di ordinare i pacchetti TCP, elaborare i filtri python, ed infine mandare i
+\texttt{verdicts}\footcite{\url{https://netfilter.org/projects/libnetfilter_queue/doxygen/html/group__nfq__verd.html}}{vedicts_nfqueue}
+al kernel per eseguire l'azione richiesta sul pacchetto, e procedere con la prossima elaborazione.\\
+Per ogni consumatore ci sarà una coda di pacchetti separata condivisa unicamente con il produttore, la quale sarà l'unico elemento critico in cui verranno utilizzate le lock.\\
+Si specifica che si è pensato anche ad una scelta implementativa diversa per le dequeue tramite l'utilizzo delle \texttt{unix pipe}\footcite{\url{https://man7.org/linux/man-pages/man2/pipe.2.html}}{unix_pipe},
+tuttavia si è scelto di utilizzare un'implementazione che fa utilizzo di \texttt{std::mutex}\footcite{\url{https://en.cppreference.com/w/cpp/thread/mutex}}{std_mutex} e
+\texttt{std::condition\_variable}\footcite{\url{https://en.cppreference.com/w/cpp/thread/condition_variable}}{condition_variable_std} per ragioni di performance
+e di possibilità di implementare un sistema di blocco della coda in push in caso di riempimento che ferma il processo produttore (evitando di riempire eccessivamente queste code).
+L'implementazione utilizzata è stata quella di \texttt{Arif Jaffer}\footcite{\url{https://www.bit-byter.com/blog/files/blocking-q-cpp.html}}{blocking_queue_cpp}.
 
 \subsection{A Per-Interpreter GIL con python 3.12}
 
-PEP 684
+Una delle problematiche citate precedentemente sulla paralelizzazione erano riguardo una caratteristica del linguaggio python,
+il \texttt{GIL}\footcite{Understanding the python gil}{beazley2010understanding} (Global Interpeter Lock), che limita l'utilizzo dei thread in python
+permettendo ad un solo thread per volta l'esecuzione del codice, che altrimenti presenterebbe problemi riguardo la gestione degli oggetti python stessi
+poichè internamente (come ad esempio per il sistema di reference counting) la loro gestione non è implementata in maniera thread-safe e incorrerebbe a comportamenti inaspettati.\\
+Inoltre si sottlinea come python in questa casistica gestisce unicamente operazioni CPU-bound, che vanno ulteriormente ad evidenziare gli svantaggi portati dal GIL.\\
 
-- https://peps.python.org/pep-0684/
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/chapter3/GIL.png}
+    \caption{Python Global Interpeter Lock}
+    \label{fig:py_gil_schema}
+\end{figure}
+
+Una soluzione potrebbe essere sarebbe quella di utilizzare processi multipli, che permettono di avere un GIL per ogni processo,
+ma che porterebbe ad un overhead per la necessità di aggiuntivi inter-process communication con i nuovi processi, e di copia di elementi in memoria.\\
+
+La soluzione adottata per questo problema è relativa ad una importante modifica in \texttt{Python 3.12} relativa al
+\texttt{PEP 684}\footcite{\url{https://peps.python.org/pep-0684/}}{pep648}, che introduce la possibilità di avviare sullo stesso processo diversi interpreti python
+ogniuno con il proprio GIL, permettendo l'esecizione di codice python in thread realmente parallelizzati.\\
+L'utilizzo di questa funzionalità è unicamente accessibile tramite C-API, che ci permettono anche l'avvio diretto di un interprete python senza l'effettivo avvio dell'eseguibile
+\texttt{python3}, ma direttamente tramite chiamate a \texttt{libpython}, permettendo anche alternare i 2 linguaggi facilmente.\\
+
+Questo ha come limite il fatto che non è possibile condividere oggetti tra gli interpreti python, che però nella casistica corrente non è un problema, dato che non
+ci sarà bisogno di condividere dati tra i thread, grazie al meccanismo di distribuzione dei pacchetti utilizzato descritto nel prossimo paragrafo che ne permette un completo isolamento.\\
+Pertanto, una volta arrivata una nuova configurazione di filtri, alla prima nuova richiesta di elaborazione di un pacchetto, verrà ri-compilato il codice python (nel suo bytecode) e
+serializzato tramite \texttt{marshal}\footcite{\url{https://docs.python.org/3/library/marshal.html}}{marshal_python} e verrà inizializzata per ogni connessione TCP
+un nuovo contesto globale python che manterrà lo stato del filtro, e verrà distrutto alla fine della connessione.\\
+
+L'implementazione di questa funzionalità tuttavia presenta i suoi limiti sul supporto di moduli python scritti con \texttt{cython}\footcite{\url{https://cython.org/}}{cython},
+o in generale moduli che ad ora non sono stati tramite \texttt{multi-phase inizialization}\footcite{\url{https://peps.python.org/pep-0489/}}{pep489}, o che semplicemente hanno elementi che non sono
+thread safe a loro interno. Questi moduli non possono essere utilizzati con questa implementazione, o possono portare a comportamenti inaspettati a causa di corruzioni di memoria.\\
+Alcune problematiche riscontrate riguardo questo aspetto sono descritte successivamente.\\
+
+
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{cpp}
+PyThreadState * tstate = nullptr;
+PyObject* handle_packet_code = nullptr;
+PyInterpreterConfig py_thread_config = {
+    .use_main_obmalloc = 0,
+    .allow_fork = 0,
+    .allow_exec = 0,
+    .allow_threads = 0,
+    .allow_daemon_threads = 0,
+    .check_multi_interp_extensions = 1,
+    .gil = PyInterpreterConfig_OWN_GIL,
+};
+
+void before_loop() { // Function called on thread start
+    PyStatus pystatus;
+    // Creating a new thread state
+    tstate = PyThreadState_New(PyInterpreterState_Main());
+    // Acquire the GIL and switching with a new GIL
+    PyEval_AcquireThread(tstate); 
+    pystatus = Py_NewInterpreterFromConfig(&tstate, &py_thread_config);
+    handle_packet_code = unmarshal_code(...); //Unmarshaling compiled code
+    ...
+}
+\end{minted}
+\end{listing}
+
+Si evidenzia come una possibile soluzione alternativa a questa potrebbe essere stata utilizzare la versione priva di GIL di
+\texttt{Python 3.13 free-threaded mode}\footcite{\url{https://docs.python.org/3/whatsnew/3.13.html\#whatsnew313-free-threaded-cpython}}{py13_free_threaded},
+che tuttavia è stata rilasciata come feature sperimentale non consigliata per l'utilizzo in produzione, e per altro con un calo netto di performance a causa
+del mancato supporto ad alcuni sistemi di ottimizzazione.
 
 \subsection{limiti sulla paralelizzazione di nfqueue}
 

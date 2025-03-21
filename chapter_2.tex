@@ -198,7 +198,7 @@ Come citato precedentemente firegex è avviabile tramite un one-command: '\textt
 Il modulo \texttt{nfregex} rappresenta la funzionalità (pensata originariamente come l'unica e principale) basata su filtri scritti con espressioni regolari. Utilizzando nfqueue in combinazione con
 \texttt{nftables}, questo modulo intercetta le richieste di rete direttamente a livello kernel. La funzionalità permette l'utilizzo di regex
 \texttt{PCRE2}\footcite{\url{https://www.pcre.org/}}{pcre_website} compliant tramite l'utilizzo di \texttt{vectorscan}\footcite{\url{https://vectorcamp.gr/project/vectorscan/}}{vectorscan}
-(fork di \texttt{hyperscan}\footcite{\url{https://www.intel.com/content/www/us/en/developer/articles/technical/introduction-to-hyperscan.html}}{hyperscan} compatibile con arm64) per garantire prestazioni elevate
+(fork di \texttt{hyperscan}\footcite{\url{http://hyperscan.io/}}{hyperscan} compatibile con arm64) per garantire prestazioni elevate
 e una valutazione accurata delle regole. La funzionalità supporta IPv4, IPv6 e protocolli di livello superiore come TCP, UDP.
 Per i pacchetti TCP, la regex viene applicata all'intero flusso ricostruito e ordinato tramite le \texttt{stream regex} offerte da vectorscan.
 
