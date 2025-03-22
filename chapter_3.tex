@@ -63,7 +63,7 @@ Di seguito un diagramma dell'architettura del modulo nfproxy, le varie component
     \centering
     \includegraphics[width=0.9\textwidth]{images/chapter3/nfproxy.drawio.png}
     \caption{Architettura del modulo nfqueue}
-    \label{fig:firegex_arch}
+    \label{fig:firegex_nfproxy_arch}
 \end{figure}
 
 \section{Elaborazione parallelizzata dei pacchetti}
@@ -342,7 +342,7 @@ Il traffico in particolare viene intercettato sia in \texttt{pre-routing}, che i
 dell'azione di defrag, in particolare a prio -310 che rientra in questo range come riportato sulla \texttt{wiki ufficiale di nftables}\footcite{\url{https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks}}{netfilter_hooks}.
 Questo permette di ottenere dei pacchetti che hanno già subito il processo di deframmentazione a livello 3, di cui pertanto non ci dovremo preoccupare,
 che non hanno subito il processo di routing (che quindi volendo potremmo manipolare) e che non sono stati ancora analizzati dal modulo conntrack.\\
-Tuttavia i pacchetti non hanno subito il processo di ordinamento dei payload che avviene a livello 4, sul quale come è possibile osservare dal precedente seguente schema, non è possibile
+Tuttavia i pacchetti non hanno subito il processo di ordinamento dei payload che avviene a livello 4, sul quale come è possibile osservare dalla figura \ref{fig:nftables_hooks}, non è possibile
 intercettare del traffico, poichè i pacchetti arriveranno direttamente alle fasi di gestioni dei dati per la loro consegna alla socket a livello applicatvo.\\
 Pertanto è dato a noi il compito di analizzare il traffico e di ordinare i pacchetti TCP per un'analisi dei dati coerente con ciò che sarà letto
 dall'applicazione.\\
@@ -358,18 +358,144 @@ Anche il TCP follower è agnostico rispetto al protocollo di livello 3, e pertan
 
 \section{Modifica dei pacchetti}
 
-Descrizione della modifica dei pacchetti e delle problematiche riscontrate
+Il modulo nfqueue permette la modifica dei pacchetti, e pertanto la possibilità sia di modificare gli header ip e tcp, che il payload del livello di trasporto.
+La modifica dei pacchetti seppur non essenziale è parzialmente supportata, ma non pienamente funzionante: questo a causa di diverse problematiche che nascono
+dalla modifiche dei pacchetti stessi per diversi meccaniscmi applicati a livello di trasporto, e alucne di queste problematiche non sono di fatto
+risolte a causa della loro complessità implementativa e a diverse conseguenze che potrebbero portare ad ulteriori problematiche ancora più complesse e tendenzalmente target di possibili attacchi.
+Pertanto i rischi che l'applicazione di queste modifiche potrebbero sono sufficientemente elevati da non essere ritenuti tollerabili rispetto alle reali esigenze di questa funzionalità (tendenzalmente nulle).\\
 
-\subsection{Traduzione di ack e seq}
+Le problematiche sul calcolo dei campi di integrità dei dati sono date come risolte tramite l'utilizzo di libtins, che si occupa nella serializzazione del pacchetto e
+anche di ricalcolare questi campi nei vari layer interessati, e pertanto non sono state considerate problematiche rilevanti.\\
 
-Descrizione della traduzione di ack e seq
+L'unica operazione aggiuntiva affrontata su questa problematica è stata la necessità di reinserire il payload del pacchetto nella catena di PDU di libtins,
+poichè (seppur non documentato), il follower del flusso TCP internamente separa di fatto il payload dal pacchetto, e pertanto è necessario reinserirlo per una
+corretta serializzazione del pacchetto modificato.\footnote{Separazione del payload nel follower: \url{https://github.com/mfontanini/libtins/blob/b7e61f4c76ac64053c9c4c9f8eadaabbe3a9381a/src/tcp_ip/data_tracker.cpp\#L68}}.\\
+
+Di seguito si riporta una descrizione accurata delle problematiche riscontrate e delle soluzioni proposte, o applicate con relativi limiti e valutazione di rischio/beneficio.\\
+
+\subsection{Cambio di dimensione del payload}
+
+Come emerge dalle specifiche stesse del protocollo di trasporto TCP\footcite{RFC9293, Transmission Control Protocol (TCP)}{rfc9293}, il protocollo tiene traccia
+dello stato della corretta recezione dei pacchetti tramite un meccanismo di \texttt{piggybacking} che fa utilizzo dei campi numerici ack e seq.
+Nella trasmissione il sequence number indica il byte da cui inizia il payload del pacchetto relativamente alla sua posizione nello stream, mentre nel campo ack della risposta
+di conferma proveniente dal ricevente, viene indicato fino a che punto il flusso di dati è stato ricevuto ordinato e corretto.\\
+Questo meccanismo è fondamentale per il corretto funzionamento del protocollo e per la ricostruzione del flusso originale,
+e di conseguenza una modifica sulla dimensione del payload causa una conseguente incoerenza di questi valori che portano comportamenti inaspettati e non conformi rispetto al 
+normale funzionamento del protocollo.\\
+
+Per risolvere questa problematica, si è implementato un sistema di conversione dei campi ack e seq, che permette una conversione di questi valori tale da
+mantenere la corretta sequenza di numeri in uscita che conferma al client che il pacchetto ricevuto è stato correttamente ricevuto per qual'era la sua grandezza originale,
+e il kernel (ma anche il follower di libtins stesso) di aver avuto un riscontro su un pacchetto che sia della dimensione del pacchetto ricevuta sulla base della modifica effettuata.
+Lo stesso meccanismo ma applicato in maniera opposta viene applicato per i dati e che arrivano a loro volta dalla direzione opposta.\\
+Si noti come dalla prima modifica di un pacchetto, il sistema di conversione viene attivato, e viene mantenuto attivo e funzionante per tutta la connessione, per
+mantenere coerenti i numeri di ack e seq.\\
+
+La conversione degli ack e seq avviene tramite il calcolo incrementale dell'offset che intercorre tra la dimensione del flusso originale e la dimensione del flusso modificato,
+calcolata come si può osservare nel seguente codice:
+
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{cpp}
+size_t payload_offset = data_size() != _data_original_size;
+// If we are in a TCP connection, the ack and seq status context was enabled, and the payload size 
+if (tcp && ack_seq_offset && payload_offset != 0){
+    // So we incrementally update the total offset based on how sent this data.
+    if (is_input){
+        ack_seq_offset->in += payload_offset;
+    }else{
+        ack_seq_offset->out += payload_offset;
+    }
+}
+\end{minted}
+\end{listing}
+
+A seguito della modifica, nei prossimi pacchetti vengono compatibilmente ricalcolati gli ack e seq, su tutto il traffico come si può vedere nel seguente codice:
+
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{cpp}
+void fix_tcp_ack(){
+    // Checks if the conversion is needed
+    need_tcp_fixing = need_tcp_fix();
+    if(!need_tcp_fixing){
+        return;
+    }
+    // Convertion of the ack and seq
+    if (is_input){
+        tcp->seq(tcp->seq() + ack_seq_offset->in);
+        tcp->ack_seq(tcp->ack_seq() - ack_seq_offset->out);
+    }else{
+        tcp->ack_seq(tcp->ack_seq() - ack_seq_offset->in);
+        tcp->seq(tcp->seq() + ack_seq_offset->out);
+    }
+}
+\end{minted}
+\end{listing}
+
+Da un'analisi superficiale, e da dei semplici test sembrerebbe che la soluzione sia sufficiente alla risoluzione del seguente problema, tuttavia la seguente logica
+non riesce a risolvere tutte le problematiche che possono sorgere dalla modifica della dimensione del payload:\\
+di fatto questo meccanismo è funzionale solo nel caso in cui non vi siano problemi di trasmissione, e che quindi non si presentino ritrasmissioni di pacchetti persi.\\
+
+Il calcolo eseguito infatti non tiene in considerazione il fatto che in caso di ritrasmissione di segmenti precedenti al pacchetto modificato, il calcolo
+del'ack relativo al segmento ritrasmesso deve essere eseguito risfasarlo come dovrebbe essere fatto per i pacchetti successivi, mentre l'implementazione
+attuale esegue questa conversione non valutando quale sia la parte del flusso che si sta effettivamente riscontrando.\\
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.98\textwidth]{images/chapter3/TCP_ack_seq_transl_failure.drawio.png}
+    \caption{Esempio di una possibile problematica nella traduzione di ack e seq implementata}
+    \label{fig:tcp_ack_seq_transl_failure}
+\end{figure}
+
+È facile comprendere osservando la figura \ref{fig:tcp_ack_seq_transl_failure} come queste casistiche possano far completamente
+decadere il sistema di traduzione implementato, che potrebbero essere frequenti in casi di congestione del traffico e diventare
+un elemento di interesse per eventuali attacchi miratamente incentrati su questo tipo di problematica (che tuttavia porterebbero ad una
+interruzione del normale andamento del traffico, e quindi non ne consegue in un effettivo vantaggio da parte dell'attaccante nello scenario di nostro interesse).\\
+
+Concludiamo pertanto che la soluzione proposta non è sufficientemente robusta per essere considerata una soluzione definitiva, e pertanto la modifica dei pacchetti viene si
+offerta come possibilità, ma segnalata come funzionalità instabile che potrebbe portare a comportamenti inaspettati.\\
+
+Una possibile soluzione robusta dovrebbe prevedere la memorizzazione del punto in cui il flusso è stato effettivamente modificato congiuntamente con l'offset utilizato fino
+a quel punto in quella direzione del traffico, finchè i dati fino a quegli intervalli non viene riscontrato dal ricevente e non solo:
+dovrebbe prevedere una logica che risulta particolarmente complessa per la traduzione di ack e seq, poichè deve tenere conto di tutta una serie di possibili scenari
+come il caso di frequenti modifiche di pacchetti in sucecssione con ritrasmissioni, ma anche i casi di ri-trasmissioni di pacchetti con payload composti da dati
+che precedentemente erano stati inviati in pacchetti differenti.\\
+Andando a trattare tutte le casistiche l'implementazione diventa via via sempre più complessa da realizzare, per cui si ritene poco utile
+il suo effettivo sviluppo dato la risicata utilità della funzionalità stessa.
 
 \subsection{Modifica di segmenti non ordinati}
 
-Descrizione del problema dei segmenti non ordinati con elenco dei problemi e proposta di soluzione.
-Motivazione per l'incompletezza della soluzione.
+Un ulteriorie problema nasce dalla necessità di modificare i pacchetti con dei payload out-of-order da modificare:
+nella attuale implementazione in caso arrivino dei paccheti non ordinati, questi vengono analizzati dal TCP follower di libtins, che considera il payload per
+la ricostruzione del flusso, ma successivamente il pacchetto viene automaticamente accettato, e pertanto non si avrà la possibilità di modificarlo in seguito.\\
+In caso quel pacchetto conteneva un payload malevolo, ad esso verrà comunque impedito di passare a livello applicativo, poichè nel momento in cui arriverà
+il pacchetto contenete il payload che completerebbe il flusso disordinato, questo verrà analizzato dal filtro insieme al payload precedete (supponendo ce ne sia solo 1),
+e bloccato: pertanto il flusso ricostruito dal kernel non verrà mai ricostruito completamente e la connessione degenererà in una chiusura forzata.\\
 
-- Riferimento agli sviluppi futuri
+Tuttavia se vogliamo avere completo controllo sulla modifica del traffico la seguente soluzione non è praticabile: una possibile alternativa richiederebbe
+di non accettare i pacchetti out-of-order, e di memorizzare i pacchetti in un buffer fino a che non arrivi il pacchetto mancante, e di procedere con la modifica
+di diversi pacchetti riportando le modifiche effettuate sul flusso ricostruito distribuendolo nei segmenti trattenuti nella queue.\\
+La seguente soluzione tuttavia richiederebbe la gestione di un importante livello di complessità a livello di ricostruzione delle modfiche, ma soprattutto
+porterebbe alla considerazione una nuova categorie di problematiche legate al riempimento della nfqueue lato kernel, che potrebbe facilmente essere soggetta
+ad un riempimento e quindi alla conseguente perdita dei pacchetti successivi. Se i pacchetti in coda per essere elaborati necessitano dell'analisi di pacchetti che nel
+frattempo verranno scartati dalla nfqueue, ci troveremo in una situazione di stallo in cui si verificherebbe il blocco totale del traffico.\\
+La seguente logica può essere implementata da un attaccante che con un'adeguata costruzione di traffico malevolo può molto facilmente
+sfruttare questa problematica per eseguire un attacco \texttt{DoS} di rilevante importanza.\\
+Per le considerazioni fatte, si può comprendere come sia di fondamentale importanza che i pacchetti elaborati abbiano un riscontro immediato che non
+debba dipendere da altri pacchetti, garantendo quindi il continuo fluire del traffico nella coda lato kernel.\\
+
+Per queste casistiche sono stati pensati diversi meccanismi che permetterebbero di mitigare il problema, ma nessuno di questi rimane
+sufficientemente robusto da essere resiliente a possibili attacchi attacchi DoS, e pertanto si è deciso di escludere la possibilità
+di accodare i pacchetti facendoli rimanere in attesa di ulteriori pacchetti: \texttt{il loro riscontro al modulo nfqueue deve essere immediatamente successivo alla sua elaborazione}
+come avviene nell'implementazione attuale.\\
 
 \section{Parsing dei pacchetti HTTP}
 
