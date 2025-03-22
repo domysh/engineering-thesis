@@ -494,16 +494,22 @@ debba dipendere da altri pacchetti, garantendo quindi il continuo fluire del tra
 
 Per queste casistiche sono stati pensati diversi meccanismi che permetterebbero di mitigare il problema, ma nessuno di questi rimane
 sufficientemente robusto da essere resiliente a possibili attacchi attacchi DoS, e pertanto si è deciso di escludere la possibilità
-di accodare i pacchetti facendoli rimanere in attesa di ulteriori pacchetti: \texttt{il loro riscontro al modulo nfqueue deve essere immediatamente successivo alla sua elaborazione}
+di accodare i pacchetti facendoli rimanere in attesa di ulteriori pacchetti: \texttt{il loro riscontro al modulo nfqueue deve essere immediatamente al termine dell'elaborazione}
 come avviene nell'implementazione attuale.\\
 
 \section{Parsing dei pacchetti HTTP}
 
-Descrizione del parsing dei pacchetti HTTP e delle problematiche riscontrate
+A seguito di una ricerca riguardo soluzioni già esistenti per il parsing dei pacchetti HTTP, non ho trovato soluzioni che fossero adeguate
+alle richieste del progetto, sopratutto data la necessaria compatibilità dei moduli le funzionalità introdotte nel
+\texttt{PEP 684}\footcite{\url{https://peps.python.org/pep-0684/}}{pep648} che come precedentemente, richiedono l'implementazione di moduli
+con \texttt{multi-phase inizialization}\footcite{\url{https://peps.python.org/pep-0489/}}{pep489} e che siano thread safe.\\
+Pertanto partendo dall'implementazione trovata online di \texttt{Derrick Lyndon Pallas}\footcite{Python wrapper for llhttp: \url{https://github.com/pallas/pyllhttp}}{original_pyllhttp_impl},
+basata sul modulo \texttt{llhttp}\footcite{\url{https://github.com/nodejs/llhttp}}{llhttp} utilizzato nell'interprete di \texttt{Node.js}, ho deciso di
+sviluppare un fork di questo modulo, con alcuni fix e con il supporto al \texttt{PEP 684} disponibile
+su github\footcite{Fork di pyllhttp con supporto al PEP 684}{pyllhttp_fork} e su \texttt{pypi}\footnote{\texttt{https://pypi.org/project/pyllhttp/}}
+per consentirne l'installazione e utilizzo tramite \texttt{pip}.\\
 
-Riferimento all'RFC
-
-- \url{https://github.com/domysh/pyllhttp}
+La versione HTTP compatibile è la 1.1.
 
 \subsection{Supporto agli algoritmi di compressione HTTP}
 
