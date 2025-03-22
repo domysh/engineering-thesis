@@ -270,7 +270,7 @@ for (int i=0; i<50000; i++){
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.98\textwidth]{images/chapter3/Benchmark-chart-with-load.png}
-    \caption{NfProxy Benchmarks with load balancing on single and multi thread}
+    \caption{NfProxy Benchmarks con load balancing personalizzato con 1 e 8 thread}
     \label{fig:nfproxy_multithread_benchmark}
 \end{figure}
 
@@ -278,13 +278,83 @@ Gli stessi benefici sono presenti in nfproxy, infatti la base di codice per il b
 
 \section{Parsing dei pacchetti L3}
 
-Descrizione del parsing dei pacchetti L3 (libtins)
+Arrivati i pacchetti nella nfqueue, questi vengono immediatamente analizzati per determinare il protocollo di livello 3,
+che viene manualmente verificato tramite l'analisi dei primi 4 bit che rappresentano sia in IPv4 e in IPv6 il campo \texttt{version}.
+Una volta determinata la versione del protocollo, il pacchetti viene passato ai parser per i relativi protocolli di \texttt{libtins}\footcite{\url{https://libtins.github.io/}}{libtins}.
+Libtins ricorsivamente analizza i layer successivi, e ci permette di calcolare in maniera automatica lo \texttt{stream\_id},
+un tipo di dato implementato nella libreria in grado di rappresentare univocamente una connessione tarmite ip e porta sorgente e destinazione in maniera ordinata:
+l'ordinamento avviene prendendo la tupla ip:porta relavtivi allo stesso host come un unico valore, ed è poi l'intera tupla che veine ordinata
+(se avessimo ordinato ip e porta non considerandoli a coppie, avremmo un identificativo che potrebbe essere facilmente soggetto a conflitti e per fino soggetto a
+possibili attacchi al fine di bypassare i filtri del firewall stesso).
+L' ordinamento permette di mantenere lo stesso identificativo sia per i pacchetti in ingresso che per i pacchetti in uscita, e dell'utilizzo di questo
+dato in strutture dati come le \texttt{map}\footcite{\url{https://en.cppreference.com/w/cpp/container/map}}{std_map} utilizzate per memorizzare gli stati dei flussi.\\
 
-- https://libtins.github.io/
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{cpp}
+//Costruttore di PktRequest: classe che rappresenta un pacchetto effettivamente scambiata tra produttori e consumatori
+PktRequest(const char* payload, size_t plen, T* ctx, mnl_socket* nl, nfgenmsg *nfg, nfqnl_msg_packet_hdr *ph, bool is_input):
+    ctx(ctx), nl(nl), res_id(nfg->res_id),
+    packet_id(ph->packet_id), is_input(is_input),
+    packet(string(payload, plen)),
+    action(FilterAction::NOACTION),
+    is_ipv6((payload[0] & 0xf0) == 0x60) //Controllo della versione del protocollo
+{
+    if (is_ipv6){
+        ipv6 = new Tins::IPv6((uint8_t*)packet.c_str(), plen); //Parsing IPv6
+        sid = stream_id::make_identifier(*ipv6); // calcolo stream_id
+        _original_size = ipv6->size();
+    }else{
+        ipv4 = new Tins::IP((uint8_t*)packet.c_str(), plen); //Parsing IPv4
+        sid = stream_id::make_identifier(*ipv4); // calcolo stream_id
+        _original_size = ipv4->size();
+    }
+    l4_proto = fill_l4_info(); // Analisi del layer di trasporto
+}
+\end{minted}
+\end{listing}
+
+Inoltre questo tipo di dato è agnostico rispetto al protocollo di livello 3, e pertanto può essere usato anche per un traffico misto IPv4 e IPv6, che attualmente
+non è previsto per le regole e il funzionamento imposto nella fase di "inserimento" della queue nella coda di traffico, poichè ne verifichiamo che il protocollo
+sia lo stesso, ma che sarebbe possibile tramite le tables L3 agnostiche di nftables, o anche semplicemente intercettando il traffico tramite diverse regole alla stessa queue,
+o perfino se intercettato tramite il nome di un'interfaccia di rete che gestisce diversi indirizzzi IP, anche di versioni L3 differenti.\\
+Avendo memoria condivisa, nel passaggio tra produttore e consumatore, l'analisi del pacchetto non viene persa, poichè nel passaggio del pacchetto, viene rilasciato l'indirizzo
+di memoria all'oggetto c++ che rappresenta il pacchetto, la responsabilità di deallocare questa area di memoria passa al consumatore che quindi non dovrà
+analizzare nuovamente il pacchetto, ma potrà direttamente procedere con la sua elaborazione.
 
 \section{Gestione dei pacchetti TCP}
 
-Descrizione del problema della gestione del flusso TCP e soluzione adottata
+Come citato precedentemete, prima di inizializzare la queue, vengono inseriti tramite nftables le regole per intercettare il traffico in un certo punto della catena
+di netfilter, per essere mandato alla queue che determinerà un verdetto sul pacchetto.\\
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.98\textwidth]{images/chapter3/nf-hooks.png}
+    \caption{NfTables Hooks}
+    \label{fig:nftables_hooks}
+\end{figure}
+
+Il traffico in particolare viene intercettato sia in \texttt{pre-routing}, che in \texttt{post-ruoting} ad un hook prima dell'azione del modulo conntrack, ma dopo
+dell'azione di defrag, in particolare a prio -310 che rientra in questo range come riportato sulla \texttt{wiki ufficiale di nftables}\footcite{\url{https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks}}{netfilter_hooks}.
+Questo permette di ottenere dei pacchetti che hanno già subito il processo di deframmentazione a livello 3, di cui pertanto non ci dovremo preoccupare,
+che non hanno subito il processo di routing (che quindi volendo potremmo manipolare) e che non sono stati ancora analizzati dal modulo conntrack.\\
+Tuttavia i pacchetti non hanno subito il processo di ordinamento dei payload che avviene a livello 4, sul quale come è possibile osservare dal precedente seguente schema, non è possibile
+intercettare del traffico, poichè i pacchetti arriveranno direttamente alle fasi di gestioni dei dati per la loro consegna alla socket a livello applicatvo.\\
+Pertanto è dato a noi il compito di analizzare il traffico e di ordinare i pacchetti TCP per un'analisi dei dati coerente con ciò che sarà letto
+dall'applicazione.\\
+Fortunatamente, libtins ci permette di fare ciò in maniera automatica, e ha una gestione sufficientemente efficiente sullo scadere dei flussi TCP, sulla gestione dei buffer
+e sulle problematiche di segmenti non ordinto dei pacchetti, che solleva l'applicativo da un numero importante di problematiche che andrebbero gestiste
+manualmente, ma che ci vengono già gestiste nell'analisi stessa dei flussi TCP\footnote{Esempio TCP Follower: \url{https://libtins.github.io/examples/http-requests/}}.\\
+Oltre al contesto creato all'interno dell'oggetto follower di libtins, viene creato uno stato esternamente per lo stesso flusso, per la memorizzatione
+dello stato del flusso memorizzato con python, deallocato e allocato in maniera coerente al follower stesso, che tramite delle callback ci permette di
+richiamare le azioni da eseguire sui dati che allochiamo.\\
+Da notare che avremo un follower per ogni processo consumatore che analizzerà una sotto parte dei flussi dell'intero traffico, l'hashing ci garantisce che
+lo stesso flusso verrà analizzato dallo stesso processo consumatore.
+Anche il TCP follower è agnostico rispetto al protocollo di livello 3, e pertanto può essere utilizzato anch'esso per un traffico misto IPv4 e IPv6.
 
 \section{Modifica dei pacchetti}
 
