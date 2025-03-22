@@ -503,27 +503,46 @@ A seguito di una ricerca riguardo soluzioni già esistenti per il parsing dei pa
 alle richieste del progetto, sopratutto data la necessaria compatibilità dei moduli le funzionalità introdotte nel
 \texttt{PEP 684}\footcite{\url{https://peps.python.org/pep-0684/}}{pep648} che come precedentemente, richiedono l'implementazione di moduli
 con \texttt{multi-phase inizialization}\footcite{\url{https://peps.python.org/pep-0489/}}{pep489} e che siano thread safe.\\
-Pertanto partendo dall'implementazione trovata online di \texttt{Derrick Lyndon Pallas}\footcite{Python wrapper for llhttp: \url{https://github.com/pallas/pyllhttp}}{original_pyllhttp_impl},
+Pertanto partendo dall'implementazione trovata online di \texttt{Derrick Lyndon Pallas}\footcite{Python wrapper per llhttp: \url{https://github.com/pallas/pyllhttp}}{original_pyllhttp_impl},
 basata sul modulo \texttt{llhttp}\footcite{\url{https://github.com/nodejs/llhttp}}{llhttp} utilizzato nell'interprete di \texttt{Node.js}, ho deciso di
 sviluppare un fork di questo modulo, con alcuni fix e con il supporto al \texttt{PEP 684} disponibile
-su github\footcite{Fork di pyllhttp con supporto al PEP 684}{pyllhttp_fork} e su \texttt{pypi}\footnote{\texttt{https://pypi.org/project/pyllhttp/}}
-per consentirne l'installazione e utilizzo tramite \texttt{pip}.\\
-
-La versione HTTP compatibile è la 1.1.
+su github\footcite{\url{https://github.com/domysh/pyllhttp}}{pyllhttp_fork} e su \texttt{pypi}\footnote{\texttt{https://pypi.org/project/pyllhttp/}}
+per consentirne l'installazione e l'utilizzo tramite \texttt{pip}. La versione HTTP compatibile è la 1.1.
 
 \subsection{Supporto agli algoritmi di compressione HTTP}
 
-Riferimento all'RFC
+Nel traffico HTTP sono spesso in uso algoritmi di compressione per ridurre la dimensione del body,
+compatibilmente con quanto descritto nell'\texttt{RFC 2616}\footcite{RFC2616, Hypertext Transfer Protocol -- HTTP/1.1}{rfc2616}.
 
-- \url{https://github.com/domysh/brotli}
+Dato il suo ampio utilizzo, al fine di semplificare l'implementazione di filtri che necessitano di analizzare il body dei pacchetti HTTP,
+si è deciso di implementare il supporto agli algoritmi di compressione supportati da browser chrome:
 
-- \url{https://github.com/domysh/python-zstd}
+\begin{itemize}
+    \setlength{\itemsep}{5pt}
+    \setlength{\parskip}{5pt}
+    \item \texttt{gzip}\footcite{RFC1952, GZIP file format specification version 4.3}{rfc1952}: Nativamente supportato in python.
+    \item \texttt{brotli}\footcite{RFC7932, Brotli Compressed Data Format}{rfc7932}: Il seguente algoritmo di compressione è supportato tramite
+    un'implementazione e il relativo wrapper python sviluppato da \texttt{google} che tuttavia non supporta il \texttt{PEP 684}, e per cui ho sviluppato
+    il fork compatibile con le specifiche del progetto disponibile su github\footcite{\url{https://github.com/domysh/brotli}}{brotli_fork}.
+    \item \texttt{zstd}\footcite{RFC8478, Zstandard Compression and the application/zstd Media Type}{rfc8478}: Algoritmo di compressione sviluppato da \texttt{Meta},
+    che non ha sviluppato direttamente un wrapper python, che tuttavia è stato sviluppato da \texttt{Sergey Dryabzhinsky}\footcite{\url{https://github.com/sergey-dryabzhinsky/python-zstd}}{zstd_ortiginal_python_wrapper},
+    anch'esso però non compatibile con il \texttt{PEP 684}, e per cui ho sviluppato un fork compatibile disponibile su github\footcite{\url{https://github.com/domysh/python-zstd}}{zstd_fork}.
+    \item \texttt{deflate}\footcite{RFC1951, DEFLATE Compressed Data Format Specification version 1.3}{rfc1951}: Implementabile tramite il modulo \texttt{zlib}.
+\end{itemize}
+
+L'implementazione è stata scritta seguendo le specifiche definite nell'\texttt{RFC 2616} il quale definisce la possibilità di compressioni multiple, correttamente
+supportate nell'implementazione finale.
     
 \subsection{Supporto alle websocket}
 
-Descrizione del supporto alle websocket
-
-- \url{https://websockets.readthedocs.io/en/stable/}
+Nel supporto ad HTTP/1.1 è stato incluso anche il supporto alle \texttt{websocket}\footcite{RFC6455, The WebSocket Protocol}{rfc6455},
+con l'utilizzo della principale libreria python utilizzata per le decodifica dei Frame websocket, ovvero \texttt{websockets}\footcite{\url{https://websockets.readthedocs.io/en/stable/}}{python_websockets}.
+Del precedente modulo sono state utilizzate le funzionalità di decodifica dei frame e le funzionalità per il supporto all'estensione \texttt{permessage-deflate}\footcite{RFC7692, Compression Extensions for WebSocket}{rfc7692},
+per permettere la decompressione dei frame compressi (che utilizza la libreria \texttt{zlib}, resa già compatibile al supporto per il \texttt{PEP 684}).
+La complessità nell'implementazione delle websocket si è concentrata sulla necessità di assemblare il flusso di dati correttamente per permettere
+la decodifica dei Frame che normalmente non supporta uno streaming parsing come nel caso di \texttt{llhttp}, e nella fase di upgrading della connessione per il
+riconoscimento dei plugin abilitati nella specifica connessione websocket.\\
+In caso di fallimento nel parsing dei frame, i dati vengono resi disponibili al filtraggio come dati TCP ordinati (la stessa cosa succede in caso di upgrade ad HTTP/2).
 
 \section{Sintassi e gestione dei filtri python}
 
