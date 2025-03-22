@@ -546,16 +546,115 @@ In caso di fallimento nel parsing dei frame, i dati vengono resi disponibili al 
 
 \section{Sintassi e gestione dei filtri python}
 
-Gestione dei dati, e sintassi adottata per la scrittura dei filtri
+I filtri python deiniti per nfproxy devono essere scritti in un singolo file (per servizio) che può contenere una serie di funzioni chiamate
+\texttt{pyfilters} che possono richiedere determinati dati, e possono restituire degli \texttt{statment} che definiscono il comportamento da eseguire elaborato
+al termine dell'elaborazione eseguita.\\
+
+Di seguito un esempio di un filtro python che blocca i pacchetti provenienti da un client che utilizza il browser \texttt{curl} e che
+richiede un upgrade a websocket:
+
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{python}
+from firegex.nfproxy.models import HttpRequest
+from firegex.nfproxy import pyfilter
+from firegex.nfproxy import REJECT
+
+@pyfilter
+def curl_filter(r: HttpRequest):
+    if r.upgrading_to_ws:
+        return REJECT # Reject the request if request is upgrading to websocket
+    if "curl" in r.user_agent:
+        print(f"Tried to access with curl: {r.user_agent}")
+        return REJECT # Reject the request if user agent is curl
+\end{minted}
+\end{listing}
+
+Come si può notare il filtro utilizza la libreria \texttt{firegex}, pubblicata su \texttt{pypi}\footcite{\url{https://pypi.org/project/firegex/}}{firegex_pypi},
+da cui è possibile importare il decorator utilizzato per definire i filtri, e le classi utilizzate per la definizione dei dati che vengono passati.\\
+
+NfProxy infatti analizza in fase di compilazione le signature delle funzioni definite come filtri, eseguendo in automatico il codice per
+eseguire il parsing dei dati richiesti e chiama le funzioni, passando come argomenti i dati richiesti.\\
+Pertanto i pyfilters prendono il nome della funzione stessa, e supportano un numero variabile di parametri che tuttavia devono necessariamente
+avere un tipo definito in \texttt{firegex.nfproxy.models} come decorator, necessario a comprendere la struttura dei dati che necessita di essere passata,
+sullo stesso principio utilizzato da \texttt{pydantic}\footcite{\url{https://docs.pydantic.dev/latest/}}{pydantic}, nota libreria python.\\
+
+Le funzioni possono restituire uno \texttt{statment} che definisce il comportamento da eseguire, tra i principali \texttt{ACCEPT}, \texttt{REJECT} e \texttt{DROP}.
+Se la funzione non restituisce nulla (o restituisce \texttt{None}), il pacchetto verrà accettato.\\
+
+Ulteriori dettagli sull'utilizzo dei models (chiamati anche datahandler) sono disponibili nella documentazione integrata nell'interfaccia di \texttt{firegex} per nfproxy.
 
 \subsection{Gestione dei buffer di memoria}
 
-Descrizione della gestione sull' 'accumulo' dei buffer in memoria
+Il parsing dei pacchetti per traffico con una dimensione di payload elevata, può portare ad un consumo eccessivo di memoria, e pertanto è necessario
+gestire in maniera efficiente i buffer di memoria utilizzati per la memorizzazione dei pacchetti.\\
+Di default nfproxy utilizza un buffer di memoria di massimo 1MB per ogni tipo di datahandler utilizzato, superato il quale il buffer viene svuotato
+evitanto quando possibile la rottura del parsing stesso.\\
 
-\subsection{Gestione di encoding errati}
+Questo comportamento può essere modificato tramite l'utilizzo delle variabili globali di nfproxy, che permettono di modificare il comportamento
+in base alle esigenze sia potendole rendere più restrittive limitando il consumo di RAM, sia potendole rendere più permissive, permettendo
+di memorizzare più dati in memoria. Inoltre è anche possibile modificare il comportamento in caso di superamento del limite imposto, permettendo
+di scegliere se svuotare il buffer, accettare il pacchetto, rifiutare la connessione o eseguendone il drop dei pacchetti successivi.\\
 
-Descrizioni delle opzioni di gestione degli encoding errati
+Di seguito un estratto della documentazione integrata in nfproxy che descrive le variabili globali utilizzate per la gestione dei buffer di memoria:
+
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{python}
+# ADVANCED OPTIONS
+# You can specify some additional options on the streaming managment
+# pyproxy will automatically store all the packets (already ordered by the c++ binary):
+#
+# If the stream is too big, you can specify what actions to take:
+# This can be done defining some variables in the global context
+# - FGEX_STREAM_MAX_SIZE: The maximum size of the stream in bytes (default 1MB)
+#   NOTE: the stream size is calculated and managed indipendently by the data type handling system
+#   Only types required by at least 1 filter will be stored.
+# - FGEX_FULL_STREAM_ACTION: The action to do when the stream is full
+#   - FullStreamAction.FLUSH: Flush the stream and continue to acquire new packets (default)
+#   - FullStreamAction.DROP: Drop the next stream packets - like a DROP action by filter
+#   - FullStreamAction.REJECT: Reject the stream and close the connection - like a REJECT action by filter
+#   - FullStreamAction.ACCEPT: Stops to call pyfilters and accept the traffic
+
+from firege.nfproxy import FullStreamAction
+
+# Example of a global context
+FGEX_STREAM_MAX_SIZE = 4096
+FGEX_FULL_STREAM_ACTION = FullStreamAction.REJECT
+# This could be an ideal configuration if we expect to normally have streams with a maximum size of 4KB of traffic
+\end{minted}
+\end{listing}
 
 \section{Proxy di simulazione}
 
-Descrizione del proxy di simulazione (comando fgex)
+Per verificare il corretto funzionamento dei filtri scritti prima della loro applicazione sul firewall, è possibile
+sviluppare e testare i filtri tramite un proxy di simulazione che permette di testare i filtri in un ambiente controllato
+già implementato nella libreria \texttt{firegex} che oltre ad offrire le funzionalità base per la scrittura del filtro, offre
+il comando \texttt{fgex} che permette di eseguire il proxy di simulazione.\\
+
+Ad esempio con il comando \texttt{fgex nfproxy test\_http.py 127.0.0.1 8080 --proto http} è possibile eseguire il proxy di simulazione
+che permette di testare i filtri scritti in \texttt{test\_http.py} su un server locale in ascolto sulla porta 8080 (la stessa cosa sarebbe possibile inserendo come
+indirizzo ad esempio quello del proprio server, e simulare un attacco sulla connessione sotto proxy, per verificare il corretto funzionamento dei filtri).\\
+
+Il proxy di simulazione riconosce automaticamente i cambiamenti nei file di filtro, e pertanto non è necessario riavviare il proxy ad ogni modifica
+dei filtri, che verranno ricaricati automaticamente ed è fortemente consigliato il suo utilizzo durante la scrittura stessa
+del filtro per verificare il corretto funzionamento del filtro stesso.\\
+
+Si specifica che il simulatore utilizza la maggior parte del codice utilizzato dal firewall reale ma ovviamente non permette di analizzare e modificare il traffico
+a livello di rete o di trasporto per limiti intrinsechi al fatto che è costruito tramite un proxy TCP.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.98\textwidth]{images/chapter3/nfproxy_sim.png}
+    \caption{Simulatore di nfproxy tramite il comando fgex}
+    \label{fig:nfproxy_sim}
+\end{figure}
+
