@@ -284,7 +284,7 @@ Una volta determinata la versione del protocollo, il pacchetti viene passato ai 
 Libtins ricorsivamente analizza i layer successivi, e ci permette di calcolare in maniera automatica lo \texttt{stream\_id},
 un tipo di dato implementato nella libreria in grado di rappresentare univocamente una connessione tarmite ip e porta sorgente e destinazione in maniera ordinata:
 l'ordinamento avviene prendendo la tupla ip:porta relavtivi allo stesso host come un unico valore, ed è poi l'intera tupla che veine ordinata
-(se avessimo ordinato ip e porta non considerandoli a coppie, avremmo un identificativo che potrebbe essere facilmente soggetto a conflitti e per fino soggetto a
+(se avessimo ordinato ip e porta non considerandoli a coppie, avremmo un identificativo che potrebbe essere facilmente soggetto a conflitti e perfino soggetto a
 possibili attacchi al fine di bypassare i filtri del firewall stesso).
 L' ordinamento permette di mantenere lo stesso identificativo sia per i pacchetti in ingresso che per i pacchetti in uscita, e dell'utilizzo di questo
 dato in strutture dati come le \texttt{map}\footcite{\url{https://en.cppreference.com/w/cpp/container/map}}{std_map} utilizzate per memorizzare gli stati dei flussi.\\
