@@ -14,6 +14,7 @@
 \usepackage{subcaption}
 \usepackage{xspace}
 \usepackage{fontawesome5}
+\usepackage{minted}
 \pgfplotsset{compat=1.18}
 
 \SetupFloatingEnvironment{listing}{name=Codice}
@@ -39,10 +40,10 @@
 \def\course{Corso di Laurea triennale in Ingegneria Informatica e dell’Automazione}
 \def\title{DIFESA DI SISTEMI INFORMATIVI TRAMITE FIREWALL PER COMPETIZIONI ATTACCO/DIFESA}
 \def\author{Domingo Dirutigliano}
-\def\prof{Chiar.mo Prof. Gennaro Boggia}
+\def\prof{Chiar.mo Prof.\ Gennaro Boggia}
 \def\supervisor{Dott.Ing. Daniele Pugliese}
 \def\subject{RETI DI TELECOMUNICAZIONI}
-\def\annoacc{2024 - 2025}
+\def\annoacc{2024\ -\ 2025}
 \def\beforecandidate{Laureando}
 \def\beforetitle{Tesi di Laurea in}
 \def\beforeprof{Relatore}
@@ -50,7 +51,7 @@
 \def\beforeannoacc{Anno Accademico}
 
 \makeatletter
-\def\cleardoublepage{\clearpage\if@twoside \ifodd\c@page\else
+\def\cleardoublepage{\clearpage\if@twoside\ifodd\c@page\else
     \hbox{}
     \vspace*{\fill}
     \vspace{\fill}
@@ -62,7 +63,7 @@
 \makeatletter
 \renewcommand{\@makefntext}[1]{%
   \scriptsize
-  \parindent 1em%
+  \parindent1em%
   \noindent\hb@xt@1.8em{\@makefnmark\hss}#1%
 }
 \makeatother
@@ -85,9 +86,7 @@
 \input{abstract}
 
 \cleardoublepage
-
 \tableofcontents
-
 \cleardoublepage
 
 \newcommand{\footcite}[2]{\footnote{#1\hspace{\fill}\cite{#2}}}

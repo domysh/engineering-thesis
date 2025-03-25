@@ -62,8 +62,7 @@ Di seguito un diagramma dell'architettura del modulo nfproxy, le varie component
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{images/chapter3/nfproxy.drawio.png}
-    \caption{Architettura del modulo nfqueue}
-    \label{fig:firegex_nfproxy_arch}
+    \caption{Architettura del modulo nfqueue}\label{fig:firegex_nfproxy_arch}
 \end{figure}
 
 \section{Elaborazione parallelizzata dei pacchetti}
@@ -108,8 +107,7 @@ Inoltre si sottlinea come python in questa casistica gestisce unicamente operazi
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{images/chapter3/GIL.png}
-    \caption{Python Global Interpeter Lock}
-    \label{fig:py_gil_schema}
+    \caption{Python Global Interpeter Lock}\label{fig:py_gil_schema}
 \end{figure}
 
 Una soluzione potrebbe essere sarebbe quella di utilizzare processi multipli, che permettono di avere un GIL per ogni processo,
@@ -270,8 +268,7 @@ for (int i=0; i<50000; i++){
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.98\textwidth]{images/chapter3/Benchmark-chart-with-load.png}
-    \caption{NfProxy Benchmarks con load balancing personalizzato con 1 e 8 thread}
-    \label{fig:nfproxy_multithread_benchmark}
+    \caption{NfProxy Benchmarks con load balancing personalizzato con 1 e 8 thread}\label{fig:nfproxy_multithread_benchmark}
 \end{figure}
 
 Gli stessi benefici sono presenti in nfproxy, infatti la base di codice per il bilanciamento dei pacchetti e la medesima per entrambi i moduli.
@@ -319,7 +316,7 @@ PktRequest(const char* payload, size_t plen, T* ctx, mnl_socket* nl, nfgenmsg *n
 \end{listing}
 
 Inoltre questo tipo di dato è agnostico rispetto al protocollo di livello 3, e pertanto può essere usato anche per un traffico misto IPv4 e IPv6, che attualmente
-non è previsto per le regole e il funzionamento imposto nella fase di "inserimento" della queue nella coda di traffico, poichè ne verifichiamo che il protocollo
+non è previsto per le regole e il funzionamento imposto nella fase di `inserimento' della queue nella coda di traffico, poichè ne verifichiamo che il protocollo
 sia lo stesso, ma che sarebbe possibile tramite le tables L3 agnostiche di nftables, o anche semplicemente intercettando il traffico tramite diverse regole alla stessa queue,
 o perfino se intercettato tramite il nome di un'interfaccia di rete che gestisce diversi indirizzzi IP, anche di versioni L3 differenti.\\
 Avendo memoria condivisa, nel passaggio tra produttore e consumatore, l'analisi del pacchetto non viene persa, poichè nel passaggio del pacchetto, viene rilasciato l'indirizzo
@@ -334,15 +331,14 @@ di netfilter, per essere mandato alla queue che determinerà un verdetto sul pac
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.98\textwidth]{images/chapter3/nf-hooks.png}
-    \caption{NfTables Hooks}
-    \label{fig:nftables_hooks}
+    \caption{NfTables Hooks}\label{fig:nftables_hooks}
 \end{figure}
 
 Il traffico in particolare viene intercettato sia in \texttt{pre-routing}, che in \texttt{post-ruoting} ad un hook prima dell'azione del modulo conntrack, ma dopo
 dell'azione di defrag, in particolare a prio -310 che rientra in questo range come riportato sulla \texttt{wiki ufficiale di nftables}\footcite{\url{https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks}}{netfilter_hooks}.
 Questo permette di ottenere dei pacchetti che hanno già subito il processo di deframmentazione a livello 3, di cui pertanto non ci dovremo preoccupare,
 che non hanno subito il processo di routing (che quindi volendo potremmo manipolare) e che non sono stati ancora analizzati dal modulo conntrack.\\
-Tuttavia i pacchetti non hanno subito il processo di ordinamento dei payload che avviene a livello 4, sul quale come è possibile osservare dalla figura \ref{fig:nftables_hooks}, non è possibile
+Tuttavia i pacchetti non hanno subito il processo di ordinamento dei payload che avviene a livello 4, sul quale come è possibile osservare dalla figura\ref{fig:nftables_hooks}, non è possibile
 intercettare del traffico, poichè i pacchetti arriveranno direttamente alle fasi di gestioni dei dati per la loro consegna alla socket a livello applicatvo.\\
 Pertanto è dato a noi il compito di analizzare il traffico e di ordinare i pacchetti TCP per un'analisi dei dati coerente con ciò che sarà letto
 dall'applicazione.\\
@@ -451,11 +447,10 @@ attuale esegue questa conversione non valutando quale sia la parte del flusso ch
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.98\textwidth]{images/chapter3/TCP_ack_seq_transl_failure.drawio.png}
-    \caption{Esempio di una possibile problematica nella traduzione di ack e seq implementata}
-    \label{fig:tcp_ack_seq_transl_failure}
+    \caption{Esempio di una possibile problematica nella traduzione di ack e seq implementata}\label{fig:tcp_ack_seq_transl_failure}
 \end{figure}
 
-È facile comprendere osservando la figura \ref{fig:tcp_ack_seq_transl_failure} come queste casistiche possano far completamente
+È facile comprendere osservando la figura\ref{fig:tcp_ack_seq_transl_failure} come queste casistiche possano far completamente
 decadere il sistema di traduzione implementato, che potrebbero essere frequenti in casi di congestione del traffico e diventare
 un elemento di interesse per eventuali attacchi miratamente incentrati su questo tipo di problematica (che tuttavia porterebbero ad una
 interruzione del normale andamento del traffico, e quindi non ne consegue in un effettivo vantaggio da parte dell'attaccante nello scenario di nostro interesse).\\
@@ -654,7 +649,6 @@ a livello di rete o di trasporto per limiti intrinsechi al fatto che è costruit
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.98\textwidth]{images/chapter3/nfproxy_sim.png}
-    \caption{Simulazione di nfproxy tramite il comando fgex}
-    \label{fig:nfproxy_sim}
+    \caption{Simulazione di nfproxy tramite il comando fgex}\label{fig:nfproxy_sim}
 \end{figure}
 

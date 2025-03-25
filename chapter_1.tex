@@ -57,7 +57,7 @@ defense_points[flag] = min(victim_score, offense_points)
 Il defense point è il punteggio sottratto al team da cui è stata rubata la flag come parte del punteggio di difesa descritto successivamente.\\
 
 \texttt{NOTA:} Si è assunto implicitamente fino ad ora che nè consegnare le flag del proprio team, nè tantomeno
-le flag rubate da dei team 'di prova' (spesso chiamati \texttt{NOP team}) possa dare punteggio.
+le flag rubate da dei team `di prova' (spesso chiamati \texttt{NOP team}) possa dare punteggio.
 I \texttt{NOP team} sono semplicemente macchine non associate a nessun gruppo reale di persone, che offrono i servizi della gara,
 al solo scopo di renderli usufruibili per eseguire penetartion testing (non tutte le competizioni prevedono la presenza dei \texttt{NOP team}).\\
 Ciò è possibile poichè il gameserver ha traccia di tutte le flag, di chi le consegna, e delle macchine in cui sono state originariamente inserite dai checker.\\
@@ -94,7 +94,7 @@ Le tipologie di punteggi che compongono il punteggio totale del singolo servizio
     La normale attività del servizio (seppur vulnerabile) pertanto, diventa di vitale importanza nella competizione per tutti i servizi.
     \item Il punteggio di \texttt{attacco} è calcolato sulla base quantitativo di submission di flag valide eseguite dal team. Il punteggio per ogni flag può variare in base alla difficoltà dell'attacco,
     alle condizioni generali di gara e alla velocità con cui si è riusciti ad attaccare quel servizio (come visto nell'esempio precendetemente).
-    \item Il punteggio di \texttt{difesa} (solitamente negativo poichè considera quanto "male" ci si sia difesi) è calcolato in base alle consegne
+    \item Il punteggio di \texttt{difesa} (solitamente negativo poichè considera quanto `male' ci si sia difesi) è calcolato in base alle consegne
     delle proprie flag eseguite dai team avversari. Accade spesso che questo punteggio vada a controbilanciare il punteggio di attacco sullo stesso servizio, se non a farlo decrescere, andandolo anche a
     portarlo a ribasso del punteggio iniziale assegnato. Esso può essere variabile sulla base degli stessi criteri discussi per il punteggio di attacco. Per questo motivo diventa necessario eseguire
     fix o patch sui propri servizi, impedendo l'arrivo di nuovi attacchi (ma comunque mantenendo il servizio in piena attività),
@@ -104,8 +104,7 @@ Le tipologie di punteggi che compongono il punteggio totale del singolo servizio
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{images/chapter1/oasis_scoreboard.png}
-    \caption{Scoreboard di una competizione realizzata con Oasis al DevFest Bari 2024}
-    \label{fig:oasis_scoreboard}
+    \caption{Scoreboard di una competizione realizzata con Oasis al DevFest Bari 2024}\label{fig:oasis_scoreboard}
 \end{figure}
 
 \vspace{\fill}
@@ -159,11 +158,10 @@ a grandi linee la configurazione di rete è spesso simile, ma potrebbe variare i
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{images/chapter1/ccit_network.png}
-    \caption{Modello della rete di gara di Cyberchallenge}
-    \label{fig:ccit_network}
+    \caption{Modello della rete di gara di Cyberchallenge}\label{fig:ccit_network}
 \end{figure}
 
-Come si può vedere nella figura \ref{fig:ccit_network} la rete di gara è composta da diversi elementi:
+Come si può vedere nella figura\ref{fig:ccit_network} la rete di gara è composta da diversi elementi:
 \begin{itemize}
     \setlength{\itemsep}{5pt}
     \setlength{\parskip}{5pt}
@@ -232,3 +230,8 @@ In generale sono frequenti nel loro utilizzo le seguenti categorie di tool:
     Tool di questo genere sono ad esempio \texttt{CTF Proxy}\footcite{\url{https://github.com/ByteLeMani/ctf_proxy}}{ctf_proxy} o il tool di cui tratta questa tesi \texttt{Firegex}\footcite{\url{https://github.com/Pwnzer0tt1/firegex}}{firegex_gh}.
 \end{itemize}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.20\textwidth]{images/chapter2/FiregexLogo.png}
+    \caption{Logo di Firegex}\label{fig:firegex_logo}
+\end{figure}
