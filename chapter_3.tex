@@ -1,19 +1,19 @@
 \chapter{Sviluppo del modulo nfproxy}
 
-Come già esplicitato in prcedenza, il regex filtering è un modello di filtraggio che permette si ottime prestazioni (pochè processato, e costruito con linguaggi
+Come già esplicitato in precedenza, il regex filtering è un modello di filtraggio che permette sì ottime prestazioni (poiché processato, e costruito con linguaggi
 e librerie veloci e low level), ma presentava delle grandi limitazioni in termini di flessibilità nell'analisi delle richieste e delle risposte, anche considerando che
-la maggior parte dei servizi in ambito CTF girano su protocolli quali HTTP o a spesso unicamente su canali TCP, per esporre interfacce di programmi da terminale,
+la maggior parte dei servizi in ambito CTF girano su protocolli quali HTTP o spesso anche su canali TCP, per esporre interfacce di programmi con interfaccia da terminale,
 che spesso hanno parte dei loro contenuti compressi o rappresentati tramite encoding i quali contenuti non sono facilmente analizzabili tramite regex. \\
 
 Al costo di prestazioni inferiori, con il vantaggio di poter scrivere i filtri in un linguaggio di semplice utilizzo e rapido per lo scripting quale
-\texttt{Python}\footcite{\url{http://python.org/}}{python}, \texttt{nfproxy} è stato sviluppato proprio ai fin di superare i precedenti limiti lasciando una
+\texttt{Python}\footcite{\url{http://python.org/}}{python}, \texttt{nfproxy} è stato sviluppato proprio al fine di superare i precedenti limiti lasciando una
 estesa libertà nell'implementazione delle logiche di filtraggio del traffico,
 mantenendo comunque un ottimo livello di prestazioni grazie ad alcune scelte architetturali intraprese e a diversi strumenti di sviluppo descritti in seguito.\\
 
-\texttt{Nfproxy} non è propriamente di per se un proxy, ma un modulo che sfrutta l'utilizzo di
+\texttt{Nfproxy} non è propriamente di per sé un proxy, ma un modulo che sfrutta l'utilizzo di
 \texttt{nfqueue}\footcite{\url{https://netfilter.org/projects/libnetfilter_queue/}}{netfilter_queue} lasciando un grado di controllo sul traffico e una facilità di utilizzo
 paragonabili a quella di un tradizionale proxy, dando in aggiunta accesso diretto ai pacchetti a livello di rete e inoltre non presenta le problematiche di
-cambio di configurazione del servizio originale per applicare i filtri, poichè il traffico viene intercettato in
+cambio di configurazione del servizio originale per applicare i filtri, poiché il traffico viene intercettato in
 maniera totalmente invisibile, non richiedendo pertanto alcuna modifica sull'applicativo.\\
 Si noti tuttavia come questa implementazione presenti alcune limitazioni riguardo la modifica, che però non rappresentano un scenario di utilizzo necessario
 e strettamente utile per la difesa stessa del servizio. La parte che gestisce la queue come vedremo in seguito, è sviluppata tramite un utilizzo ibrido
@@ -26,29 +26,29 @@ Il modulo supporta nativamente il parsing di HTTP/1.1\footcite{RFC2616, Hypertex
 Di seguito si elencano i requisiti principali, obiettivi dello sviluppo del seguente modulo:
 
 \begin{itemize}
-    \setlength{\itemsep}{5pt}
-    \setlength{\parskip}{5pt}
-    \item \texttt{Utilizzo del linguaggio python per la scrittura dei filtri}: il modulo deve offrire come strumenti di sviluppo dei filtri
+    \setlength{\itemsep}{2pt}
+    \setlength{\parskip}{2pt}
+    \item \textbf{Utilizzo del linguaggio python per la scrittura dei filtri}: il modulo deve offrire come strumenti di sviluppo dei filtri
     il linguaggio python, tramite l'ausilio di funzionalità offerte dal modulo stesso, ottimali, semplici per l'utilizzo per la scrittura dei filtri.
-    \item \texttt{Supporto ai protocolli HTTP/1.1 e Websocket}: il modulo deve supportare nativamente il parsing dei pacchetti HTTP/1.1 e Websocket eseguendone il parsing
+    \item \textbf{Supporto ai protocolli HTTP/1.1 e Websocket}: il modulo deve supportare nativamente il parsing dei pacchetti HTTP/1.1 e Websocket eseguendone il parsing
     e rendendo disponibili i dati già decodificati e decodificati quando è possibile, garantendone un accesso immediato. Deve supportare pertando i metodi di decompressione
     quali \texttt{gzip}\footcite{RFC1952, GZIP file format specification version 4.3}{rfc1952},
     \texttt{deflate}\footcite{RFC1951, DEFLATE Compressed Data Format Specification version 1.3}{rfc1951},
     \texttt{brotli}\footcite{RFC7932, Brotli Compressed Data Format}{rfc7932},
     \texttt{zstd}\footcite{RFC8478, Zstandard Compression and the application/zstd Media Type}{rfc8478}.
     Deve supportare anche l'estensione per websocket \texttt{permessage-deflate}\footcite{RFC7692, Compression Extensions for WebSocket}{rfc7692}.
-    \item \texttt{Supporto al parsing dei pacchetti TCP}: il modulo deve supportare il parsing dei pacchetti TCP, permettendo l'accesso ai dati di livello di trasporto con payload già ordinati.
-    \item \texttt{Accesso agli header ai livelli di rete e di trasporto}: il modulo deve permettere degli header IP e TCP accessibili e modificabili.
-    \item \texttt{Supporto a IPv4 e IPv6}: il modulo deve supportare il parsing dei pacchetti IPv4\footcite{RFC791, Internet Protocol}{rfc791} e IPv6\footcite{RFC2460, Internet Protocol, Version 6 (IPv6) Specification}{rfc2460}.
-    \item \texttt{Gestione autonoma dei buffer}: il modulo deve gestire autonomamente i buffer di memoria, evitando di sovraccaricare la memoria del sistema e di
+    \item \textbf{Supporto al parsing dei pacchetti TCP}: il modulo deve supportare il parsing dei pacchetti TCP, permettendo l'accesso ai dati di livello di trasporto con payload già ordinati.
+    \item \textbf{Accesso agli header ai livelli di rete e di trasporto}: il modulo deve permettere degli header IP e TCP accessibili e modificabili.
+    \item \textbf{Supporto a IPv4 e IPv6}: il modulo deve supportare il parsing dei pacchetti IPv4\footcite{RFC791, Internet Protocol}{rfc791} e IPv6\footcite{RFC2460, Internet Protocol, Version 6 (IPv6) Specification}{rfc2460}.
+    \item \textbf{Gestione autonoma dei buffer}: il modulo deve gestire autonomamente i buffer di memoria, evitando di sovraccaricare la memoria del sistema e di
     delegare la gestione di questi al programmatore, tuttavia lasciando la libertà di decisione sulle modalità di gestione, fornendo delle opzioni di configurazione opzionali.
-    \item \texttt{Segnalazione degli errori}: il modulo deve segnalare in maniera chiara e precisa gli errori di parsing e di esecuzione dei filtri, facendo noto 
+    \item \textbf{Segnalazione degli errori}: il modulo deve segnalare in maniera chiara e precisa gli errori di parsing e di esecuzione dei filtri, facendo noto 
     al programmatore errori inaspettati rilevati e fornendo i log necessari per la risoluzione.
-    \item \texttt{Supporto alla gestione dei filtri in maniera immediata}: deve essere possibile disabilitare totalmente o parzialmente i filtri in maniera immediata e
+    \item \textbf{Supporto alla gestione dei filtri in maniera immediata}: deve essere possibile disabilitare totalmente o parzialmente i filtri in maniera immediata e
     senza downtime del servizio.
-    \item \texttt{Supporto alla paralelizzazione}: il modulo deve supportare la paralelizzazione dei pacchetti, permettendo di sfruttare al meglio le risorse del sistema
+    \item \textbf{Supporto alla parallelizzazione}: il modulo deve supportare la parallelizzazione dei pacchetti, permettendo di sfruttare al meglio le risorse del sistema
     e garantendo un'ottima scalabilità del firewall.
-    \item \texttt{Possibilitò di verifica del filtro tramite simulazione}: il modulo deve permettere di verificare il filtro in maniera simulata, permettendo di testare
+    \item \textbf{Possibilitò di verifica del filtro tramite simulazione}: il modulo deve permettere di verificare il filtro in maniera simulata, permettendo di testare
     il quest'ultimo senza dover necessariamente applicarlo direttamente al traffico della macchina, permettendone il debugging e lo sviluppo in modo sicuro e rapido.
   \end{itemize}
 
@@ -72,20 +72,20 @@ a causa di una serie di problematiche descritte in seguito riguardo il funzionam
 python, e anche la necessità di far interfacciare 2 linguaggi differenti in un unico modulo.\\
 Obiettivi principali della paralellizzazione sono stati:
 \begin{itemize}
-    \setlength{\itemsep}{5pt}
-    \setlength{\parskip}{5pt}
-    \item \texttt{Evitare la possibilità di conflitti di dati tra i processi}: Elemento critico nella progettazione per cui si devono evitare quanto possibile i conflitti
+    \setlength{\itemsep}{2pt}
+    \setlength{\parskip}{2pt}
+    \item \textbf{Evitare la possibilità di conflitti di dati tra i processi}: Elemento critico nella progettazione per cui si devono evitare quanto possibile i conflitti
     tra i vari processi di modo da evitare corruzione di dati, crash improvvisi e comportamenti inaspettati.
-    \item \texttt{Evitare l'utilizzo di elementi bloccanti quali le lock}: i lock spesso ricorrono utili nella gestione di risorse condivise, ma possono portare a problemi
-    di prestazioni e di deadlock: pertanto uno degli obiettivi fissati è ridurre il loro utilizzo al minimo indispensabile, strutturando il sistema appositamente per eviatre 
+    \item \textbf{Evitare l'utilizzo di elementi bloccanti quali le lock}: i lock spesso ricorrono utili nella gestione di risorse condivise, ma possono portare a problemi
+    di prestazioni e di deadlock: pertanto uno degli obiettivi fissati è ridurre il loro utilizzo al minimo indispensabile, strutturando il sistema appositamente per evitare 
     casistiche in cui è necessario il loro utilizzo.
-    \item \texttt{Evitare copie in memoria, e avvio di processi sovrabbondanti}: Evitando le copie in memoria dei pacchetti, riduciamo il
+    \item \textbf{Evitare copie in memoria, e avvio di processi sovrabbondanti}: Evitando le copie in memoria dei pacchetti, riduciamo il
     consumo di memoria ma soprattutto velociziamo il processo di analisi garantendo maggiori performance.
 \end{itemize}
 Per le motivazioni sopra citate, si è scelto un approccio alla parallelizzazione di tipo produttore-consumatore, che vede come produttore
 un processo ascoltatore, che riceve dal kernel i pacchetti da elaborare, il quale fa effettivamente il binding della \texttt{nfqueue},
 e diversi processi consumatori che hanno come uniche risorse comuni delle dequeue di pacchetti, che verranno distribuiti dal produttore.
-Il produttore quindi accoderà i pacchetti in queste code, che verranno prevelati dai relativi consumatori per essere elaborati.
+Il produttore quindi accoderà i pacchetti in queste code, che verranno prelevati dai relativi consumatori per essere elaborati.
 Il singolo consumatore si occupa di ordinare i pacchetti TCP, elaborare i filtri python, ed infine mandare i
 \texttt{verdicts}\footcite{\url{https://netfilter.org/projects/libnetfilter_queue/doxygen/html/group__nfq__verd.html}}{vedicts_nfqueue}
 al kernel per eseguire l'azione richiesta sul pacchetto, e procedere con la prossima elaborazione.\\
@@ -98,16 +98,16 @@ L'implementazione utilizzata è stata quella di \texttt{Arif Jaffer}\footcite{\u
 
 \subsection{A Per-Interpreter GIL con python 3.12}
 
-Una delle problematiche citate precedentemente sulla paralelizzazione erano riguardo una caratteristica del linguaggio python,
-il \texttt{GIL}\footcite{Understanding the python gil}{beazley2010understanding} (Global Interpeter Lock), che limita l'utilizzo dei thread in python
+Una delle problematiche citate precedentemente sulla parallelizzazione erano riguardo una caratteristica del linguaggio python,
+il \texttt{GIL}\footcite{Understanding the python gil}{beazley2010understanding} (Global Interpreter Lock), che limita l'utilizzo dei thread in python
 permettendo ad un solo thread per volta l'esecuzione del codice, che altrimenti presenterebbe problemi riguardo la gestione degli oggetti python stessi
-poichè internamente (come ad esempio per il sistema di reference counting) la loro gestione non è implementata in maniera thread-safe e incorrerebbe a comportamenti inaspettati.\\
-Inoltre si sottlinea come python in questa casistica gestisce unicamente operazioni CPU-bound, che vanno ulteriormente ad evidenziare gli svantaggi portati dal GIL.\\
+poiché internamente (come ad esempio per il sistema di reference counting) la loro gestione non è implementata in maniera thread-safe e incorrerebbe a comportamenti inaspettati.\\
+Inoltre si sottolinea come python in questa casistica gestisce unicamente operazioni CPU-bound, che vanno ulteriormente ad evidenziare gli svantaggi portati dal GIL.\\
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{images/chapter3/GIL.png}
-    \caption{Python Global Interpeter Lock}\label{fig:py_gil_schema}
+    \caption{Python Global Interpreter Lock}\label{fig:py_gil_schema}
 \end{figure}
 
 Una soluzione potrebbe essere sarebbe quella di utilizzare processi multipli, che permettono di avere un GIL per ogni processo,
@@ -205,7 +205,7 @@ void __real_handler(PktRequest<Worker>* pkt) {
 
 Si sottolinea come una tecnica simile sia anche utilizzata direttamente kernel space per il bilanciamento del carico dei pacchetti.
 La seguente gestione è stata fatta userspace e lasciata a nfqueue kernel space (come in una precedente implementazione usata per nfregex),
-poichè l'hashing eseguito nel kernel per motivi tecnici legati alla generalizzazione del modulo per protocolli diversi da quelli di cui
+poiché l'hashing eseguito nel kernel per motivi tecnici legati alla generalizzazione del modulo per protocolli diversi da quelli di cui
 si è interessati per lo sviluppo di nfproxy, nell'hashing eseguito lato kernel non viene utilizzata la porta.
 
 \begin{listing}[H]
@@ -245,8 +245,8 @@ e il codice utilizzato per l'hashing\footnote{\url{https://web.git.kernel.org/pu
 come è possibile vedere non include la porta, che è stata aggiunta per il bilanciamento del carico in userspace.\\
 
 Questo rappresenta un limite importante per l'utilizzo di questo modulo in contesti come le competizioni Attack Defence dove
-troviamo traffico anonimizzato tramito l'ausilio di un NAT, che di per se pertanto porterebbe
-ad un bilanciamento del carico non esistente poichè 1 solo consumatore verrebbe impegnato nell'elaborazione di tutti i pacchetti
+troviamo traffico anonimizzato tramito l'ausilio di un NAT, che di per sé pertanto porterebbe
+ad un bilanciamento del carico non esistente poiché 1 solo consumatore verrebbe impegnato nell'elaborazione di tutti i pacchetti
 se 1 solo ip è utilizzato nel NAT.\\
 Di seguito si riporta un benchmark del modulo \texttt{nfregex} che utilizza il nuovo sistema di bilanciamento del carico userspace,
 che simula del carico in elaborazione del traffico con il seguente codice:
@@ -316,10 +316,10 @@ PktRequest(const char* payload, size_t plen, T* ctx, mnl_socket* nl, nfgenmsg *n
 \end{listing}
 
 Inoltre questo tipo di dato è agnostico rispetto al protocollo di livello 3, e pertanto può essere usato anche per un traffico misto IPv4 e IPv6, che attualmente
-non è previsto per le regole e il funzionamento imposto nella fase di `inserimento' della queue nella coda di traffico, poichè ne verifichiamo che il protocollo
+non è previsto per le regole e il funzionamento imposto nella fase di `inserimento' della queue nella coda di traffico, poiché ne verifichiamo che il protocollo
 sia lo stesso, ma che sarebbe possibile tramite le tables L3 agnostiche di nftables, o anche semplicemente intercettando il traffico tramite diverse regole alla stessa queue,
 o perfino se intercettato tramite il nome di un'interfaccia di rete che gestisce diversi indirizzzi IP, anche di versioni L3 differenti.\\
-Avendo memoria condivisa, nel passaggio tra produttore e consumatore, l'analisi del pacchetto non viene persa, poichè nel passaggio del pacchetto, viene rilasciato l'indirizzo
+Avendo memoria condivisa, nel passaggio tra produttore e consumatore, l'analisi del pacchetto non viene persa, poiché nel passaggio del pacchetto, viene rilasciato l'indirizzo
 di memoria all'oggetto c++ che rappresenta il pacchetto, la responsabilità di deallocare questa area di memoria passa al consumatore che quindi non dovrà
 analizzare nuovamente il pacchetto, ma potrà direttamente procedere con la sua elaborazione.
 
@@ -339,13 +339,13 @@ dell'azione di defrag, in particolare a prio -310 che rientra in questo range co
 Questo permette di ottenere dei pacchetti che hanno già subito il processo di deframmentazione a livello 3, di cui pertanto non ci dovremo preoccupare,
 che non hanno subito il processo di routing (che quindi volendo potremmo manipolare) e che non sono stati ancora analizzati dal modulo conntrack.\\
 Tuttavia i pacchetti non hanno subito il processo di ordinamento dei payload che avviene a livello 4, sul quale come è possibile osservare dalla figura\ref{fig:nftables_hooks}, non è possibile
-intercettare del traffico, poichè i pacchetti arriveranno direttamente alle fasi di gestioni dei dati per la loro consegna alla socket a livello applicatvo.\\
+intercettare del traffico, poiché i pacchetti arriveranno direttamente alle fasi di gestioni dei dati per la loro consegna alla socket a livello applicatvo.\\
 Pertanto è dato a noi il compito di analizzare il traffico e di ordinare i pacchetti TCP per un'analisi dei dati coerente con ciò che sarà letto
 dall'applicazione.\\
 Fortunatamente, libtins ci permette di fare ciò in maniera automatica, e ha una gestione sufficientemente efficiente sullo scadere dei flussi TCP, sulla gestione dei buffer
-e sulle problematiche di segmenti non ordinto dei pacchetti, che solleva l'applicativo da un numero importante di problematiche che andrebbero gestiste
+e sulle problematiche di segmenti non ordinati dei pacchetti, che solleva l'applicativo da un numero importante di problematiche che andrebbero gestiste
 manualmente, ma che ci vengono già gestiste nell'analisi stessa dei flussi TCP\footnote{Esempio TCP Follower: \url{https://libtins.github.io/examples/http-requests/}}.\\
-Oltre al contesto creato all'interno dell'oggetto follower di libtins, viene creato uno stato esternamente per lo stesso flusso, per la memorizzatione
+Oltre al contesto creato all'interno dell'oggetto follower di libtins, viene creato uno stato esternamente per lo stesso flusso, per la memorizzazione
 dello stato del flusso memorizzato con python, deallocato e allocato in maniera coerente al follower stesso, che tramite delle callback ci permette di
 richiamare le azioni da eseguire sui dati che allochiamo.\\
 Da notare che avremo un follower per ogni processo consumatore che analizzerà una sotto parte dei flussi dell'intero traffico, l'hashing ci garantisce che
@@ -357,14 +357,14 @@ Anche il TCP follower è agnostico rispetto al protocollo di livello 3, e pertan
 Il modulo nfqueue permette la modifica dei pacchetti, e pertanto la possibilità sia di modificare gli header ip e tcp, che il payload del livello di trasporto.
 La modifica dei pacchetti seppur non essenziale è parzialmente supportata, ma non pienamente funzionante: questo a causa di diverse problematiche che nascono
 dalla modifiche dei pacchetti stessi per diversi meccaniscmi applicati a livello di trasporto, e alucne di queste problematiche non sono di fatto
-risolte a causa della loro complessità implementativa e a diverse conseguenze che potrebbero portare ad ulteriori problematiche ancora più complesse e tendenzalmente target di possibili attacchi.
+risolte a causa della loro complessità implementativa e a diverse conseguenze che potrebbero portare ad ulteriori problematiche ancora più complesse e tendenzialmente target di possibili attacchi.
 Pertanto i rischi che l'applicazione di queste modifiche potrebbero sono sufficientemente elevati da non essere ritenuti tollerabili rispetto alle reali esigenze di questa funzionalità (tendenzalmente nulle).\\
 
 Le problematiche sul calcolo dei campi di integrità dei dati sono date come risolte tramite l'utilizzo di libtins, che si occupa nella serializzazione del pacchetto e
 anche di ricalcolare questi campi nei vari layer interessati, e pertanto non sono state considerate problematiche rilevanti.\\
 
 L'unica operazione aggiuntiva affrontata su questa problematica è stata la necessità di reinserire il payload del pacchetto nella catena di PDU di libtins,
-poichè (seppur non documentato), il follower del flusso TCP internamente separa di fatto il payload dal pacchetto, e pertanto è necessario reinserirlo per una
+poiché (seppur non documentato), il follower del flusso TCP internamente separa di fatto il payload dal pacchetto, e pertanto è necessario reinserirlo per una
 corretta serializzazione del pacchetto modificato.\footnote{Separazione del payload nel follower: \url{https://github.com/mfontanini/libtins/blob/b7e61f4c76ac64053c9c4c9f8eadaabbe3a9381a/src/tcp_ip/data_tracker.cpp\#L68}}.\\
 
 Di seguito si riporta una descrizione accurata delle problematiche riscontrate e delle soluzioni proposte, o applicate con relativi limiti e valutazione di rischio/beneficio.\\
@@ -424,7 +424,7 @@ void fix_tcp_ack(){
     if(!need_tcp_fixing){
         return;
     }
-    // Convertion of the ack and seq
+    // conversion of the ack and seq
     if (is_input){
         tcp->seq(tcp->seq() + ack_seq_offset->in);
         tcp->ack_seq(tcp->ack_seq() - ack_seq_offset->out);
@@ -460,8 +460,8 @@ offerta come possibilità, ma segnalata come funzionalità instabile che potrebb
 
 Una possibile soluzione robusta dovrebbe prevedere la memorizzazione del punto in cui il flusso è stato effettivamente modificato congiuntamente con l'offset utilizato fino
 a quel punto in quella direzione del traffico, finchè i dati fino a quegli intervalli non viene riscontrato dal ricevente e non solo:
-dovrebbe prevedere una logica che risulta particolarmente complessa per la traduzione di ack e seq, poichè deve tenere conto di tutta una serie di possibili scenari
-come il caso di frequenti modifiche di pacchetti in sucecssione con ritrasmissioni, ma anche i casi di ri-trasmissioni di pacchetti con payload composti da dati
+dovrebbe prevedere una logica che risulta particolarmente complessa per la traduzione di ack e seq, poiché deve tenere conto di tutta una serie di possibili scenari
+come il caso di frequenti modifiche di pacchetti in successione con ritrasmissioni, ma anche i casi di ri-trasmissioni di pacchetti con payload composti da dati
 che precedentemente erano stati inviati in pacchetti differenti.\\
 Andando a trattare tutte le casistiche l'implementazione diventa via via sempre più complessa da realizzare, per cui si ritene poco utile
 il suo effettivo sviluppo dato la risicata utilità della funzionalità stessa.
@@ -469,15 +469,15 @@ il suo effettivo sviluppo dato la risicata utilità della funzionalità stessa.
 \subsection{Modifica di segmenti non ordinati}
 
 Un ulteriorie problema nasce dalla necessità di modificare i pacchetti con dei payload out-of-order da modificare:
-nella attuale implementazione in caso arrivino dei paccheti non ordinati, questi vengono analizzati dal TCP follower di libtins, che considera il payload per
+nella attuale implementazione in caso arrivino dei pacchetti non ordinati, questi vengono analizzati dal TCP follower di libtins, che considera il payload per
 la ricostruzione del flusso, ma successivamente il pacchetto viene automaticamente accettato, e pertanto non si avrà la possibilità di modificarlo in seguito.\\
-In caso quel pacchetto conteneva un payload malevolo, ad esso verrà comunque impedito di passare a livello applicativo, poichè nel momento in cui arriverà
+In caso quel pacchetto conteneva un payload malevolo, ad esso verrà comunque impedito di passare a livello applicativo, poiché nel momento in cui arriverà
 il pacchetto contenete il payload che completerebbe il flusso disordinato, questo verrà analizzato dal filtro insieme al payload precedete (supponendo ce ne sia solo 1),
 e bloccato: pertanto il flusso ricostruito dal kernel non verrà mai ricostruito completamente e la connessione degenererà in una chiusura forzata.\\
 
 Tuttavia se vogliamo avere completo controllo sulla modifica del traffico la seguente soluzione non è praticabile: una possibile alternativa richiederebbe
 di non accettare i pacchetti out-of-order, e di memorizzare i pacchetti in un buffer fino a che non arrivi il pacchetto mancante, e di procedere con la modifica
-di diversi pacchetti riportando le modifiche effettuate sul flusso ricostruito distribuendolo nei segmenti trattenuti nella queue.\\
+di diversi pacchetti riportando le modifiche effettuate sul flusso distribuendolo nei segmenti trattenuti nella queue.\\
 La seguente soluzione tuttavia richiederebbe la gestione di un importante livello di complessità a livello di ricostruzione delle modfiche, ma soprattutto
 porterebbe alla considerazione una nuova categorie di problematiche legate al riempimento della nfqueue lato kernel, che potrebbe facilmente essere soggetta
 ad un riempimento e quindi alla conseguente perdita dei pacchetti successivi. Se i pacchetti in coda per essere elaborati necessitano dell'analisi di pacchetti che nel
@@ -488,14 +488,14 @@ Per le considerazioni fatte, si può comprendere come sia di fondamentale import
 debba dipendere da altri pacchetti, garantendo quindi il continuo fluire del traffico nella coda lato kernel.\\
 
 Per queste casistiche sono stati pensati diversi meccanismi che permetterebbero di mitigare il problema, ma nessuno di questi rimane
-sufficientemente robusto da essere resiliente a possibili attacchi attacchi DoS, e pertanto si è deciso di escludere la possibilità
-di accodare i pacchetti facendoli rimanere in attesa di ulteriori pacchetti: \texttt{il loro riscontro al modulo nfqueue deve essere immediatamente al termine dell'elaborazione}
+sufficientemente robusto da essere resiliente a possibili attacchi DoS, e pertanto si è deciso di escludere la possibilità
+di accodare i pacchetti e farli rimanere in attesa di ulteriori pacchetti: \texttt{il loro riscontro al modulo nfqueue deve essere immediatamente al termine dell'elaborazione}
 come avviene nell'implementazione attuale.\\
 
 \section{Parsing dei pacchetti HTTP}
 
 A seguito di una ricerca riguardo soluzioni già esistenti per il parsing dei pacchetti HTTP, non ho trovato soluzioni che fossero adeguate
-alle richieste del progetto, sopratutto data la necessaria compatibilità dei moduli le funzionalità introdotte nel
+alle richieste del progetto, sopratutto data la necessaria compatibilità dei moduli e le funzionalità introdotte nel
 \texttt{PEP 684}\footcite{\url{https://peps.python.org/pep-0684/}}{pep648} che come precedentemente, richiedono l'implementazione di moduli
 con \texttt{multi-phase inizialization}\footcite{\url{https://peps.python.org/pep-0489/}}{pep489} e che siano thread safe.\\
 Pertanto partendo dall'implementazione trovata online di \texttt{Derrick Lyndon Pallas}\footcite{Python wrapper per llhttp: \url{https://github.com/pallas/pyllhttp}}{original_pyllhttp_impl},
@@ -513,16 +513,16 @@ Dato il suo ampio utilizzo, al fine di semplificare l'implementazione di filtri 
 si è deciso di implementare il supporto agli algoritmi di compressione supportati da browser chrome:
 
 \begin{itemize}
-    \setlength{\itemsep}{5pt}
-    \setlength{\parskip}{5pt}
-    \item \texttt{gzip}\footcite{RFC1952, GZIP file format specification version 4.3}{rfc1952}: Nativamente supportato in python.
-    \item \texttt{brotli}\footcite{RFC7932, Brotli Compressed Data Format}{rfc7932}: Il seguente algoritmo di compressione è supportato tramite
+    \setlength{\itemsep}{2pt}
+    \setlength{\parskip}{2pt}
+    \item \textbf{gzip}\footcite{RFC1952, GZIP file format specification version 4.3}{rfc1952}: Nativamente supportato in python.
+    \item \textbf{brotli}\footcite{RFC7932, Brotli Compressed Data Format}{rfc7932}: Il seguente algoritmo di compressione è supportato tramite
     un'implementazione e il relativo wrapper python sviluppato da \texttt{google} che tuttavia non supporta il \texttt{PEP 684}, e per cui ho sviluppato
     il fork compatibile con le specifiche del progetto disponibile su github\footcite{\url{https://github.com/domysh/brotli}}{brotli_fork}.
-    \item \texttt{zstd}\footcite{RFC8478, Zstandard Compression and the application/zstd Media Type}{rfc8478}: Algoritmo di compressione sviluppato da \texttt{Meta},
+    \item \textbf{zstd}\footcite{RFC8478, Zstandard Compression and the application/zstd Media Type}{rfc8478}: Algoritmo di compressione sviluppato da \texttt{Meta},
     che non ha sviluppato direttamente un wrapper python, che tuttavia è stato sviluppato da \texttt{Sergey Dryabzhinsky}\footcite{\url{https://github.com/sergey-dryabzhinsky/python-zstd}}{zstd_ortiginal_python_wrapper},
     anch'esso però non compatibile con il \texttt{PEP 684}, e per cui ho sviluppato un fork compatibile disponibile su github\footcite{\url{https://github.com/domysh/python-zstd}}{zstd_fork}.
-    \item \texttt{deflate}\footcite{RFC1951, DEFLATE Compressed Data Format Specification version 1.3}{rfc1951}: Implementabile tramite il modulo \texttt{zlib}.
+    \item \textbf{deflate}\footcite{RFC1951, DEFLATE Compressed Data Format Specification version 1.3}{rfc1951}: Implementabile tramite il modulo \texttt{zlib}.
 \end{itemize}
 
 L'implementazione è stata scritta seguendo le specifiche definite nell'\texttt{RFC 2616} il quale definisce la possibilità di compressioni multiple, correttamente
@@ -541,8 +541,8 @@ In caso di fallimento nel parsing dei frame, i dati vengono resi disponibili al 
 
 \section{Sintassi e gestione dei filtri python}
 
-I filtri python deiniti per nfproxy devono essere scritti in un singolo file (per servizio) che può contenere una serie di funzioni chiamate
-\texttt{pyfilters} che possono richiedere determinati dati, e possono restituire degli \texttt{statment} che definiscono il comportamento da eseguire elaborato
+I filtri python definiti per nfproxy devono essere scritti in un singolo file (per servizio) che può contenere una serie di funzioni chiamate
+\texttt{pyfilters} che possono richiedere determinati dati, e possono restituire degli \texttt{statement} che definiscono il comportamento da eseguire elaborato
 al termine dell'elaborazione eseguita.\\
 
 Di seguito un esempio di un filtro python che blocca i pacchetti provenienti da un client che utilizza il browser \texttt{curl} e che
@@ -578,7 +578,7 @@ Pertanto i pyfilters prendono il nome della funzione stessa, e supportano un num
 avere un tipo definito in \texttt{firegex.nfproxy.models} come decorator, necessario a comprendere la struttura dei dati che necessita di essere passata,
 sullo stesso principio utilizzato da \texttt{pydantic}\footcite{\url{https://docs.pydantic.dev/latest/}}{pydantic}, nota libreria python.\\
 
-Le funzioni possono restituire uno \texttt{statment} che definisce il comportamento da eseguire, tra i principali \texttt{ACCEPT}, \texttt{REJECT} e \texttt{DROP}.
+Le funzioni possono restituire uno \texttt{statement} che definisce il comportamento da eseguire, tra i principali \texttt{ACCEPT}, \texttt{REJECT} e \texttt{DROP}.
 Se la funzione non restituisce nulla (o restituisce \texttt{None}), il pacchetto verrà accettato.\\
 
 Ulteriori dettagli sull'utilizzo dei models (chiamati anche datahandler) sono disponibili nella documentazione integrata nell'interfaccia di \texttt{firegex} per nfproxy.
@@ -644,7 +644,7 @@ dei filtri, che verranno ricaricati automaticamente ed è fortemente consigliato
 del filtro per verificare il corretto funzionamento del filtro stesso.\\
 
 Si specifica che il simulatore utilizza la maggior parte del codice utilizzato dal firewall reale ma ovviamente non permette di analizzare e modificare il traffico
-a livello di rete o di trasporto per limiti intrinsechi al fatto che è costruito tramite un proxy TCP.
+a livello di rete o di trasporto per limiti intrinsechi al fatto che è costruito tramite un proxy TCP.\@
 
 \begin{figure}[H]
     \centering

@@ -14,25 +14,25 @@ Tuttavia, la vulnerabilità è stata classificata come critica, in quanto con l'
 un utente non privilegiato.\\
 
 È possibile verificare la vulnerabilità tramite il seguente one-command realizzato da noi: \texttt{curl -sLf https://pwnzer0tt1.it/cve-2022-36946.sh | bash}.\\
-Informazioni aggiuntive sono disponibili sulla pagina da noi creata \url{https://github.com/Pwnzer0tt1/CVE-2022-36946}.\\
+Informazioni aggiuntive sono disponibili sulla pagina da noi creata \url{https://github.com/Pwnzer0tt1/CVE-2022-36946}.
 
 \section{Sviluppi futuri}
 
 Di seguito si elencano alcuni sviluppi futuri che potrebbero essere implementati per migliorare il modulo nfproxy:
 
 \begin{itemize}
-    \setlength{\itemsep}{5pt}
-    \setlength{\parskip}{5pt}
-    \item \texttt{Implementazione di HTTP/2}: supporto al protocollo HTTP/2 permettendo di codificare tutte le versioni del protocollo su TCP in maniera
+    \setlength{\itemsep}{2pt}
+    \setlength{\parskip}{2pt}
+    \item \textbf{Implementazione di HTTP/2}: supporto al protocollo HTTP/2 permettendo di codificare tutte le versioni del protocollo su TCP in maniera
     quanto più trasparente nell'utilizzo dei datahandler http.
-    \item \texttt{Supporto a UDP}: supporto al protocollo UDP, permettendo di filtrare e modificare i pacchetti UDP. Questione complessa da affrontare
+    \item \textbf{Supporto a UDP}: supporto al protocollo UDP, permettendo di filtrare e modificare i pacchetti UDP.\@ Questione complessa da affrontare
     in questo contesto è la mancanza di un meccanismo per il quale decidere se una determinata connessione è terminata o meno a livello di gestione di memoria.
-    \item \texttt{Reimplementazione tramite lo sviluppo di un MITM proxy con address e port translation personalizzato}: permettere di utilizzare gli stessi filtri di nfproxy
+    \item \textbf{Reimplementazione tramite lo sviluppo di un MITM proxy con address e port translation personalizzato}: permettere di utilizzare gli stessi filtri di nfproxy
     ma realizzando l'impementazione tramite un proxy MITM, che tuttavia non richieda cambi di configurazione sui servizi: ciò sarebbe differente dal
-    modulo \texttt{porthijack} poichè il proxy sarebbe gestito da firegex stesso, e si dovrebbe implementare un meccanismo di address e port translation
+    modulo \textbf{porthijack} poichè il proxy sarebbe gestito da firegex stesso, e si dovrebbe implementare un meccanismo di address e port translation
     ulteriore per cui al server la richiesta sembri provenire all'indirizzo originale.
-    \item \texttt{Sviluppo di un modulo per la condivisione di dati tra i vari thread}: permettere di condividere dati tra i vari thread, tramite una struttura apposita in nfproxy
+    \item \textbf{Sviluppo di un modulo per la condivisione di dati tra i vari thread}: permettere di condividere dati tra i vari thread, tramite una struttura apposita in nfproxy
     che con la realizzazione di un modulo python personalizzato in c, permetterebbe di condividere dati tra i vari thread con GIL separati in maniera sicura.
-    \item \texttt{Supporto al monitoring delle queue}: permettere di monitorare le queue di netfilter nel frontend di firegex per permettere di comprendere
+    \item \textbf{Supporto al monitoring delle queue}: permettere di monitorare le queue di netfilter nel frontend di firegex per permettere di comprendere
     meglio il carico associato in real-time sul firewall. Ciò sarebbe possibile tramite le API kernel esposte in \path{/proc/net/netfilter/nfnetlink_queue}.
 \end{itemize}
