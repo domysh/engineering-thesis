@@ -56,7 +56,7 @@ Di seguito gli obiettivi fondamentali del modulo:
     
     \item \textbf{Compatibilità dual-stack}: Elaborazione sia di pacchetti IPv4\footcite{RFC791, Internet Protocol}{rfc791} che IPv6\footcite{RFC2460, Internet Protocol, Version 6 (IPv6) Specification}{rfc2460}.
     
-    \item \textbf{Allocazione e deallocazione di memoria ottimizzata}: Gestione automatica dei buffer per evitare memory leak, ed evitare sovraccarichi di memoria, non delegando la gestione al programmatore, ma fornendo opzioni di configurazione opzionali per configurare il modo in cui vengono gestiti.
+    \item \textbf{Allocazione e deallocazione di memoria ottimizzata}: Gestione automatica dei buffer per evitare memory leak e sovraccarichi, non delegandone la gestione al programmatore, ma fornendo opzioni di configurazione opzionali per configurare il modo in cui vengono gestiti.
     
     \item \textbf{Diagnostica avanzata}: Notifica strutturata degli errori (codici, descrizioni, contesto) con log dettagliati per l'analisi forniti in tempo reale.
     
@@ -94,7 +94,7 @@ Tre obiettivi hanno guidato l'implementazione della parallelizzazione:
 \end{itemize}
 
 La soluzione adottata segue il pattern produttore-consumatore. Un processo produttore unico, responsabile del binding alla \texttt{nfqueue},
-riceve i pacchetti dal kernel e li distribuisce a multiple code FIFO.\@ I consumatori, associati ciascuno a una coda dedicata, gestiscono in parallelo:
+riceve i pacchetti dal kernel e li distribuisce a multiple code FIFO.\@ I consumatori, associati ciascuno ad una coda dedicata, gestiscono in parallelo:
 \begin{itemize}
     \setlength{\itemsep}{2pt}
     \setlength{\parskip}{2pt}
@@ -103,7 +103,7 @@ riceve i pacchetti dal kernel e li distribuisce a multiple code FIFO.\@ I consum
     \item Invio dei \texttt{verdicts}\footcite{\url{https://netfilter.org/projects/libnetfilter_queue/doxygen/html/group__nfq__verd.html}}{vedicts_nfqueue} al kernel
 \end{itemize}
 
-L'unica sezione critica risiede nell'accesso concorrente alle code, protetto da un sistema di lock ottimizzato basato su
+L'unica sezione critica risiede nell'accesso concorrente alle code, protetto da un sistema di lock basato su
 \texttt{std::mutex}\footcite{\url{https://en.cppreference.com/w/cpp/thread/mutex}}{std_mutex} e \texttt{std::condition\_variable}\footcite{\url{https://en.cppreference.com/w/cpp/thread/condition_variable}}{condition_variable_std}.Questa scelta, preferita alle \texttt{unix pipe}\footcite{\url{https://man7.org/linux/man-pages/man2/pipe.2.html}}{unix_pipe} per motivi prestazionali, implementa un meccanismo di \texttt{backpressure} che blocca il produttore in caso di code sature, prevenendo consumo eccessivo di memoria.
 
 L'implementazione si basa su quella pubblicata da \texttt{Arif Jaffer}\footcite{\url{https://www.bit-byter.com/blog/files/blocking-q-cpp.html}}{blocking_queue_cpp} per le code bloccanti.
@@ -141,7 +141,7 @@ Per ogni nuova connessione TCP vengono eseguite le seguenti operazioni:\@
     \setlength{\parskip}{2pt}
     \item Viene inizializzato un nuovo contesto globale Python indipendente
     \item Il bytecode del filtro viene deserializzato con \texttt{marshal}\footcite{\url{https://docs.python.org/3/library/marshal.html}}{marshal_python}
-    \item Il codice di inizializzazione del filtro viene eseguito (sul contesto globale)
+    \item Il codice di inizializzazione del filtro viene eseguito sul contesto globale
 \end{itemize}
 
 Qui viene riportato il codice di inizializzazione del consumatore con il relativo interprete Python indipendente.
@@ -174,12 +174,9 @@ void before_loop() {
 \end{minted}
 \end{listing}
 
-L'utilizzo delle funzionalità offerte dal \texttt{PEP 684}\footcite{\url{https://peps.python.org/pep-0684/}}{pep648} non sono tuttavia esenti da limitazioni riguardo l'utilizzo
-di moduli non compatibili con la \texttt{multi-phase initialization}\footcite{\url{https://peps.python.org/pep-0489/}}{pep489}, moduli scritti in \texttt{Cython}\footcite{\url{https://cython.org/}}{cython}
-(che non supporta la \texttt{multi-phase initialization}) e moduli con componenti non thread-safe. Nel corso dello sviluppo queste limitazioni sono state oggetto
-di ulteriori problematiche, affrontate in seguito.\\
+L'utilizzo delle funzionalità offerte dal \texttt{PEP 684}\footcite{\url{https://peps.python.org/pep-0684/}}{pep648}, soffre tuttavia di forti limitazioni sull'utilizzo di moduli non compatibili con la \texttt{multi-phase initialization}\footcite{\url{https://peps.python.org/pep-0489/}}{pep489} (includendo tutti quelli scritti in \texttt{Cython}\footcite{\url{https://cython.org/}}{cython}) e moduli con componenti non thread-safe. Nel corso dello sviluppo, queste limitazioni sono state oggetto di diverse problematiche, affrontate e approfondite in seguito.\\
 
-Un'alternativa considerata è stata l'utilizzo dell'interprete in \texttt{free-threaded mode} di Python 3.13\footcite{\url{https://docs.python.org/3/whatsnew/3.13.html\#whatsnew313-free-threaded-cpython}}{py13_free_threaded}, attualmente sconsigliato per:
+Un'altra possibilità considerata è stata l'utilizzo dell'interprete in \texttt{free-threaded mode} di Python 3.13\footcite{\url{https://docs.python.org/3/whatsnew/3.13.html\#whatsnew313-free-threaded-cpython}}{py13_free_threaded}, attualmente sconsigliato per:
 \begin{itemize}
     \setlength{\itemsep}{2pt}
     \setlength{\parskip}{2pt}
