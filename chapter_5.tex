@@ -3,7 +3,7 @@
 \section{CVE-2022-36946}
 
 Durante lo sviluppo di \texttt{nfregex}, io e il mio collega \texttt{Nicola Guerrera} abbiamo scoperto una vulnerabilità di sicurezza che permetteva ad un utente malintenzionato di causare un crash del kernel.\\
-La vulnerabilità è stata inzialmente segnalata al team di sicurezza del kernel che rapidamente ha rilasciato una patch: \url{https://web.git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=99a63d36cb3ed5ca3aa6fcb64cffbeaf3b0fb164}.\\
+La vulnerabilità è stata inzialmente segnalata al team di sicurezza del kernel che rapidamente ha rilasciato una patch\footnote{\url{https://web.git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=99a63d36cb3ed5ca3aa6fcb64cffbeaf3b0fb164}}.\\
 La vulnerabilità è stata successivamente segnalata a MITRE, e quindi identificata come \texttt{CVE-2022-36946}\footcite{\url{https://nvd.nist.gov/vuln/detail/cve-2022-36946}}{cve_2022_36946}.\\
 
 In un primo momento la problematica ci è sembrata difficilmente sfruttabile, in quanto (pensavamo) richiedeva necessariamente privilegi di amministratore o l'esecuzione di firewall vulnerabili che tuttavia risultava un caso d'uso estremamente raro per come tecnicamente doveva essere stato scritto il firewall.\\

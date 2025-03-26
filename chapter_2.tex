@@ -88,7 +88,7 @@ Firegex si distingue rispetto ad altre soluzioni presenti, come \texttt{CTF prox
     \item \textbf{Fortinet} è una soluzione estremamente affidabile, ben riconosciuta nel settore, ma richiede configurazioni complesse ed è per questo molto lento da avviare. Il suo operato inoltre potrebbe causare diversi problemi, essendo molto invasivo nel sistema. Il suo utilizzo è poco pratico per l'utilizzo in competizioni CTF, nonostante rappresenti una delle principali soluzioni fuori da questo contesto.\@
     \item \textbf{Suricata} è una soluzione molto affidabile che offre un grado di flessibilità intermedio, ma pecca della mancanza di un'interfaccia semplice per il suo utilizzo, e richiede configurazioni per essere avviato.
 \end{itemize}
-\newpage
+
 \section{Architettura}
 
 Firegex, avendo un interfaccia web, è composto da un frontend scritto in \texttt{react}\footcite{\url{https://react.dev/}}{react} e un backend sviluppato con \texttt{fastapi}\footcite{\url{https://fastapi.tiangolo.com/}}{fastapi}. Il backend utilizza inoltre dei moduli scritti in C++ per le funzionalità più critiche, come per lo scambio dei pacchetti lato kernel e l'elaborazione in tempo reale delle espressioni regolari. Inoltre per funzionare, fa intenso utilizzo delle funzionalità di \texttt{nftables}\footcite{\url{https://netfilter.org/projects/nftables/}}{nftables}, e di \texttt{netfilter\_queue}\footcite{\url{https://netfilter.org/projects/libnetfilter_queue/}}{netfilter_queue} (brevemente \texttt{nfqueue}). L'intera infrastruttura è avviata tramite \texttt{docker}\footcite{\url{https://www.docker.com/}}{docker} che ne permette un avvio con 0 configurazioni e immediato: \texttt{docker} è usualmente lo strumento principale per l'avvio di servizi in competizioni CTF, pertanto nella maggior parte dei casi è già presente e configurato correttamente.
@@ -138,8 +138,17 @@ Il modulo Netfilter Queue (nfqueue) gioca un ruolo fondamentale nell'architettur
 
 All'interno di Firegex sono presenti attualmente 4 moduli principali, ognuno con delle funzionalità specifiche che permettono di applicare filtri con tecnologie e funzionalità differenti. I moduli sono \texttt{nfregex}, \texttt{firewall}, \texttt{porthijack} e \texttt{nfproxy}. All'interno di questi moduli firegex possiede una documentazione interna alla piattaforma stessa che permette di comprendere come utilizzare le funzionalità offerte, e come configurare i filtri in maniera corretta.\\
 
-Firegex è avviabile tramite un unico comando, supponendo che \texttt{docker}\footcite{\url{https://www.docker.com/}}{docker} sia già installato nel sistema:\\
-\mintinline{bash}{sh <(curl -sLf https://pwnzer0tt1.it/firegex.sh)}
+Firegex è avviabile tramite un unico comando, supponendo che \texttt{docker}\footcite{\url{https://www.docker.com/}}{docker} sia già installato nel sistema:
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{bash}
+sh <(curl -sLf https://pwnzer0tt1.it/firegex.sh)
+\end{minted}
+\end{listing}
 
 \subsection{nfregex}
 Il modulo \texttt{nfregex} (pensato originariamente come unico e principale) possiede funzionalità per la creazione di filtri basati su espressioni regolari. Utilizzando \texttt{nfqueue} in combinazione con \texttt{nftables}, questo modulo intercetta le richieste di rete direttamente a livello kernel. La funzionalità permette l'utilizzo di regex \texttt{PCRE2}\footcite{\url{https://www.pcre.org/}}{pcre_website} compliant tramite l'utilizzo di \texttt{vectorscan}\footcite{\url{https://vectorcamp.gr/project/vectorscan/}}{vectorscan} (fork di \texttt{hyperscan}\footcite{\url{http://hyperscan.io/}}{hyperscan} compatibile con arm64) per garantire prestazioni elevate e una corretta elaborazione delle regole. La funzionalità supporta IPv4 e IPv6, e protocolli di livello superiore come TCP e UDP.\@ Per i pacchetti TCP, la regex viene applicata all'intero flusso ricostruito e ordinato, tramite le \texttt{stream regex} disponibili in vectorscan.

@@ -28,26 +28,35 @@ In particolare, quelli riguardanti nfproxy sono contenuti nel file \texttt{tests
 I benchmark sono stati realizzati tramite uno script python con l'ausilio di \texttt{iperf3}\footcite{\url{https://iperf.fr/}}{iperf_website}.\\
 Le casistiche utilizzate sono di semplice natura: verificano le prestazioni in termini di throughput, e lo fanno sia a servizio attivo senza filtri, che con un filtro che applica la seguente regex al payload TCP (regex per il matching di email):
 \begin{verbatim}
-    (?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+
-       (?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)* |
-       "(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f] |
-           \\[\x01-\x09\x0b\x0c\x0e-\x7f])*")
-    @
-    (?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+
-        [a-z0-9](?:[a-z0-9-]*[a-z0-9])? |
-       \[(?:(?:25[0-5] | 2[0-4][0-9] | [01]?[0-9][0-9]?)\.){3}
-           (?:25[0-5] | 2[0-4][0-9] | [01]?[0-9][0-9]? |
-               [a-z0-9-]*[a-z0-9]:
-               (?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f] |
-                   \\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])
+(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+
+    (?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)* |
+    "(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f] |
+        \\[\x01-\x09\x0b\x0c\x0e-\x7f])*")
+@
+(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+
+    [a-z0-9](?:[a-z0-9-]*[a-z0-9])? |
+    \[(?:(?:25[0-5] | 2[0-4][0-9] | [01]?[0-9][0-9]?)\.){3}
+        (?:25[0-5] | 2[0-4][0-9] | [01]?[0-9][0-9]? |
+            [a-z0-9-]*[a-z0-9]:
+            (?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f] |
+                \\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])
 \end{verbatim}
 
 A differenza dei test, i benchmark non hanno lo scopo di applicare i filtri su un traffico da bloccare, ma si inserisce la seguente regola all'unico scopo di
 misurare l'overhead causato dalla presenza del filtro stesso.\\
 I benchmark sono stati eseguiti su una macchina con le seguenti caratteristiche:\\
-\texttt{Macbook Air M2 16GB RAM}\\
-\texttt{Su una VM avviata da OrbStack con Fedora Linux 41 (Container Image) aarch64}\\
-\texttt{Linux 6.12.13-orbstack-00304-gede1cf3337c4}\\
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{text}
+Macbook Air M2 16GB RAM
+Su una VM avviata da OrbStack con Fedora Linux 41 (Container Image) aarch64
+Linux 6.12.13-orbstack-00304-gede1cf3337c4
+\end{minted}
+\end{listing}
 
 Lo script python che esegue i benchmark, ripete la stessa misura un numero configurabile di volte, sia per il modulo nfproxy, che per il modulo nfregex.
 I risultati sono stati raccolti e analizzati, e messi a disposizioni nei grafici in seguito, eseguiti con i seguenti comandi:
