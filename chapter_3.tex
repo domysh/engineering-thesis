@@ -187,9 +187,7 @@ Un'altra possibilità considerata è stata l'utilizzo dell'interprete in \texttt
 
 \subsection{Bilanciamento del carico}
 
-Per il bilanciamento del carico tra i processi consumatori, finalizzato all'isolamento e alla distribuzione equa dei pacchetti, 
-è stato implementato un meccanismo di hashing basato su indirizzi IP e porte di origine/destinazione. Questo approccio garantisce una distribuzione uniforme dei pacchetti tra i consumatori,
-evitando sovraccarichi e assicurando un'elaborazione parallela efficiente, e allo stesso tempo garantisce che i pacchetti di una stessa connessione vengano sempre gestiti dallo stesso thread.\\
+Per il bilanciamento del carico tra i processi consumatori, finalizzato all'isolamento e alla distribuzione equa dei pacchetti, è stato implementato un meccanismo di hashing basato su indirizzi IP e porte di origine/destinazione. Questo approccio garantisce una distribuzione uniforme dei pacchetti tra i consumatori, evitando sovraccarichi e assicurando un'elaborazione parallela efficiente, oltre che a instradare i pacchetti di una stessa connessione sempre verso lo stesso thread.\\
 
 \begin{listing}[H]
 \begin{minted}[
@@ -265,7 +263,7 @@ I benchmark su nfregex con carico simulato mostrano il beneficio che può portar
     fontsize=\footnotesize,
     breaklines
   ]{cpp}
-// Simulazione carico computazionale
+// Simulazione carico computazionale usato nel benchmark
 volatile int x = 0;
 for (int i=0; i<50000; i++){
     x+=1;
@@ -321,22 +319,16 @@ PktRequest(const char* payload, size_t plen, T* ctx, mnl_socket* nl,
 \end{minted}
 \end{listing}
 
-Inoltre lo \texttt{stream\_id} è indipendente dal protocollo internet utilizzato, permettendo di identificare connessioni miste IPv4/IPv6:
-questo permette di utilizzare la stessa queue per interfaccie di rete differenti, potenzialmente per nuove feature sulla
-selezione del traffico da filtrare.\\
+Inoltre lo \texttt{stream\_id} è indipendente dal protocollo internet utilizzato, permettendo di identificare connessioni miste IPv4/IPv6: questo permette di utilizzare la stessa queue per interfaccie di rete differenti, carattertistica potenzialmente utile per implementare nuove feature sulla selezione del traffico da inoltrare alla queue.\\
 
-Ogni produttore utilizza questo dato come chiave per individurare i dati relativi a quella specifica connessione, utilizzando una \texttt{std::map}\footcite{\url{https://en.cppreference.com/w/cpp/container/map}}{std_map}
-diversa per ogni singolo produttore, così implementabile per merito del meccanismo di smistamento dei pacchetti descritto precedentemente.\\
+Ogni produttore utilizza questo dato come chiave per individurare i dati relativi ad una specifica connessione, salvandoli in una \texttt{std::map}\footcite{\url{https://en.cppreference.com/w/cpp/container/map}}{std_map} diversa per ogni singolo produttore, così implementabile per merito del meccanismo di smistamento dei pacchetti descritto precedentemente.\\
 
-Il produttore ricevuto il pacchetto pertanto lo ingloba in un oggetto \texttt{PktRequest}, che contiene tutte le informazioni necessarie per
-l'elaborazione del pacchetto, e lo inserisce nella coda condivisa del produttore di riferimento.\\
-Sarà il produttore che una volta elaborato il pacchetto ed inviato il verdetto al kernel, dealloca questa struttura e passa all'elaborazione del
-prossimo pacchetto. Nessuna copia in memoria è pertanto necessaria in questo passaggio.
+Il produttore, ricevuto il pacchetto, lo ingloba in un oggetto \texttt{PktRequest}, che contiene tutte le informazioni necessarie per l'elaborazione del pacchetto, e lo inserisce nella coda condivisa del produttore di riferimento.\\
+Sarà il produttore che una volta elaborato il pacchetto ed inviato il verdetto al kernel, deallocherà questa struttura passando all'elaborazione del prossimo pacchetto. Nessuna copia in memoria è pertanto necessaria in questo passaggio.
 
 \section{Gestione dei pacchetti TCP}
 
-Come citato precedentemete, prima di inizializzare la queue, vengono inseriti tramite nftables le regole per intercettare il traffico in un certo punto della catena
-di netfilter, per essere mandato alla queue che determinerà un verdetto sul pacchetto.\\
+Come citato precedentemete, prima di inizializzare la queue, vengono inseriti tramite nftables le regole per intercettare il traffico in un certo punto della catena di netfilter, per essere mandato alla queue che determinerà un verdetto sul pacchetto.\\
 
 \begin{figure}[H]
     \centering
@@ -344,15 +336,10 @@ di netfilter, per essere mandato alla queue che determinerà un verdetto sul pac
     \caption{NfTables Hooks}\label{fig:nftables_hooks}
 \end{figure}
 
-Il traffico in particolare viene intercettato sia in \texttt{pre-routing}, che in \texttt{post-ruoting} ad un hook prima dell'azione del modulo conntrack, ma dopo
-dell'azione di defrag, in particolare a prio -310 che rientra in questo range come riportato sulla \texttt{wiki ufficiale di nftables}\footcite{\url{https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks}}{netfilter_hooks}.
-Questo permette di ottenere dei pacchetti che hanno già subito il processo di deframmentazione a livello 3, di cui pertanto non ci dovremo preoccupare,
-che non hanno subito il processo di routing (che quindi volendo potremmo manipolare) e che non sono stati ancora analizzati dal modulo conntrack.\\
-Tuttavia i pacchetti non hanno subito il processo di ordinamento dei payload che avviene a livello 4, sul quale come è possibile osservare dalla figura\ref{fig:nftables_hooks}, non è possibile
-intercettare del traffico, poiché i pacchetti arriveranno direttamente alle fasi di gestioni dei dati per la loro consegna alla socket a livello applicatvo.\\
-Pertanto è dato a noi il compito di analizzare il traffico e di ordinare i pacchetti TCP per un'analisi dei dati coerente con ciò che sarà letto
-dall'applicazione.\\
-\texttt{libtins} semplifica significativamente questa gestione attraverso meccanismi automatizzati gestiti dal suo \texttt{TCP follower}\footnote{Esempio TCP Follower: \url{https://libtins.github.io/examples/http-requests/}} per:  
+Il traffico in particolare viene intercettato sia in \texttt{pre-routing}, che in \texttt{post-ruoting} ad un hook prima dell'azione del modulo conntrack, ma dopo dell'azione di defrag, in particolare a prio -310 che rientra in questo range come riportato sulla \texttt{wiki ufficiale di nftables}\footcite{\url{https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks}}{netfilter_hooks}. Questo permette di ottenere dei pacchetti che hanno già subito il processo di deframmentazione a livello 3, di cui pertanto non ci dovremo preoccupare, che non hanno subito il processo di routing (che quindi volendo potremmo manipolare) e che non sono stati ancora analizzati dal modulo conntrack.\\
+Tuttavia, qui i pacchetti non hanno subito il processo di ordinamento dei payload che avviene a livello 4, sul quale come è possibile osservare dalla Figura~\ref{fig:nftables_hooks}, non è possibile intercettare del traffico, poiché i pacchetti arriveranno direttamente alle fasi di gestioni dei dati per la loro consegna alla socket a livello applicatvo.\\
+Pertanto è dato a noi il compito di analizzare il traffico e di ordinare i pacchetti TCP per un'utilizzo dei dati coerente a quelli che saranno letti dall'applicazione.\\
+\texttt{Libtins} semplifica significativamente questa gestione attraverso meccanismi automatizzati gestiti dal suo \texttt{TCP follower}\footnote{Esempio TCP Follower: \url{https://libtins.github.io/examples/http-requests/}} per:  
 \begin{itemize}
     \setlength{\itemsep}{2pt}
     \item Chiusura dei flussi TCP basata su:
@@ -366,17 +353,16 @@ dall'applicazione.\\
     \item Gestione automatica dei buffer con prevenzione su memory leak
 \end{itemize}
 
-Il follower inoltre permette l'integrazione di contesti di stato gestiti esternamente tramite un sistema di callback, utili a gestire
-il contesto python allocato per ogni flusso, gestito pertanto in maniera coerente con i dati del follower stesso.\\
+Il follower inoltre permette facilmente l'integrazione di dati gestiti esternamente, tramite il suo sistema di callback, che ne chiamerà le funzionalità compatibilmente con quanto fatto con i buffer internamente.\\
 Le callback permettono di gestire le seguenti operazioni:
 \begin{itemize}
     \setlength{\itemsep}{2pt}
     \item Inizializzazione contesti
     \item Pulizia risorse
-    \item Propagazione eventi critici (per chiusure anomale dei flussi)
+    \item Propagazione di eventi critici (per chiusure anomale dei flussi)
 \end{itemize}
 
-Ogni processo consumatore ha un suo follower dedicato che analizzerà la porzione dei flussi dell'intero traffico a lui dedicata.
+Ogni processo consumatore ha un suo follower dedicato che analizzerà i flussi relativi alla porzione traffico a lui dedicata.
 
 \section{Modifica dei pacchetti}
 
@@ -384,7 +370,7 @@ Il modulo \texttt{nfqueue} consente effettivamente la modifica dei pacchetti, of
 IP/TCP e payload a livello di trasporto. Tuttavia, questa funzionalità, seppur teoricamente disponibile, è stata implementata solo parzialmente e non risulta pienamente affidabile.\\
 Le limitazioni derivano da problematiche intrinseche legate all’interazione con i meccanismi di livello di trasporto.
 Ad esempio, modifiche al payload TCP durante connessioni attive potrebbero invalidare checksum o causare inconsistenze nei sequence number.
-La complessità per garantire coerenza in tutti i possibili scenari (come in caso di ritrasmissioni) rende l’implementazione robusta di queste feature
+La complessità per garantire coerenza in tutti i possibili scenari (come in caso di ritrasmissioni) rende l’implementazione robusta di questa feature
 particolarmente onerosa. Inoltre, se gestita male, la modifica del payload potrebbe essere soggetta a vulnerabilità di sicurezza.
 Valutando il rapporto rischio-beneficio, si è optato per comunque rendere disponibile la funzionalità, seppur parzialmente implementata, 
 ma fortemente disincentivata e volutamente resa meno facilmente accessibile.\\
@@ -396,16 +382,16 @@ Di seguito si riporta una descrizione accurata delle problematiche riscontrate e
 \texttt{NOTA}: Le problematiche sul calcolo dei campi di integrità dei dati non sono trattate, ma considerate già risolte tramite l'utilizzo di libtins, che si occupa durante la serializzazione
 del pacchetto di ricalcolare questi campi nei vari layer interessati, pertanto non considerata una problematica rilevante.\\
 L'unica operazione aggiuntiva affrontata su questo, è stata la necessità di reinserire il payload del pacchetto nella catena di PDU di libtins,
-poiché (seppur non documentato), il follower del flusso TCP internamente separa di fatto il payload dal pacchetto, rendendone necessario il reinserimento per la
-corretta serializzazione e calcolo di questi campi.\footnote{Separazione del payload nel follower: \url{https://github.com/mfontanini/libtins/blob/b7e61f4c76ac64053c9c4c9f8eadaabbe3a9381a/src/tcp_ip/data_tracker.cpp\#L68}}.\\
+poiché (seppur non documentato), il follower del flusso TCP internamente separa di fatto il payload dal pacchetto\footnote{Separazione del payload nel follower: \url{https://github.com/mfontanini/libtins/blob/b7e61f4c76ac64053c9c4c9f8eadaabbe3a9381a/src/tcp_ip/data_tracker.cpp\#L68}}, rendendone necessario il reinserimento per la
+corretta serializzazione e calcolo di questi campi.\\
 
 \subsection{Cambio di dimensione del payload}
 
 Come emerge dalle specifiche stesse del protocollo di trasporto TCP\footcite{RFC9293, Transmission Control Protocol (TCP)}{rfc9293}, questo tiene traccia
 dello stato della corretta recezione dei pacchetti tramite un meccanismo di \texttt{piggybacking} che fa utilizzo dei campi numerici ack e seq.
-Nella trasmissione il sequence number indica il byte da cui inizia il payload del pacchetto relativamente alla sua posizione nello stream, mentre il campo ack della risposta
+Nella trasmissione, il sequence number indica il byte da cui inizia il payload del pacchetto relativamente alla sua posizione nello stream, mentre il campo ack della risposta
 di conferma proveniente dal ricevente, indica fino a che punto il flusso di dati è stato ricevuto correttamente.\\
-Questo meccanismo è fondamentale per il corretto funzionamento del protocollo e per la ricostruzione del flusso originale:
+Questo meccanismo è fondamentale per il corretto funzionamento del protocollo e per la corretta ricostruzione del flusso originale:
 di conseguenza la modifica alla dimensione del payload causa inevitabilmente l'incoerenza di questi valori che porteranno a comportamenti inaspettati, non conformi al 
 normale funzionamento del protocollo.\\
 
@@ -415,7 +401,7 @@ Il kernel e il TCP Follower di \texttt{libtins} ricevono così numerazioni coere
 Il sistema opera in modo simmetrico per entrambe le direzioni del traffico: le modifiche applicate ai pacchetti in uscita vengono compensate da una riconversione inversa per quelli in entrata.
 L'attivazione avviene automaticamente alla prima modifica di un pacchetto nella sessione TCP e rimane attiva per tutta la durata della connessione, garantendo la persistenza del contesto di traduzione.\\
 La conversione degli ack e seq pertanto avviene tramite il calcolo incrementale dell'offset che intercorre tra la dimensione del flusso originale e la dimensione del flusso modificato,
-calcolata come si può osservare nel seguente codice:
+calcolata incrementalmente come si può osservare nel seguente codice:
 
 \begin{listing}[H]
     \begin{minted}[
@@ -465,7 +451,7 @@ void fix_tcp_ack(){
 \end{listing}
 
 
-Un'analisi preliminare e test di base suggerirebbero l'adeguatezza di questa soluzione, tuttavia occorre sottolineare come il meccanismo presenti limitazioni intrinseche in specifiche casistiche operative. L'approccio risulta efficace esclusivamente in condizioni ideali di trasmissione, dove non si verificano fenomeni di ritrasmissione di pacchetti persi né ricezione di segmenti non ordinati.
+Un'analisi preliminare e test di base suggerirebbero l'adeguatezza di questa soluzione. Tuttavia occorre sottolineare come il meccanismo presenti limitazioni intrinseche in specifiche casistiche operative. L'approccio risulta efficace esclusivamente in condizioni ideali di trasmissione, dove non si verificano fenomeni di ritrasmissione di pacchetti persi né ricezione di segmenti non ordinati.
 
 La criticità principale risiede nell'algoritmo di conversione, che non considera adeguatamente le ritrasmissioni di segmenti antecedenti al pacchetto modificato.
 In tali scenari, il calcolo dell'\texttt{ACK} relativo al segmento ritrasmesso richiederebbe una ricalibrazione temporale analoga a quella applicata ai pacchetti successivi,
@@ -483,17 +469,17 @@ L'analisi della Figura~\ref{fig:tcp_ack_seq_transl_failure} evidenzia come le ca
 Alla luce di queste considerazioni, si conclude che la soluzione proposta non possiede la robustezza necessaria per un'implementazione definitiva.
 La funzionalità di modifica pacchetti viene pertanto mantenuta come opzione sperimentale, accompagnata da avvertenze esplicite sul suo comportamento instabile.
 
-Una soluzione teoricamente più solida richiederebbe la memorizzazione di informazioni aggiuntive riguardo i vari punti nel flusso dove il traffico è stato modificato, insieme agli offset applicati in quegli specifici intervalli, per tutta la finestra di trasmissione ancora non riscontrata dal ricevente. Inoltre, sarebbe necessaria una logica di traduzione più complessa per gli \texttt{ACK}/\texttt{SEQ}, che vada ad esguire un calcolo corerente di questi valori, basato sul posizionamento che il segmento ha in trasmissione o riscontro nel flusso complessivo, sfruttando le nuove informazioni memorizzate.
+Una soluzione teoricamente più solida richiederebbe la memorizzazione di informazioni aggiuntive riguardo i vari punti del flusso dove il traffico è stato modificato, insieme agli offset applicati in quegli specifici intervalli, per tutta la finestra di trasmissione ancora non riscontrata dal ricevente. Inoltre, sarebbe necessaria una logica di traduzione più complessa per gli \texttt{ACK}/\texttt{SEQ}, che vada ad esguire un calcolo corerente di questi valori, basato sul posizionamento che il segmento ha in trasmissione o riscontro nel flusso complessivo, sfruttando le nuove informazioni memorizzate.
 
 Considerando il rapporto costo-beneficio e il limitato valore operativo della funzionalità, si è optato per mantenere lo stato corrente dello sviluppo, consapevoli delle possibili criticità che può portare, non essendo una soluzione definitiva.
 
 \subsection{Modifica di segmenti non ordinati}
 
-Un'ulteriore criticità emerge nella gestione dei pacchetti con payload \emph{out-of-order} da modificare. Nell'implementazione corrente, i pacchetti non ordinati vengono analizzati dal TCP Follower di \texttt{libtins} per la ricostruzione dello stream ed accettati immediatamente dopo questa elaborazione, privando tuttavia il sistema della possibilità di modificarli successivamente. Questo meccanismo, sebbene un payload malevolo venga accettato, riesce comunque a bloccarlo a livello applicativo, prima che il flusso possa essere completamente riordinato con l'arrivo del primo pacchetto disordinato, e con conseguente chiusura forzata della connessione.
+Un'ulteriore criticità emerge nella gestione dei pacchetti con payload \emph{out-of-order} da modificare. Nell'implementazione corrente, i pacchetti non ordinati vengono analizzati dal TCP Follower di \texttt{libtins} per la ricostruzione dello stream ed accettati immediatamente dopo questa elaborazione, privando tuttavia il sistema della possibilità di modificarli successivamente. Questo meccanismo, sebbene un payload malevolo venga accettato, riesce comunque a bloccarlo a livello applicativo, prima che il flusso possa essere completamente riordinato, intervenendo sul primo pacchetto disordinato, che causerebbe a quel punto la chiusura forzata della connessione.
 
-Una soluzione alternativa prevedrebbe il buffering dei pacchetti \emph{out-of-order} in attesa dei segmenti mancanti, applicando modifiche retroattive sui pacchetti trattenuti. Tuttavia, questo approccio introdurrebbe: una complessità significativa nel meccanismo di ricostruzione distribuita del flusso e il rischio di saturare la \texttt{nfqueue} kernel-side, con conseguente perdita di pacchetti e con la possibile esposizione ad attacchi \texttt{DoS} mirati a sfruttare le debolezze di questo sistema, potenzialmente portandolo ad un blocco del traffico.
+Una soluzione alternativa prevedrebbe il buffering dei pacchetti \emph{out-of-order} in attesa dei segmenti mancanti, applicando modifiche retroattive sui pacchetti trattenuti. Tuttavia, questo approccio introdurrebbe: una complessità significativa nel meccanismo di ricostruzione distribuita del flusso e il rischio di saturare la \texttt{nfqueue} kernel-side, con conseguente perdita di pacchetti e possibile esposizione ad attacchi \texttt{DoS} mirati a sfruttare le debolezze di questo sistema, potenzialmente portandolo ad un blocco del traffico.
 
-Sulla base di queste considerazioni, si conclude che il riscontro immediato dei pacchetti è un approccio che deve essere applicato al fine di scongiurare possibili criticità riguardanti il riempimento della coda kernel, potenzialmente soggetta a questa tipologia di attacchi. La scelta progettuale attuale, seppur limitante, garantisce un'operatività ed un throughput stabile e prevedibile, mantiene il sistema immune a possibili vulnerabilità ma non offre la possibilità di eseguire modifiche su pacchetti non ordinati.\\
+Sulla base di queste considerazioni, si conclude che il riscontro immediato dei pacchetti è un approccio che deve essere applicato al fine di scongiurare possibili criticità riguardanti il riempimento della coda kernel, soggetta a questa tipologia di attacchi. La scelta progettuale attuale, seppur limitante, garantisce un'operatività ed un throughput stabile e prevedibile, mantiene il sistema immune a possibili vulnerabilità ma non offre la possibilità di eseguire modifiche su pacchetti non ordinati.\\
 
 Sarebbe possibile progettare un sistema che eviti i problemi di saturazione della coda kernel, implementando ad esempio un meccanismo basato su dei timeout che evitino la saturazione della coda eliminando i pacchetti potenzialmente fraudolenti. Tuttavia simili implementazioni richiederebbero un'attenta analisi ed uno studio molto più approfondito rispetto a quanto fatto finora, considerando anche un vasto spettro di casistiche insidiose che non si ritiene necessario affrontare in questa tesi e ai fini dello sviluppo di questo modulo.\\
 
@@ -522,14 +508,14 @@ supportate nell'implementazione finale.
 \subsection{Supporto alle websocket}
 
 Nell'implementazione per HTTP/1.1 è stato incluso anche il supporto alle \texttt{websocket}\footcite{RFC6455, The WebSocket Protocol}{rfc6455}, tramite l'utilizzo della principale libreria python utilizzata per le decodifica dei \texttt{Frame}, ovvero \texttt{websockets}\footcite{\url{https://websockets.readthedocs.io/en/stable/}}{python_websockets}. Da qui sono state prese le funzionalità di decodifica dei frame, e le funzionalità per il supporto all'estensione \texttt{permessage-deflate}\footcite{RFC7692, Compression Extensions for WebSocket}{rfc7692}, per permetterne la decompressione, utilizzando internamente \texttt{zlib}, già resa compatibile per \texttt{PEP 684} grazie al fork precedentemente citato.
-La complessità nell'implementazione delle websocket si è concentrata sulla necessità di assemblare il flusso di dati correttamente, dato il mancato supporto nativo al parsing su flussi di dati, come invece supportato su \texttt{llhttp}. Nella fase di upgrading della connessione HTTP, vengono riconosciuti i plugin abilitati, e viene automaticamente introdotta la gestione dei websocket che si occupa di decodificare i prossimi dati sulla connessione TCP.\\
-In caso di fallimento nel parsing dei frame, i dati vengono resi disponibili per il filtraggio, semplicemente come byte grezzi, meccanismo che viene attivato anche in caso di upgrade ad HTTP/2 (non supportato attualmente).
+La complessità nell'implementazione delle websocket si è concentrata sulla necessità di assemblare il flusso di dati correttamente, dato il mancato supporto nativo al parsing in streaming, come invece supportato su \texttt{llhttp}. Nella fase di upgrading della connessione HTTP, vengono riconosciuti i plugin abilitati, e viene automaticamente introdotta la gestione dei websocket che si occupa di decodificare i prossimi dati sulla connessione TCP.\\
+In caso di fallimento nel parsing dei frame, i dati vengono resi disponibili per il filtraggio, semplicemente come byte grezzi, stesso meccanismo usato in caso di upgrade ad HTTP/2 (non supportato attualmente).
 
 \section{Sintassi e gestione dei filtri python}
 
 
 
-I filtri Python per \texttt{nfproxy} vengono definiti in file singoli (uno per servizio) contenenti funzioni annotate con il decoratore \texttt{@pyfilter}. Queste funzioni, denominate collettivamente \texttt{pyfilters}, accettano parametri tipizzati che rappresentano i dati estratti dal traffico di rete e restituiscono istruzioni di azione (\texttt{ACCEPT}, \texttt{REJECT}, \texttt{DROP}) determinando il comportamento finale sul pacchetto.  
+I filtri Python per \texttt{nfproxy} vengono definiti in file singoli (uno per servizio) contenenti funzioni annotate con il decoratore \texttt{@pyfilter}. Queste funzioni, denominate collettivamente \texttt{pyfilters}, accettano parametri tipizzati che rappresentano i dati estratti dal traffico di rete e restituiscono istruzioni di azione (\texttt{ACCEPT}, \texttt{REJECT}, \texttt{DROP}, chiamati \texttt{statment}) determinando il comportamento finale sul pacchetto.  
 
 L'esempio seguente illustra un filtro che blocca le richieste HTTP contenenti la stringa `\texttt{curl}' nell'header \texttt{User-Agent} e impedisce gli upgrade a WebSocket:
 
@@ -567,9 +553,6 @@ Ulteriori dettagli sull'utilizzo dei models (spesso chiamati anche datahandler) 
 
 \subsection{Gestione dei buffer di memoria}
 
-
-
-
 La gestione di flussi di traffico con payload di grandi dimensioni richiede un'attenzione particolare al consumo di memoria, specialmente in contesti ad alto throughput. \texttt{nfproxy} implementa un sistema di bufferring che consente una dimensione massima predefinita di 1MB per ciascun tipo di \texttt{datahandler}, tentando di mantere il corretto funzionamento dei parser anche in condizioni di sovraccarico. Infatti quando la soglia viene superata, il buffer viene automaticamente svuotato sebbene ciò possa comportare perdita di informazioni utili.
 
 Il comportamento predefinito è configurabile attraverso variabili globali che permettono di adattare il bilanciamento tra consumo di risorse e completezza analitica. È possibile ridurre la dimensione massima dei buffer per ambienti memory-constrained o aumentarla per scenari che richiedono la ricostruzione completa di flussi complessi. In aggiunta, l'azione da intraprendere al superamento della capacità del buffer può essere personalizzata tra quattro opzioni: svuotamento controllato (\texttt{FLUSH}), accettazione passiva del traffico successivo (\texttt{ACCEPT}), rifiuto selettivo della connessione (\texttt{REJECT}), o drop dei pacchetti successivi (\texttt{DROP}).
@@ -597,7 +580,7 @@ FGEX_FULL_STREAM_ACTION = FullStreamAction.REJECT  # Politica di overflow
 
 Per validare il corretto funzionamento dei filtri prima del deployment sul firewall, \texttt{firegex} integra un ambiente di simulazione basato su proxy TCP.\@ Questo strumento, accessibile tramite il comando \texttt{fgex nfproxy}, consente di testare le regole in condizioni controllate riproducendo fedelmente l'architettura operativa del modulo reale.  
 
-Un tipico workflow di testing prevede l'esecuzione di:
+Un tipico workflow di testing prevede l'esecuzione di un comando simile al seguente:
 \begin{listing}[H]
     \begin{minted}[
         frame=single,
@@ -616,7 +599,7 @@ Inoltre il simulatore supporta l'\texttt{hot-reload} dei filtri, rilevando autom
 
 Si specifica che il simulatore si occupa unicamente di replicare a grandi linee il comportamento della parte c++ del modulo, ma utilizza esattamente lo stesso codice per eseguire il parsing e per l'esecuzione dei filtri, permettendo nella maggior parte dei casi di avere un comportamento pressochè identico a quello che si avrebbe in produzione.
 
-La Figura~\ref{fig:nfproxy_sim} illustra l'output del simulatore durante l'esecuzione di un filtro http, mostrando anche l'auto-reload eseguito in seguito alla modifica del filtro.
+La Figura~\ref{fig:nfproxy_sim} illustra l'output del simulatore durante l'esecuzione di un filtro http, mostrando anche l'auto-reload eseguito in seguito all'esecuzione di modifiche.
 
 \begin{figure}[H]
     \centering
