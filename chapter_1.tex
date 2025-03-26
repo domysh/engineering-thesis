@@ -1,20 +1,18 @@
 \chapter{Competizioni CTF A/D}
 
-Le competizioni CTF di tipo attacco/difesa sono una tipologia di competizioni in cui i partecipanti devono difendere i propri servizi
-e attaccare i servizi degli avversari, in un contesto di gara estremamente dinamico e competitivo. 
-In queste competizioni prendono parte diversi team, i quali vengono associati ognuno ad una macchina solitamente linux,
-con avviati un insieme di servizi che presentano vulnerabilità\footcite{\url{https://faustctf.net/information/attackdefense-for-beginners/}}{faustctf_attackdefense_for_beginners}.
+Le competizioni CTF di tipo attacco/difesa sono una tipologia di competizioni in cui i partecipanti devono difendere i propri servizi e attaccare i servizi degli avversari, in un contesto di gara estremamente dinamico e competitivo. 
+In queste competizioni prendono parte diversi team, i quali vengono associati ognuno ad una macchina solitamente linux, con avviati un insieme di servizi che presentano vulnerabilità\footcite{\url{https://faustctf.net/information/attackdefense-for-beginners/}}{faustctf_attackdefense_for_beginners}.
+
 I servizi sono accessibili tramite la rete di gara, e sono replicati su tutte le macchine.
 
 \section{Descrizione dell'infrastruttura}
 
 \subsection{Il Gameserver e i Checker}
 
-Al centro di tutta la competizione c'è il \texttt{gameserver}, entità (che può essere composta da 1 o un insieme di host) che prende in carico
-la gestione della competizione eseguento una serie di azioni e fornendo diversi servizi descritti in questo capitolo, essenziali per lo svolgimento della gara stessa.
-La competizione è strutturata in \texttt{tick} (o \texttt{round}),
-ovvero intervalli di tempo in cui ciclicamente il gameserver assegna punti ai team in base alle azioni compiute dagli stessi,
-e monitora i servizi tramite i \texttt{checker}.
+Al centro di tutta la competizione c'è il \texttt{gameserver}, entità (che può essere composta da 1 o un insieme di host) che prende in carico la gestione della competizione eseguento una serie di azioni e fornendo diversi servizi descritti in questo capitolo, essenziali per lo svolgimento della gara stessa.
+
+La competizione è strutturata in \texttt{tick} (o \texttt{round}), ovvero intervalli di tempo in cui ciclicamente il gameserver assegna punti ai team in base alle azioni compiute dagli stessi, e monitora i servizi tramite i \texttt{checker}.
+
 Questo tempo può variare da competizione a competizione. I \texttt{checker} sono dei bot che si occupano di verificare lo stato della gara eseguendo diverse azioni:
 \begin{itemize}
     \setlength{\itemsep}{2pt}
@@ -26,15 +24,13 @@ Questo tempo può variare da competizione a competizione. I \texttt{checker} son
     pertanto non siano state modificate o rimosse dal team possessore di quella macchina.
 \end{itemize}
 
-In generale, rimuovere vecchie flag, avere il servizio non raggiungibile e non avere la possibilità di inserirne di nuove, sono azioni che vanno ad invalidare la normale
-attività del servizio: il gameserver, rilevate queste problematiche, lo andrà a considerare come totalmente o parzialmente inaccessibile o manomesso, dipendentemnte dalle scelte degli organizzatori.\\
+In generale, rimuovere vecchie flag, avere il servizio non raggiungibile e non avere la possibilità di inserirne di nuove, sono azioni che vanno ad invalidare la normale attività del servizio: il gameserver, rilevate queste problematiche, lo andrà a considerare come totalmente o parzialmente inaccessibile o manomesso, dipendentemnte dalle scelte degli organizzatori.\\
 
 Si evidenzia come i checker non sfruttino mai le vulnerabilità dei servizi, ma si limitino al loro corretto utilizzo.
 
 \subsection{I servizi, le flag e i flag store}
 
-Ogni flag viene generata e inserita nel servizio dei vari team ciclicamente ad ogni tick, con una flag sempre differente dalle altre ed ha usualmente una durata massima di valenza (ad esempio 5 tick):
-in questo intervallo di tempo è ancora possibile rubare e consegnare la flag al gameserver ottenendo punti.\\
+Ogni flag viene generata e inserita nel servizio dei vari team ciclicamente ad ogni tick, con una flag sempre differente dalle altre ed ha usualmente una durata massima di valenza (ad esempio 5 tick): in questo intervallo di tempo è ancora possibile rubare e consegnare la flag al gameserver ottenendo punti.\\
 
 Le flag infatti una volta ottenute vanno consegnate al gameserver, che tramite un calcolo che può variare in diverse competizioni, assegna punti al team che ha consegnato la flag.\\
 
@@ -56,34 +52,32 @@ defense_points[flag] = min(victim_score, offense_points)
 
 Il defense point è il punteggio sottratto al team da cui è stata rubata la flag come parte del punteggio di difesa descritto successivamente.\\
 
-\texttt{NOTA:} Si è assunto implicitamente fino ad ora che nè consegnare le flag del proprio team, nè tantomeno
-le flag rubate da dei team `di prova' (spesso chiamati \texttt{NOP team}) possa dare punteggio.
-I \texttt{NOP team} sono semplicemente macchine non associate a nessun gruppo reale di persone, che offrono i servizi della gara,
-al solo scopo di renderli usufruibili per eseguire penetration testing (non tutte le competizioni prevedono la presenza dei \texttt{NOP team}).\\
+\texttt{NOTA:} Si è assunto implicitamente fino ad ora che nè consegnare le flag del proprio team, nè tantomeno le flag rubate da dei team `di prova' (spesso chiamati \texttt{NOP team}) possa dare punteggio.
+
+I \texttt{NOP team} sono semplicemente macchine non associate a nessun gruppo reale di persone, che offrono i servizi della gara, al solo scopo di renderli usufruibili per eseguire penetration testing (non tutte le competizioni prevedono la presenza dei \texttt{NOP team}).\\
+
 Ciò è possibile poichè il gameserver ha traccia di tutte le flag, di chi le consegna, e delle macchine in cui sono state originariamente inserite.\\
 
-Una distinzione importante da sottolineare riguarda il significato di \texttt{servizio} di cui si è parlato fino ad ora:
-si è implicitamente assunto che per ogni servizio ci sia 1 sola flag per tick ed 1 sola vulnerabilità.
-Questo spesso non è vero, poichè ogni servizio ha usualmente più vulnerabilità e non solo, potrebbe avere anche diverse flag per tick a suo interno:
-i checker che si occupano di inserire le flag potrebbero inserirne diverse, usando diverse parti o impostazioni del servizio.
+Una distinzione importante da sottolineare riguarda il significato di \texttt{servizio} di cui si è parlato fino ad ora: si è implicitamente assunto che per ogni servizio ci sia 1 sola flag per tick ed 1 sola vulnerabilità. Questo spesso non è vero, poichè ogni servizio ha usualmente più vulnerabilità e non solo, potrebbe avere anche diverse flag per tick a suo interno: i checker che si occupano di inserire le flag potrebbero inserirne diverse, usando diverse parti o impostazioni del servizio.
+
 In caso di servizi con più flag, diremo che questi conterranno diversi \texttt{flag store}.\\
+
 Ciò detto prima e ciò che verrà detto in seguito è valido per ogni flag store, ma nonostante ciò, continueremo a parlare spesso comunque di servizi per semplicità.\\
 
 \texttt{NOTA:} Comunemente esiste un set di checker differente per ogni flag store.
 
 \subsection{I Flag ID}
 
-Il gameserver potrebbe rilasciare delle informazioni aggiuntive per ogni servizio, come ad esempio un username, che di per se non va direttamente a permettere l'accesso protetto alla flag,
-ma da un informazione utile agli attaccanti al fine di poterla individuare più facilmente all'interno del servizio stesso.
-Questa informazione aggiuntiva è chiamata \texttt{Flag ID} e viene rilasciata per ogni team, per ogni flag store, e per ogni flag ancora valida nel momento in cui si visita l'API che
-le espone pubblicamente per tutti i partecipanti, resa disponibile dal gameserver. Non è possibile manomettere i Flag ID, in quanto sono informazioni direttamente rilasciate dagli
-organizzatori, che comunque in assenza di vulnerabilità nei servizi, rimangono insufficienti per ottenere flag.
+Il gameserver potrebbe rilasciare delle informazioni aggiuntive per ogni servizio, come ad esempio un username, che di per se non va direttamente a permettere l'accesso protetto alla flag, ma da un informazione utile agli attaccanti al fine di poterla individuare più facilmente all'interno del servizio stesso.
+
+Questa informazione aggiuntiva è chiamata \texttt{Flag ID} e viene rilasciata per ogni team, per ogni flag store, e per ogni flag ancora valida nel momento in cui si visita l'API che le espone pubblicamente per tutti i partecipanti, resa disponibile dal gameserver. Non è possibile manomettere i Flag ID, in quanto sono informazioni direttamente rilasciate dagli organizzatori, che comunque in assenza di vulnerabilità nei servizi, rimangono insufficienti per ottenere flag.
 
 \subsection{Calcolo del punteggio}
 
-A ciascun servizio in gara viene associato un punteggio, che riflette la capacità del team di sfruttare e proteggere le relative vulnerabilità. Il calcolo del punteggio totale si
-ottiene tradizionalmente mediante una semplice sommatoria dei punteggi parziali.
+A ciascun servizio in gara viene associato un punteggio, che riflette la capacità del team di sfruttare e proteggere le relative vulnerabilità. Il calcolo del punteggio totale si ottiene tradizionalmente mediante una semplice sommatoria dei punteggi parziali.
+
 Il punteggio attribuito a un singolo servizio è inizialmente determinato da un valore base, soggetto a variazioni durante la competizione in relazione alle prestazioni del team.
+
 Tale valore può essere incrementato o ridotto in base a tre componenti aggiuntive:
 
 \begin{itemize}
@@ -172,64 +166,36 @@ Come si può vedere nella figura\ref{fig:ccit_network} la rete di gara è compos
     \item Una sottorete (spesso realizzata tramite VPN) per ogni team, dove sono connessi gli host dei partecipanti con i quali è possibile interagire direttamente con la rete di gara.
 \end{itemize}
 
-Al centro di tutto ciò troviamo il cloud router, che si occupa di gestire il traffico in base alle regole imposte dagli organizzatori e in base alla fase in cui si trova la competizione,
-ma che soprattutto si occupa di \texttt{anonimizzare il traffico} manipolandolo tramite diverse tecniche tra le quali il \texttt{NAT} (Network Address Translation).
-Tramite il \texttt{NAT} infatti si nascondono gli indirizzi IP delle macchine e dei componenti del team, mascherando nelle richieste l'ip del mittente con quello (o quelli) del router.
-Questo è un elemento di fondamentale importanza poichè altrimenti sarebbe davvero molto semplice diversificare le connessioni dei checker e degli attaccanti, e si andrebbe a perdere l'obiettivo che ha
-la competizione stessa, ovvero: individuare, sfruttare e difendersi dalle vulnerabilità.\\
+Al centro di tutto ciò troviamo il cloud router, che si occupa di gestire il traffico in base alle regole imposte dagli organizzatori e in base alla fase in cui si trova la competizione, ma che soprattutto si occupa di \texttt{anonimizzare il traffico} manipolandolo tramite diverse tecniche tra le quali il \texttt{NAT} (Network Address Translation). Tramite il \texttt{NAT} infatti si nascondono gli indirizzi IP delle macchine e dei componenti del team, mascherando nelle richieste l'ip del mittente con quello (o quelli) del router. Questo è un elemento di fondamentale importanza poichè altrimenti sarebbe davvero molto semplice diversificare le connessioni dei checker e degli attaccanti, e si andrebbe a perdere l'obiettivo che ha la competizione stessa, ovvero: individuare, sfruttare e difendersi dalle vulnerabilità.\\
 
-Inoltre si specifica che le reti dei singoli team sono isolate per tutta la competizione al fine di evitare possibili attacchi agli host dei partecipanti,
-che non sono dei target di interesse nella gara e per cui non è consentita l'esecuzione di attacchi mirati.
+Inoltre si specifica che le reti dei singoli team sono isolate per tutta la competizione al fine di evitare possibili attacchi agli host dei partecipanti, che non sono dei target di interesse nella gara e per cui non è consentita l'esecuzione di attacchi mirati.
 Un simile comportamento potrebbe portare alla squalifica del team attaccante a seguito di segnalazioni e analisi del traffico da parte degli organizzatori.
 
 \section{Svolgimento della competizione}
 
-Una competizione A/D inizia nel momento in cui viene dato accesso alle macchine e alla rete di gara. Usualmente in questa fase c'è un periodo di tempo
-in cui la rete rimane non accessibile: i team avranno accesso unicamente alle loro macchine, mentre l'accesso ai servizi degli avversari verrà negato.\\
-In questo momento tuttavia è già possibile analizzare i servizi, avviare tutti i tool necessari all'avvio degli attacchi, all'analisi della rete, e alla difesa del server (che analizzeremo nel prossimo paragrafo).
-Finito questo periodo di tempo, la rete di gara viene aperta, e la competizione inizia ufficialmente.\\
-Da ora il gameserver inizia a scandire i tick, i checker iniziano ad utilizzare i servizi e ad inserire le prime flag, pubblicando anche i primi Flag ID.
-I team iniziano a lavorare, tentando di difendersi dai primi attacchi, e a loro volta di attaccare rubando le prime flag agli avversari, tutto ciò mantenendo sempre i loro servizi attivi e funzionanti.
-Ad ogni tick, il gameserver assegna i nuovi punteggi, e i team possono osservare tramite questi dati l'evoluzione della gara stessa, comprendendo quali possono essere le azioni da compiere per massimizzare la crescita del loro punteggio.
+Una competizione A/D inizia nel momento in cui viene dato accesso alle macchine e alla rete di gara. Usualmente in questa fase c'è un periodo di tempo in cui la rete rimane non accessibile: i team avranno accesso unicamente alle loro macchine, mentre l'accesso ai servizi degli avversari verrà negato.\\
+
+In questo momento tuttavia è già possibile analizzare i servizi, avviare tutti i tool necessari all'avvio degli attacchi, all'analisi della rete, e alla difesa del server (che analizzeremo nel prossimo paragrafo). Finito questo periodo di tempo, la rete di gara viene aperta, e la competizione inizia ufficialmente.\\
+
+Da ora il gameserver inizia a scandire i tick, i checker iniziano ad utilizzare i servizi e ad inserire le prime flag, pubblicando anche i primi Flag ID.\@
+I team iniziano a lavorare, tentando di difendersi dai primi attacchi, e a loro volta di attaccare rubando le prime flag agli avversari, tutto ciò mantenendo sempre i loro servizi attivi e funzionanti. Ad ogni tick, il gameserver assegna i nuovi punteggi, e i team possono osservare tramite questi dati l'evoluzione della gara stessa, comprendendo quali possono essere le azioni da compiere per massimizzare la crescita del loro punteggio.
 Inoltre viene segnalato pubblicamente quali dei servizi di quale team non sono funzionanti, e perchè sono considerati down: cioè la motivazione per cui i checker hanno segnalato un mal funzionamento.
 La competizione termina ad un determinato orario di fine, dove la rete di gara viene chiusa, e il gameserver interrompe l'azione dei checker non accettando inoltre nuove submission di flag.\\
 
-\texttt{NOTA:} tutto quello descritto in questo capitolo è possibile simularlo e sperimentarlo tramite un mio progetto chiamato \texttt{Oasis}\footcite{\url{https://github.com/domysh/Oasis}}{oasis_gh},
-fork del progetto originale dei TheRomanXpl0it\footcite{\url{https://theromanxpl0.it/about.html}}{theromanxploit} con cui è possibile simulare ma anche 
-svolgere competizioni A/D di medio-piccole dimensioni in un ambiente realizzato unicamente tramite l'utilizzo di container, con funzionamento e regolamento simile a quello di CyberChallenge\footcite{\url{https://rules.ad.cyberchallenge.it/}}{cyberchallenge_ad_rules}.
+\texttt{NOTA:} tutto quello descritto in questo capitolo è possibile simularlo e sperimentarlo tramite un mio progetto chiamato \texttt{Oasis}\footcite{\url{https://github.com/domysh/Oasis}}{oasis_gh}, fork del progetto originale dei TheRomanXpl0it\footcite{\url{https://theromanxpl0.it/about.html}}{theromanxploit} con cui è possibile simulare ma anche svolgere competizioni A/D di medio-piccole dimensioni in un ambiente realizzato unicamente tramite l'utilizzo di container, con funzionamento e regolamento simile a quello di CyberChallenge\footcite{\url{https://rules.ad.cyberchallenge.it/}}{cyberchallenge_ad_rules}.
 
 \section{Tool utili}
 
-Data l'elevata complessità nello svolgimento di una competizione A/D, spesso diventa necessario l'utilizzo di tool specializzati che permettano di automatizzare
-diverse operazioni necessarie durante la gara. Ogni team può sviluppare e utilizare anche tool che facilitano (o perfino che automatizzino) l'attacco e la difesa dei servizi.\\
+Data l'elevata complessità nello svolgimento di una competizione A/D, spesso diventa necessario l'utilizzo di tool specializzati che permettano di automatizzare diverse operazioni necessarie durante la gara. Ogni team può sviluppare e utilizare anche tool che facilitano (o perfino che automatizzino) l'attacco e la difesa dei servizi.\\
+
 In generale sono frequenti nel loro utilizzo le seguenti categorie di tool:
 
 \begin{itemize}
     \setlength{\itemsep}{2pt}
     \setlength{\parskip}{2pt}
-    \item \textbf{Traffic Analyzer}: permettono di analizzare il traffico sulla macchina, in modo da riconoscere e visionare il traffico dei checker e degli attaccanti (anche se anonimizzato).
-    Analizzare il traffico diventa cruciale dal momento in cui un nuovo attacco è attivo sulla rete, poichè permette ai team di analizzarlo, riconoscere la vulnerabilità
-    sfruttata, e intraprendere azioni quanto più immediate per la difesa e la replicazione dello stesso attacco. Normalmente per analizzare il traffico è
-    possibile usare tool quali \texttt{Wireshark}\footcite{\url{https://www.wireshark.org/}}{wireshark} o \texttt{Suricata}\footcite{\url{https://suricata.io/}}{suricata} (anche se non propriamente un network analyzer).
-    Solitamente però non si utilizzano tool simili dato il loro poco pratico utilizzo in ambito CTF A/D dove il traffico da analizzare è elevato e continuo.
-    Esistono tool scritti appositamente per queste competizioni che permettono di analizzarlo in modo più efficiente e veloce, ma anche di riprodurre velocemente
-    le stesse sequenze di attacco, come ad esempio \texttt{Caronte}\footcite{\url{https://github.com/eciavatta/caronte}}{caronte} o
-    \texttt{Tulip}\footcite{\url{https://github.com/OpenAttackDefenseTools/tulip}}{tulip} (che utilizza internamente suricata per alcune funzionalità).
-    \item \textbf{Attacker \& Submitter}: coordinano gli attacchi, assistono alla scrittura degli exploit, ne monitorano l'esecuzione, schedulandola e parallelizzandola.
-    Questi tool sono fondamentali per l'attacco e hanno lo scopo di far focalizzare l'attaccate sulla scrittura del singolo attacco, e non sulla gestione dell'esecuzione di quell'attacco
-    su tutte le macchine degli avversari. Inoltre potrebbe esserci in questi tool anche la possibilità di tenere traccia degli attacchi al fine di individuare facilmente problemi nell'esecuzione e 
-    monitorare quanti e quali team stanno iniziando a difendere il proprio servizio. Usualmente (ma non sempre) questi tool eseguono anche la parte di submission delle flag al gameserver, che
-    (normalmente) avviene in modo centralizzato per tutte le flag ottenute dagli attacchi: questo poichè in questo modo risulta più semplice coordinarne la consegna, in base alle regole imposte
-    dagli organizzatori che ne limitano il numero e la frequenza, al fine di evitare attacchi di tipo \texttt{bruteforce} o \texttt{DoS} all'infrastruttura.
-    Tool di questo genere sono ad esempio \texttt{DestructiveFarm}\footcite{\url{https://github.com/DestructiveVoice/DestructiveFarm}}{destructivefarm}, che
-    tuttavia ha diversi punti deboli e pecca in diverse funzionalità sull'analisi dell'andamento degli attacchi, motivo per il quale ho sviluppato un nuovo tool chiamato
-    \texttt{ExploitFarm}\footcite{\url{https://github.com/Pwnzer0tt1/exploitfarm}}{exploitfarm} che permette di coordinare gli attacchi, di monitorarli, e di schedularli in modo più efficiente e semplice,
-    disponendo anche di funzionalità avanzate sulla possibilità di eseguire attacchi distribuiti su più macchine.
-    \item \textbf{Proxy e Firewall}: permettono di filtrare il traffico in modo da riconoscere e bloccare gli attacchi. Questi tool possono essere molto utili
-    nella difesa, e permettono di bloccare gli attacchi senza di fatto eseguire una modifica sui servizi stessi, spesso diretta conseguenza di malfunzionamenti per errori eseguiti durante questa fase.
-    Questo modo di proteggere i servizi, tuttavia, risulta spesso incompleto e superabile, ma se ben progettato e correttamente utilizzato può essere un'ottima soluzione temporanea, se non
-    una soluzione completa in alcune casistiche specifiche. Spesso però la soluzione più efficace rimane comunque quella di correggere la vulnerabilità.
-    Tool di questo genere sono ad esempio \texttt{CTF Proxy}\footcite{\url{https://github.com/ByteLeMani/ctf_proxy}}{ctf_proxy} o il tool di cui tratta questa tesi \texttt{Firegex}\footcite{\url{https://github.com/Pwnzer0tt1/firegex}}{firegex_gh}.
+    \item \textbf{Traffic Analyzer}: permettono di analizzare il traffico sulla macchina, in modo da riconoscere e visionare il traffico dei checker e degli attaccanti (anche se anonimizzato). Analizzare il traffico diventa cruciale dal momento in cui un nuovo attacco è attivo sulla rete, poichè permette ai team di analizzarlo, riconoscere la vulnerabilità sfruttata, e intraprendere azioni quanto più immediate per la difesa e la replicazione dello stesso attacco. Normalmente per analizzare il traffico è possibile usare tool quali \texttt{Wireshark}\footcite{\url{https://www.wireshark.org/}}{wireshark} o \texttt{Suricata}\footcite{\url{https://suricata.io/}}{suricata} (anche se non propriamente un network analyzer). Solitamente però non si utilizzano tool simili dato il loro poco pratico utilizzo in ambito CTF A/D dove il traffico da analizzare è elevato e continuo. Esistono tool scritti appositamente per queste competizioni che permettono di analizzarlo in modo più efficiente e veloce, ma anche di riprodurre velocemente le stesse sequenze di attacco, come ad esempio \texttt{Caronte}\footcite{\url{https://github.com/eciavatta/caronte}}{caronte} o \texttt{Tulip}\footcite{\url{https://github.com/OpenAttackDefenseTools/tulip}}{tulip} (che utilizza internamente suricata per alcune funzionalità).
+    \item \textbf{Attacker \& Submitter}: coordinano gli attacchi, assistono alla scrittura degli exploit, ne monitorano l'esecuzione, schedulandola e parallelizzandola. Questi tool sono fondamentali per l'attacco e hanno lo scopo di far focalizzare l'attaccate sulla scrittura del singolo attacco, e non sulla gestione dell'esecuzione di quell'attacco su tutte le macchine degli avversari. Inoltre potrebbe esserci in questi tool anche la possibilità di tenere traccia degli attacchi al fine di individuare facilmente problemi nell'esecuzione e monitorare quanti e quali team stanno iniziando a difendere il proprio servizio. Usualmente (ma non sempre) questi tool eseguono anche la parte di submission delle flag al gameserver, che (normalmente) avviene in modo centralizzato per tutte le flag ottenute dagli attacchi: questo poichè in questo modo risulta più semplice coordinarne la consegna, in base alle regole imposte dagli organizzatori che ne limitano il numero e la frequenza, al fine di evitare attacchi di tipo \texttt{bruteforce} o \texttt{DoS} all'infrastruttura. Tool di questo genere sono ad esempio \texttt{DestructiveFarm}\footcite{\url{https://github.com/DestructiveVoice/DestructiveFarm}}{destructivefarm}, che tuttavia ha diversi punti deboli e pecca in diverse funzionalità sull'analisi dell'andamento degli attacchi, motivo per il quale ho sviluppato un nuovo tool chiamato \texttt{ExploitFarm}\footcite{\url{https://github.com/Pwnzer0tt1/exploitfarm}}{exploitfarm} che permette di coordinare gli attacchi, di monitorarli, e di schedularli in modo più efficiente e semplice, disponendo anche di funzionalità avanzate sulla possibilità di eseguire attacchi distribuiti su più macchine.
+    \item \textbf{Proxy e Firewall}: permettono di filtrare il traffico in modo da riconoscere e bloccare gli attacchi. Questi tool possono essere molto utili nella difesa, e permettono di bloccare gli attacchi senza di fatto eseguire una modifica sui servizi stessi, spesso diretta conseguenza di malfunzionamenti per errori eseguiti durante questa fase. Questo modo di proteggere i servizi, tuttavia, risulta spesso incompleto e superabile, ma se ben progettato e correttamente utilizzato può essere un'ottima soluzione temporanea, se non una soluzione completa in alcune casistiche specifiche. Spesso però la soluzione più efficace rimane comunque quella di correggere la vulnerabilità. Tool di questo genere sono ad esempio \texttt{CTF Proxy}\footcite{\url{https://github.com/ByteLeMani/ctf_proxy}}{ctf_proxy} o il tool di cui tratta questa tesi \texttt{Firegex}\footcite{\url{https://github.com/Pwnzer0tt1/firegex}}{firegex_gh}.
 \end{itemize}
 
 \begin{figure}[H]

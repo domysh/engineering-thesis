@@ -2,37 +2,36 @@
 
 \section{CVE-2022-36946}
 
-Durante lo sviluppo di \texttt{nfregex} di firegex, è stata scoperta una vulnerabilità di sicurezza che permetteva ad un utente malintenzionato di
-causare un crash del kernel.\\
-La vulnerabilità è stata prima segnalata al team di sicurezza del kernel e rapidamente risolta nel commit
-\url{https://web.git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=99a63d36cb3ed5ca3aa6fcb64cffbeaf3b0fb164}.\\
-La vulnerabilità è stata successivamente segnalata a MITRE, nominata come \texttt{CVE-2022-36946}\footcite{\url{https://nvd.nist.gov/vuln/detail/cve-2022-36946}}{cve_2022_36946}.\\
+Durante lo sviluppo di \texttt{nfregex}, io e il mio collega \texttt{Nicola Guerrera} abbiamo scoperto una vulnerabilità di sicurezza che permetteva ad un utente malintenzionato di causare un crash del kernel.\\
+La vulnerabilità è stata inzialmente segnalata al team di sicurezza del kernel che rapidamente ha rilasciato una patch: \url{https://web.git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=99a63d36cb3ed5ca3aa6fcb64cffbeaf3b0fb164}.\\
+La vulnerabilità è stata successivamente segnalata a MITRE, e quindi identificata come \texttt{CVE-2022-36946}\footcite{\url{https://nvd.nist.gov/vuln/detail/cve-2022-36946}}{cve_2022_36946}.\\
 
-In un primo momento la vulnerabilità ci è sembrata di difficile sfruttamento, in quanto (pensavamo) richiedeva comunque privilegi di amministratore 
-o firewall costruiti con funzionalità sfruttabili difficilmente immaginabili da scrivere in contesti reali.\\
-Tuttavia, la vulnerabilità è stata classificata come critica, in quanto con l'utilizzo dei linux namespace permette il crash del kernel anche da
-un utente non privilegiato.\\
+In un primo momento la problematica ci è sembrata difficilmente sfruttabile, in quanto (pensavamo) richiedeva necessariamente privilegi di amministratore o l'esecuzione di firewall vulnerabili che tuttavia risultava un caso d'uso estremamente raro per come tecnicamente doveva essere stato scritto il firewall.\\
+Tuttavia, la vulnerabilità è stata classificata come critica (7.5 HIGH), in quanto con l'utilizzo dei linux namespace permette il crash del kernel anche tramite utente non privilegiato.\\
 
-È possibile verificare la vulnerabilità tramite il seguente one-command realizzato da noi: \texttt{curl -sLf https://pwnzer0tt1.it/cve-2022-36946.sh | bash}.\\
-Informazioni aggiuntive sono disponibili sulla pagina da noi creata \url{https://github.com/Pwnzer0tt1/CVE-2022-36946}.
+È possibile verificare la vulnerabilità tramite il seguente one-command realizzato da me:
+\begin{listing}[H]
+    \begin{minted}[
+        frame=single,
+        framerule=0.8pt,
+        fontsize=\footnotesize,
+        breaklines
+      ]{bash}
+curl -sLf https://pwnzer0tt1.it/cve\-2022\-36946.sh | bash
+\end{minted}
+\end{listing}
+Informazioni aggiuntive sono disponibili e una POC è disponibile sulla pagina da noi creata \url{https://github.com/Pwnzer0tt1/CVE-2022-36946}.
 
 \section{Sviluppi futuri}
 
-Di seguito si elencano alcuni sviluppi futuri che potrebbero essere implementati per migliorare il modulo nfproxy:
+Di seguito si elencano alcune funzionalità future che potrebbero essere implementate per migliorare il modulo nfproxy:
 
 \begin{itemize}
     \setlength{\itemsep}{2pt}
     \setlength{\parskip}{2pt}
-    \item \textbf{Implementazione di HTTP/2}: supporto al protocollo HTTP/2 permettendo di codificare tutte le versioni del protocollo su TCP in maniera
-    quanto più trasparente nell'utilizzo dei datahandler http.
-    \item \textbf{Supporto a UDP}: supporto al protocollo UDP, permettendo di filtrare e modificare i pacchetti UDP.\@ Questione complessa da affrontare
-    in questo contesto è la mancanza di un meccanismo per il quale decidere se una determinata connessione è terminata o meno a livello di gestione di memoria.
-    \item \textbf{Reimplementazione tramite lo sviluppo di un MITM proxy con address e port translation personalizzato}: permettere di utilizzare gli stessi filtri di nfproxy
-    ma realizzando l'impementazione tramite un proxy MITM, che tuttavia non richieda cambi di configurazione sui servizi: ciò sarebbe differente dal
-    modulo \textbf{porthijack} poichè il proxy sarebbe gestito da firegex stesso, e si dovrebbe implementare un meccanismo di address e port translation
-    ulteriore per cui al server la richiesta sembri provenire all'indirizzo originale.
-    \item \textbf{Sviluppo di un modulo per la condivisione di dati tra i vari thread}: permettere di condividere dati tra i vari thread, tramite una struttura apposita in nfproxy
-    che con la realizzazione di un modulo python personalizzato in c, permetterebbe di condividere dati tra i vari thread con GIL separati in maniera sicura.
-    \item \textbf{Supporto al monitoring delle queue}: permettere di monitorare le queue di netfilter nel frontend di firegex per permettere di comprendere
-    meglio il carico associato in real-time sul firewall. Ciò sarebbe possibile tramite le API kernel esposte in \path{/proc/net/netfilter/nfnetlink_queue}.
+    \item \textbf{Implementazione di HTTP/2}: supporto al protocollo HTTP/2 permettendo di decodificare pertanto tutte le versioni del protocollo su TCP in maniera quanto più semplice possibile, facendo uso dello stesso datahandler attualmente presente.
+    \item \textbf{Supporto a UDP}: supporto al protocollo UDP, permettendo di filtrare e modificare i singoli pacchetti UDP.\@ La sua implementazione può apparentemente sembrare banale, tuttavia nasconde una serie di problematiche per la mancanza di un meccanismo per determinare se una connessione è terminata o meno, che trascina con se problemi riguardo la gestione della memoria per queste connessioni.
+    \item \textbf{Reimplementazione tramite lo sviluppo di un MITM proxy con address e port translation personalizzato}: permettere di utilizzare gli stessi filtri di nfproxy ma realizzando l'implementazione tramite un proxy MITM tradizionale, che agisca in modo ugualmente trasparente, che è leggermente differente da quello che fa il modulo \textbf{porthijack}: la gestione del proxy sarebbe a carico di firegex stesso, e inoltre necessiterebbe di implementare un meccanismo di address e port translation per dirottare verso il proxy, ma poi reinoltrare nuovamente per mantenenre l'indirizzo e la porta originali con cui era stato mandato in origine il pacchetto.
+    \item \textbf{Sviluppo di un modulo per la condivisione di dati tra i vari thread}: permettere di condividere dati tra i vari thread, tramite una funzionalità dedicata in nfproxy, che sarebbe possibile tramite la realizzazione di un modulo python personalizzato in c, dovrebbe gestire la condivisione dei dati tra i vari interpreti, senza mai scambiare oggetti python ma utilizzando strutture dati in c.
+    \item \textbf{Supporto al monitoring delle queue}: permettere di monitorare le queue di netfilter tramite il frontend di firegex al fine di osservare lo stato in cui si trova il firwall per ogni servizio in real-time. Ciò sarebbe possibile tramite le API kernel esposte in \path{/proc/net/netfilter/nfnetlink_queue}.
 \end{itemize}
