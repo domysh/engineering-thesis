@@ -1,7 +1,7 @@
 \chapter{Competizioni CTF A/D}
 
 Le competizioni CTF di tipo attacco/difesa sono una tipologia di competizioni in cui i partecipanti devono difendere i propri servizi e attaccare i servizi degli avversari, in un contesto di gara estremamente dinamico e competitivo. 
-In queste competizioni prendono parte diversi team, i quali vengono associati ognuno ad una macchina solitamente linux, con avviati un insieme di servizi che presentano vulnerabilità\footcite{\url{https://faustctf.net/information/attackdefense-for-beginners/}}{faustctf_attackdefense_for_beginners}.
+In queste competizioni prendono parte diversi team, i quali vengono associati ognuno ad una macchina, solitamente linux, con in esecuzione un insieme di servizi ogniuno dei quali presenta vulnerabilità\footcite{\url{https://faustctf.net/information/attackdefense-for-beginners/}}{faustctf_attackdefense_for_beginners}.
 
 I servizi sono accessibili tramite la rete di gara, e sono replicati su tutte le macchine.
 
@@ -32,7 +32,7 @@ Si evidenzia come i checker non sfruttino mai le vulnerabilità dei servizi, ma 
 
 Ogni flag viene generata e inserita nel servizio dei vari team ciclicamente ad ogni tick, con una flag sempre differente dalle altre ed ha usualmente una durata massima di valenza (ad esempio 5 tick): in questo intervallo di tempo è ancora possibile rubare e consegnare la flag al gameserver ottenendo punti.\\
 
-Le flag infatti una volta ottenute vanno consegnate al gameserver, che tramite un calcolo che può variare in diverse competizioni, assegna punti al team che ha consegnato la flag.\\
+Le flag infatti una volta ottenute vanno consegnate al gameserver, che tramite un calcolo che può variare in diverse competizioni, assegna punti al team che l'ha consegnata.\\
 
 Nel seguente esempio si mostra il calcolo per l'assegnazione dei punti alla consegna di una flag valida, utilizzato nel progetto CyberChallenge\footcite{\url{https://rules.ad.cyberchallenge.it/}}{cyberchallenge_ad_rules}:
 
@@ -152,16 +152,16 @@ a grandi linee la configurazione di rete è spesso simile, ma potrebbe variare i
     \caption{Modello della rete di gara di Cyberchallenge}\label{fig:ccit_network}
 \end{figure}
 
-Come si può vedere nella figura\ref{fig:ccit_network} la rete di gara è composta da diversi elementi:
+Come si può vedere nella Figura~\ref{fig:ccit_network}, la rete di gara è composta da diversi elementi:
 \begin{itemize}
     \setlength{\itemsep}{2pt}
     \setlength{\parskip}{2pt}
     \item La rete dedicata agli organizzatori, dove abbiamo il gameserver (potenzialmente formato da un insieme di host) ed eventuali ulteriori host al servizio degli organizzatori.
-    \item La sottorete delle macchine dei team, dove ogni team ha accesso ssh alla propria macchina con i propri servizi vulnerabili.
+    \item La sottorete delle macchine dei team, dove si ha accesso ssh alla propria macchina con i propri servizi vulnerabili.
     \item Una sottorete (spesso realizzata tramite VPN) per ogni team, dove sono connessi gli host dei partecipanti con i quali è possibile interagire direttamente con la rete di gara.
 \end{itemize}
 
-Al centro di tutto ciò troviamo il cloud router, che si occupa di gestire il traffico in base alle regole imposte dagli organizzatori e in base alla fase in cui si trova la competizione, ma che soprattutto si occupa di \texttt{anonimizzare il traffico} manipolandolo tramite diverse tecniche tra le quali il \texttt{NAT} (Network Address Translation). Tramite il \texttt{NAT} infatti si nascondono gli indirizzi IP delle macchine e dei componenti del team, mascherando nelle richieste l'ip del mittente con quello (o quelli) del router. Questo è un elemento di fondamentale importanza poichè altrimenti sarebbe davvero molto semplice diversificare le connessioni dei checker e degli attaccanti, e si andrebbe a perdere l'obiettivo che ha la competizione stessa, ovvero: individuare, sfruttare e difendersi dalle vulnerabilità.\\
+Al centro di tutto ciò troviamo il cloud router, che si occupa di gestire il traffico in base alle regole imposte dagli organizzatori e in base alla fase in cui si trova la competizione, ma che soprattutto si occupa di \texttt{anonimizzare il traffico}, manipolandolo tramite diverse tecniche tra le quali il \texttt{NAT} (Network Address Translation). Tramite il \texttt{NAT} infatti si nascondono gli indirizzi IP delle macchine e dei componenti del team, mascherando nelle richieste la vera identità del mittente con quella del router stesso. Questo è un elemento di fondamentale importanza poichè altrimenti sarebbe davvero molto semplice diversificare le connessioni dei checker da quelle degli attaccanti, andando a perdere l'obiettivo che ha la competizione stessa, ovvero: individuare, sfruttare e difendersi dalle vulnerabilità.\\
 
 Inoltre si specifica che le reti dei singoli team sono isolate per tutta la competizione al fine di evitare possibili attacchi agli host dei partecipanti, che non sono dei target di interesse nella gara e per cui non è consentita l'esecuzione di attacchi mirati.
 Un simile comportamento potrebbe portare alla squalifica del team attaccante a seguito di segnalazioni e analisi del traffico da parte degli organizzatori.
