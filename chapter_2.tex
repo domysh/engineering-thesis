@@ -1,11 +1,6 @@
 \chapter{Firegex}
 
-Firegex è un firewall innovativo e multifunzionale, ideato per essere avviato con 0 configurazioni in modo rapido e semplice, che agisce principalmente a
-livello applicativo in modo da permettere un'analisi del traffico specifica e dettagliata per ogni servizio.
-Esistono al suo interno diversi moduli che permettono la creazione di filtri di diversa natura, in modo semplice, flessibile e quanto meno invasivo ed impattante sulle prestazioni della macchina,
-mantenendo sempre la massima priorità sulla disponibilità e la corretta funzionalità del servizio stesso.
-Il contesto per cui è stato pensato è quello delle competizioni CTF di tipo Attack/Defense, dove vi sono particolari esigenze (descritte nel capitolo precedente),
-che Firegex cerca di soddisfare, semplificandone il suo utilizzo, e soprattutto fornendo soluzioni adattabili ai requisiti spesso fortemente dinamici dei servizi in gara.
+Firegex è un firewall innovativo e multifunzionale, ideato per essere avviato con 0 configurazioni in modo rapido e semplice, che agisce principalmente a livello applicativo in modo da permettere un'analisi del traffico specifica e dettagliata per ogni servizio. Esistono al suo interno diversi moduli che permettono la creazione di filtri di diversa natura, in modo semplice, flessibile e quanto meno invasivo ed impattante sulle prestazioni della macchina, mantenendo sempre la massima priorità sulla disponibilità e la corretta funzionalità del servizio stesso. Il contesto per cui è stato pensato è quello delle competizioni CTF di tipo Attack/Defense, dove vi sono particolari esigenze (descritte nel capitolo precedente), che Firegex cerca di soddisfare, semplificandone il suo utilizzo, e soprattutto fornendo soluzioni adattabili ai requisiti spesso fortemente dinamici dei servizi in gara.
 
 \begin{figure}[H]
     \centering
@@ -15,14 +10,13 @@ che Firegex cerca di soddisfare, semplificandone il suo utilizzo, e soprattutto 
 
 \section{Perché nasce Firegex?}
 
-Firegex (come detto in precedenza) nasce dal gruppo che ha affrontato la gara nazionale di Cyberchallenge\footcite{\url{https://cyberchallenge.it/}}{cyberchallenge}
-del 2022 al Politecnico di Bari\footcite{\url{https://www.poliba.it}}{poliba_website}, come un normale proxy con filtri basati sulle regex, che col tempo si è evoluto aggiungendo nuove
-funzionalità sempre più efficienti, sicure e funzionali alla competizione stessa.\\
-La necessità dello sviluppo è nata proprio dalla mancanza di un sistema di difesa che fosse immediato da utilizzare, che non richiedesse configurazioni complesse per
-essere avviato, e che permettesse in maniera semplice di costruire dei filtri prontamente attivi, funzionanti e stabili.\\
+Firegex (come detto in precedenza) nasce dal gruppo che ha affrontato la gara nazionale di Cyberchallenge\footcite{\url{https://cyberchallenge.it/}}{cyberchallenge} del 2022 al Politecnico di Bari\footcite{\url{https://www.poliba.it}}{poliba_website}, come un normale proxy con filtri basati sulle regex, che col tempo si è evoluto aggiungendo nuove funzionalità sempre più efficienti, sicure e funzionali alla competizione stessa.\\
+La necessità dello sviluppo è nata proprio dalla mancanza di un sistema di difesa che fosse immediato da utilizzare, che non richiedesse configurazioni complesse per essere avviato, e che permettesse in maniera semplice di costruire dei filtri prontamente attivi, funzionanti e stabili.\\
 Durante il suo sviluppo firegex si è sempre più focalizzato su alcuni punti chiave che lo rendono unico rispetto ad altre soluzioni presenti:
 
 \begin{itemize}
+    \setlength{\itemsep}{1pt}
+    \setlength{\parskip}{1pt}
     \item \textbf{Trasparenza totale:} La creazione di un proxy comporta una serie di cambiamenti sulla configurazione delle porte di rete esposte dai servizi, l'avvio e la gestione del processo del proxy stesso, e utilizzo di meccanismi di fallback per ovviare ad eventuali problematiche. Queste complicanze erano solo parzialmente gestite inizialmente da firegex, ma con le nuove implementazioni è possibile applicare regole sul traffico senza cambiamenti nelle configurazione, grazie a particolari funzionalità utilizzate, disponibili nel kernel linux, nascondendone però tutta la complessità gestita internamente per il loro corretto funzionamento.
     \item \textbf{Integrazione di tecnologie multiple:} Come già detto, Firegex utilizzava come unico meccanismo di filtraggio le regex, che venivano applicate sui pacchetti di rete per individuare eventuali attacchi. Negli anni si è notato come questo approccio spesso potesse essere limitante, per cui sono stati implementati nuovi meccanismi e tecnologie di filtraggio aumentando la precisione con cui è possibile analizzare il traffico. La seguente tesi tratterà dello sviluppo di una nuova funzionalità particolarmente flessibile denominata \texttt{nfproxy}.
     \item \textbf{Affidabilità e disponibilità:} In ambienti dove la continuità del servizio è critica, è fondamentale che il sistema di sicurezza non diventi un collo di bottiglia. Firegex è stato progettato per garantire un’elevata disponibilità, avendo meccanismi di fallback applicati in caso di errori critici, e offrendo soluzioni rapide per il ripristino della configurazione in caso di errori e per il reset immediato dei filtri applicati.
@@ -81,13 +75,16 @@ Firegex si distingue rispetto ad altre soluzioni presenti, come \texttt{CTF prox
 \renewcommand{\arraystretch}{1}
 
 \begin{itemize}
-    \setlength{\itemsep}{2pt}
-    \setlength{\parskip}{2pt}
+    \setlength{\itemsep}{1pt}
+    \setlength{\parskip}{1pt}
     \item \textbf{Nginx} è una soluzione molto flessibile ed affidabile, ma richiede configurazioni complesse e non permette di applicare filtri in maniera immediata e trasparente, ha necessità di cambiare porte e non supporta nativamente filtri più avanzati come quello trattato in questa tesi. Non ha una interfaccia grafica per la gestione delle regole.
     \item \textbf{CTF proxy} è una soluzione fortemente flessibile ed affidabile, ma richiede la creazione di configurazioni e allo stesso modo necessita di cambiare porte ai servizi originali, inoltre a suo supporto non esiste un'interfaccia semplice da usare.
     \item \textbf{Fortinet} è una soluzione estremamente affidabile, ben riconosciuta nel settore, ma richiede configurazioni complesse ed è per questo molto lento da avviare. Il suo operato inoltre potrebbe causare diversi problemi, essendo molto invasivo nel sistema. Il suo utilizzo è poco pratico per l'utilizzo in competizioni CTF, nonostante rappresenti una delle principali soluzioni fuori da questo contesto.\@
     \item \textbf{Suricata} è una soluzione molto affidabile che offre un grado di flessibilità intermedio, ma pecca della mancanza di un'interfaccia semplice per il suo utilizzo, e richiede configurazioni per essere avviato.
 \end{itemize}
+
+\vspace{\fill}
+\newpage
 
 \section{Architettura}
 
@@ -101,6 +98,8 @@ Firegex, avendo un interfaccia web, è composto da un frontend scritto in \textt
 
 \subsection{Frontend e Backend}
 \begin{itemize}
+    \setlength{\itemsep}{1pt}
+    \setlength{\parskip}{1pt}
     \item \textbf{Frontend (React):} L'interfaccia utente risulta fortemente interattiva e intuitiva nelle fasi di creazione dei filtri, nel loro monitoraggio e la gestione degli stessi. L'interfaccia è parte fondamentale di Firegex, poichè consente di soddisfare uno dei punti chiave del progetto: la semplicità di utilizzo.
     \item \textbf{Backend (FastAPI + C++):} Il backend è realizzato utilizzando FastAPI, un framework moderno e ad alte prestazioni per la creazione di API HTTP, integrato con moduli critici scritti in C++. Questa combinazione consente di gestire le richieste in maniera estremamente veloce ed affidabile, garantendo al contempo, l'esecuzione delle operazioni critiche a livello di rete con le performance di un linguaggio a basso livello. Il backend python tuttavia svolge anche un ruolo attivo nell'applicazione delle regole di rete tramite il modulo ufficiale di \texttt{libnftables}\footcite{\url{https://git.netfilter.org/nftables/tree/py}}{nftables_python}.
 \end{itemize}
@@ -111,6 +110,8 @@ Le parti critiche di networking gestite da Firegex sono implementate in C++. Que
 Ciò permette di fornire le seguenti caratteristiche:
 
 \begin{itemize}
+    \setlength{\itemsep}{1pt}
+    \setlength{\parskip}{1pt}
     \item \textbf{Prestazioni elevate:} Grazie all'efficienza del linguaggio C++ e alla possibilità di gestire low level le interazione con il sistema operativo, il filtraggio del traffico avviene con latenze estremamente ridotte.
     \item \textbf{Parallelizzazione:} I filtri che richiedono elaborazione userspace facendo uso di nfqueue, sono gestiti in un sistema di elaborazione multi-thread, garantendo una gestione ottimale del traffico in situazioni di carico elevato e con un numero di connessioni elevate.
     \item \textbf{Integrazione con librerie di rete:} L'utilizzo di librerie specializzate come libtins e libmnl consente di implementare funzionalità avanzate mantenendo affidabilità su come vengono elaborati i pacchetti in rete e prestazioni elevate nell'elaborazione.
@@ -130,6 +131,8 @@ Le funzionalità precedentemente citate saranno meglio trattate nei paragrafi su
 \subsection{Netfilter Queue Module}
 Il modulo Netfilter Queue (nfqueue) gioca un ruolo fondamentale nell'architettura di Firegex, consentendo l'intercettazione dei pacchetti direttamente a livello kernel e il loro inoltro allo spazio utente. Le sue principali caratteristiche includono:
 \begin{itemize}
+    \setlength{\itemsep}{1pt}
+    \setlength{\parskip}{1pt}
     \item \textbf{Intercettazione diretta:} nfqueue permette di catturare il traffico di rete e accodarlo ad una coda, in attesa di essere elaborato da un'applicazione utente: questo permette allo sviluppatore di avere accesso ai pacchetti dal layer di rete, permettendo anche l'analisi e la modifica degli header, normalmente non accessibili tramite un proxy. Inoltre intercettare i pacchetti in questo modo rende l'operazione di filtraggio completamente invisibile per l'applicativo, che non necessiterà di riconfigurazioni.
     \item \textbf{Elaborazione in spazio utente:} Una volta intercettati, i pacchetti vengono inoltrati allo spazio utente dove possono essere analizzati e processati da moduli come \texttt{nfregex} e \texttt{nfproxy}, consentendo l'utilizzo di logiche di filtraggio avanzate ma comunque evitando di portare codice potenzialmente pericoloso lato kernel che potrebbe compromettere la stabilità del sistema.
 \end{itemize}
@@ -137,8 +140,8 @@ Il modulo Netfilter Queue (nfqueue) gioca un ruolo fondamentale nell'architettur
 \section{Funzionalità}
 
 All'interno di Firegex sono presenti attualmente 4 moduli principali, ognuno con delle funzionalità specifiche che permettono di applicare filtri con tecnologie e funzionalità differenti. I moduli sono \texttt{nfregex}, \texttt{firewall}, \texttt{porthijack} e \texttt{nfproxy}. All'interno di questi moduli firegex possiede una documentazione interna alla piattaforma stessa che permette di comprendere come utilizzare le funzionalità offerte, e come configurare i filtri in maniera corretta.\\
-
 Firegex è avviabile tramite un unico comando, supponendo che \texttt{docker}\footcite{\url{https://www.docker.com/}}{docker} sia già installato nel sistema:
+
 \begin{listing}[H]
     \begin{minted}[
         frame=single,
@@ -170,7 +173,7 @@ Il modulo \texttt{porthijack} introduce la capacità di reindirizzare il traffic
     \item \textbf{Interfaccia grafica:} L'interfaccia di dettaglio del servizio permette di visualizzare in tempo reale i log e le eventuali eccezioni che si verificano durante l'esecuzione del filtro.
 \end{itemize}
 
-Il seguente modulo è stato introdotto in vista di scenari complessi dove gli elementi da individuare per il corretto filtraggio non sono facilmente individuabili tramite regex: ad esempio se il payload fraudolento fosse nei cookie JWT, sarebbe necessario eseguire il decoding per rilevare l'attacco.\\
+Il seguente modulo è stato introdotto in vista di scenari complessi dove gli elementi da individuare per il corretto filtraggio non sono facilmente individuabili tramite regex: ad esempio se il payload fraudolento fosse nei cookie JWT, sarebbe necessario eseguire il decoding per rilevare l'attacco.
 
 \begin{figure}[H]
     \centering

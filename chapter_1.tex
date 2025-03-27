@@ -25,13 +25,11 @@ Questo tempo può variare da competizione a competizione. I \texttt{checker} son
 \end{itemize}
 
 In generale, rimuovere vecchie flag, avere il servizio non raggiungibile e non avere la possibilità di inserirne di nuove, sono azioni che vanno ad invalidare la normale attività del servizio: il gameserver, rilevate queste problematiche, lo andrà a considerare come totalmente o parzialmente inaccessibile o manomesso, dipendentemnte dalle scelte degli organizzatori.\\
-
 Si evidenzia come i checker non sfruttino mai le vulnerabilità dei servizi, ma si limitino al loro corretto utilizzo.
 
 \subsection{I servizi, le flag e i flag store}
 
 Ogni flag viene generata e inserita nel servizio dei vari team ciclicamente ad ogni tick, con una flag sempre differente dalle altre ed ha usualmente una durata massima di valenza (ad esempio 5 tick): in questo intervallo di tempo è ancora possibile rubare e consegnare la flag al gameserver ottenendo punti.\\
-
 Le flag infatti una volta ottenute vanno consegnate al gameserver, che tramite un calcolo che può variare in diverse competizioni, assegna punti al team che l'ha consegnata.\\
 
 Nel seguente esempio si mostra il calcolo per l'assegnazione dei punti alla consegna di una flag valida, utilizzato nel progetto CyberChallenge\footcite{\url{https://rules.ad.cyberchallenge.it/}}{cyberchallenge_ad_rules}:
@@ -51,19 +49,14 @@ defense_points[flag] = min(victim_score, offense_points)
 \end{listing}
 
 Il defense point è il punteggio sottratto al team da cui è stata rubata la flag come parte del punteggio di difesa descritto successivamente.\\
-
 \texttt{NOTA:} Si è assunto implicitamente fino ad ora che nè consegnare le flag del proprio team, nè tantomeno le flag rubate da dei team `di prova' (spesso chiamati \texttt{NOP team}) possa dare punteggio.
 
 I \texttt{NOP team} sono semplicemente macchine non associate a nessun gruppo reale di persone, che offrono i servizi della gara, al solo scopo di renderli usufruibili per eseguire penetration testing (non tutte le competizioni prevedono la presenza dei \texttt{NOP team}).\\
-
 Ciò è possibile poichè il gameserver ha traccia di tutte le flag, di chi le consegna, e delle macchine in cui sono state originariamente inserite.\\
-
 Una distinzione importante da sottolineare riguarda il significato di \texttt{servizio} di cui si è parlato fino ad ora: si è implicitamente assunto che per ogni servizio ci sia 1 sola flag per tick ed 1 sola vulnerabilità. Questo spesso non è vero, poichè ogni servizio ha usualmente più vulnerabilità e non solo, potrebbe avere anche diverse flag per tick a suo interno: i checker che si occupano di inserire le flag potrebbero inserirne diverse, usando diverse parti o impostazioni del servizio.
 
 In caso di servizi con più flag, diremo che questi conterranno diversi \texttt{flag store}.\\
-
 Ciò detto prima e ciò che verrà detto in seguito è valido per ogni flag store, ma nonostante ciò, continueremo a parlare spesso comunque di servizi per semplicità.\\
-
 \texttt{NOTA:} Comunemente esiste un set di checker differente per ogni flag store.
 
 \subsection{I Flag ID}
@@ -83,23 +76,15 @@ Tale valore può essere incrementato o ridotto in base a tre componenti aggiunti
 \begin{itemize}
     \setlength{\itemsep}{2pt}
     \setlength{\parskip}{2pt}
-    \item \textbf{Punteggio di \texttt{SLA} (Service Level Agreement)}: misura la disponibilità del servizio, calcolata in proporzione al tempo di effettiva operatività.
-    Questo indicatore, generalmente in percentuale, viene applicato al punteggio complessivo del servizio.
-    La scelta di attribuirgli un ruolo predominante mira a scoraggiare strategicamente la disattivazione volontaria dei servizi per evitare attacchi, penalizzando severamente tale approccio.
-    Di conseguenza, il mantenimento dell’operatività del servizio (pur nella sua condizione vulnerabile) assume un’importanza critica nella competizione.
-    \item \textbf{Punteggio di \texttt{attacco}}: determinato dal numero di invii corretti di flag effettuati dal team.
-    Il valore attribuito a ciascuna flag può variare in funzione della complessità dell’attacco e della tempestività con cui il servizio è stato compromesso rispetto
-    agli altri team.
-    \item \textbf{Punteggio di \texttt{difesa}}: tipicamente negativo, poiché quantifica l’inefficacia delle contromisure, è calcolato in base al numero di flag sottratte al
-    team da parte degli avversari. Tale componente tende a controbilanciare, o persino ridurre, il punteggio di attacco relativo allo stesso servizio,
-    potendo portare complessivamente il punteggio al di sotto del valore base iniziale. La sua entità è modulata da criteri analoghi a quelli del punteggio di attacco.
-    Per mitigarne gli effetti, risulta essenziale applicare interventi correttivi (\emph{patch}) che impediscano nuovi attacchi,
-    garantendo al contempo la piena operatività del servizio e l’integrità dei dati archiviati (comprese le flag precedenti, la cui perdita comporterebbe un deterioramento del punteggio di SLA).
+    \item \textbf{Punteggio di SLA (Service Level Agreement)}: misura la disponibilità del servizio, calcolata in proporzione al tempo di effettiva operatività.
+    Questo indicatore, generalmente in percentuale, viene applicato al punteggio complessivo del servizio. La scelta di attribuirgli un ruolo predominante mira a scoraggiare strategicamente la disattivazione volontaria dei servizi per evitare attacchi, penalizzando severamente tale approccio. Di conseguenza, il mantenimento dell’operatività del servizio (pur nella sua condizione vulnerabile) assume un’importanza critica nella competizione.
+    \item \textbf{Punteggio di attacco}: determinato dal numero di invii corretti di flag effettuati dal team. Il valore attribuito a ciascuna flag può variare in funzione della complessità dell’attacco e della tempestività con cui il servizio è stato compromesso rispetto agli altri team.
+    \item \textbf{Punteggio di difesa}: tipicamente negativo, poiché quantifica l’inefficacia delle contromisure, è calcolato in base al numero di flag sottratte al team da parte degli avversari. Tale componente tende a controbilanciare, o persino ridurre, il punteggio di attacco relativo allo stesso servizio, potendo portare complessivamente il punteggio al di sotto del valore base iniziale. La sua entità è modulata da criteri analoghi a quelli del punteggio di attacco. Per mitigarne gli effetti, risulta essenziale applicare interventi correttivi (\emph{patch}) che impediscano nuovi attacchi, garantendo al contempo la piena operatività del servizio e l’integrità dei dati archiviati (comprese le flag precedenti, la cui perdita comporterebbe un deterioramento del punteggio di SLA).
 \end{itemize}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.95\textwidth]{images/chapter1/oasis_scoreboard.png}
+    \includegraphics[width=0.98\textwidth]{images/chapter1/oasis_scoreboard.png}
     \caption{Scoreboard di una competizione realizzata con Oasis al DevFest Bari 2024}\label{fig:oasis_scoreboard}
 \end{figure}
 
@@ -139,6 +124,9 @@ for service in services:
 
 \end{minted}
 \end{listing}
+
+\vspace{\fill}
+\newpage
 
 \subsection{Rete di gara}
 
@@ -182,12 +170,11 @@ La competizione termina ad un determinato orario di fine, dove la rete di gara v
 \section{Tool utili}
 
 Data l'elevata complessità nello svolgimento di una competizione A/D, spesso diventa necessario l'utilizzo di tool specializzati che permettano di automatizzare diverse operazioni necessarie durante la gara. Ogni team può sviluppare e utilizare anche tool che facilitano (o perfino che automatizzino) l'attacco e la difesa dei servizi.\\
-
 In generale sono frequenti nel loro utilizzo le seguenti categorie di tool:
 
 \begin{itemize}
-    \setlength{\itemsep}{2pt}
-    \setlength{\parskip}{2pt}
+    \setlength{\itemsep}{1pt}
+    \setlength{\parskip}{1pt}
     \item \textbf{Traffic Analyzer}: permettono di analizzare il traffico sulla macchina, in modo da riconoscere e visionare il traffico dei checker e degli attaccanti (anche se anonimizzato). Analizzare il traffico diventa cruciale dal momento in cui un nuovo attacco è attivo sulla rete, poichè permette ai team di analizzarlo, riconoscere la vulnerabilità sfruttata, e intraprendere azioni quanto più immediate per la difesa e la replicazione dello stesso attacco. Normalmente per analizzare il traffico è possibile usare tool quali \texttt{Wireshark}\footcite{\url{https://www.wireshark.org/}}{wireshark} o \texttt{Suricata}\footcite{\url{https://suricata.io/}}{suricata} (anche se non propriamente un network analyzer). Solitamente però non si utilizzano tool simili dato il loro poco pratico utilizzo in ambito CTF A/D dove il traffico da analizzare è elevato e continuo. Esistono tool scritti appositamente per queste competizioni che permettono di analizzarlo in modo più efficiente e veloce, ma anche di riprodurre velocemente le stesse sequenze di attacco, come ad esempio \texttt{Caronte}\footcite{\url{https://github.com/eciavatta/caronte}}{caronte} o \texttt{Tulip}\footcite{\url{https://github.com/OpenAttackDefenseTools/tulip}}{tulip} (che utilizza internamente suricata per alcune funzionalità).
     \item \textbf{Attacker \& Submitter}: coordinano gli attacchi, assistono alla scrittura degli exploit, ne monitorano l'esecuzione, schedulandola e parallelizzandola. Questi tool sono fondamentali per l'attacco e hanno lo scopo di far focalizzare l'attaccate sulla scrittura del singolo attacco, e non sulla gestione dell'esecuzione di quell'attacco su tutte le macchine degli avversari. Inoltre potrebbe esserci in questi tool anche la possibilità di tenere traccia degli attacchi al fine di individuare facilmente problemi nell'esecuzione e monitorare quanti e quali team stanno iniziando a difendere il proprio servizio. Usualmente (ma non sempre) questi tool eseguono anche la parte di submission delle flag al gameserver, che (normalmente) avviene in modo centralizzato per tutte le flag ottenute dagli attacchi: questo poichè in questo modo risulta più semplice coordinarne la consegna, in base alle regole imposte dagli organizzatori che ne limitano il numero e la frequenza, al fine di evitare attacchi di tipo \texttt{bruteforce} o \texttt{DoS} all'infrastruttura. Tool di questo genere sono ad esempio \texttt{DestructiveFarm}\footcite{\url{https://github.com/DestructiveVoice/DestructiveFarm}}{destructivefarm}, che tuttavia ha diversi punti deboli e pecca in diverse funzionalità sull'analisi dell'andamento degli attacchi, motivo per il quale ho sviluppato un nuovo tool chiamato \texttt{ExploitFarm}\footcite{\url{https://github.com/Pwnzer0tt1/exploitfarm}}{exploitfarm} che permette di coordinare gli attacchi, di monitorarli, e di schedularli in modo più efficiente e semplice, disponendo anche di funzionalità avanzate sulla possibilità di eseguire attacchi distribuiti su più macchine.
     \item \textbf{Proxy e Firewall}: permettono di filtrare il traffico in modo da riconoscere e bloccare gli attacchi. Questi tool possono essere molto utili nella difesa, e permettono di bloccare gli attacchi senza di fatto eseguire una modifica sui servizi stessi, spesso diretta conseguenza di malfunzionamenti per errori eseguiti durante questa fase. Questo modo di proteggere i servizi, tuttavia, risulta spesso incompleto e superabile, ma se ben progettato e correttamente utilizzato può essere un'ottima soluzione temporanea, se non una soluzione completa in alcune casistiche specifiche. Spesso però la soluzione più efficace rimane comunque quella di correggere la vulnerabilità. Tool di questo genere sono ad esempio \texttt{CTF Proxy}\footcite{\url{https://github.com/ByteLeMani/ctf_proxy}}{ctf_proxy} o il tool di cui tratta questa tesi \texttt{Firegex}\footcite{\url{https://github.com/Pwnzer0tt1/firegex}}{firegex_gh}.

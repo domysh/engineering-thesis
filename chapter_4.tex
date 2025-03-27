@@ -3,7 +3,7 @@
 Ai fini di verificare il corretto funzionamento del sistema e valutarne le prestazioni, sono stati sviluppati una serie di test e benchmark. Firegex già presentava un set di test, che con l'integrazione di nfproxy sono stati ampliati e migliorati, al fine di coprire anche le nuove
 feature introdotte.\\
 I test sono eseguiti prima di ogni rilascio in automatico, al fine di garantire che le modifiche apportate non abbiano introdotto regressioni. I rilasci di firegex avvengono tramite GitHub Actions, che ad ogni rilascio su GitHub esegue i test e, in caso di successo, pubblica l'immagine del container sul Github Container Registry (ghcr.io/pwnzer0tt1/firegex) e rilascia una nuova versione della libreria, inclusa nello stesso repository, su PyPi.\\
-I rilasci avvengono sia per architetture \texttt{x86\_64} che \texttt{ARM64}, al fine di supportare il maggior numero di macchine possibile.\\
+I rilasci avvengono sia per architetture \texttt{x86\_64} che \texttt{ARM64}, al fine di supportare il maggior numero di macchine possibile.
 
 \section{Integrazione dei test}
 
@@ -11,8 +11,8 @@ Tutti i test di firegex sono disponibili nel suo repository, all'interno della c
 In particolare, quelli riguardanti nfproxy sono contenuti nel file \texttt{tests/nfproxy\_test.py}, ed esegue la seguente serie di operazioni:
 
 \begin{itemize}
-    \setlength{\itemsep}{2pt}
-    \setlength{\parskip}{2pt}
+    \setlength{\itemsep}{1pt}
+    \setlength{\parskip}{1pt}
     \item Avvia un nuovo servizio sull'interfaccia di loopback, e verifica che il traffico non sia stato compromesso dal semplice avvio del modulo.
     \item Verifica che ogni tipo di statment sia correttamente funzionante, inserendo un filtro che individua se sul segmento TCP sia presente un payload specifico, che se inviato, causi il comportamento desiderato, imposto dallo statment inserito.
     \item Si verifica che la funzionalità di modifica funzioni correttamente, eseguendo prove sia su mangle a pacchetti più piccoli, che a pacchetti più grandi, comprovando pertanto che la traduzione degli ack e seq avvenga correttamente. Inoltre viene verificato se a seguito della modifica, il traffico di rete continui a transitare normalmente.
@@ -44,7 +44,7 @@ Le casistiche utilizzate sono di semplice natura: verificano le prestazioni in t
 
 A differenza dei test, i benchmark non hanno lo scopo di applicare i filtri su un traffico da bloccare, ma si inserisce la seguente regola all'unico scopo di
 misurare l'overhead causato dalla presenza del filtro stesso.\\
-I benchmark sono stati eseguiti su una macchina con le seguenti caratteristiche:\\
+I benchmark sono stati eseguiti su una macchina con le seguenti caratteristiche:
 \begin{listing}[H]
     \begin{minted}[
         frame=single,
@@ -72,18 +72,17 @@ python3 comparemark.py nfregex -p testpassword -d 1 -s 50 -V 100
 \end{minted}
 \end{listing}
 
-I benchmark pertanto sono stati eseguiti con 1 secondo di durata della singola misura, 50 connessioni simultanee, e 100 misure eseguite.\\
-Il numero indicato dopo la \texttt{T} nei grafici indica il numero di thread con cui firegex è stato configurato: quindi eseguiti sia in single-threading che in multi-threading (con 8 thread).\\
+I benchmark pertanto sono stati eseguiti con 1 secondo di durata della singola misura, 50 connessioni simultanee, e 100 misure eseguite. Il numero indicato dopo la \texttt{T} nei grafici indica il numero di thread con cui firegex è stato configurato: quindi eseguiti sia in single-threading che in multi-threading (con 8 thread).
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.98\textwidth]{images/chapter4/whisker_nfproxy.png}
+    \includegraphics[width=0.90\textwidth]{images/chapter4/whisker_nfproxy.png}
     \caption{Grafico Whisker sulle misure di throughput di nfproxy}\label{fig:wisker_nfproxy}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.98\textwidth]{images/chapter4/istogramma_nfproxy.png}
+    \includegraphics[width=0.90\textwidth]{images/chapter4/istogramma_nfproxy.png}
     \caption{Istogramma sulle misure medie di throughput di nfproxy}\label{fig:istogramma_nfproxy}
 \end{figure}
 
