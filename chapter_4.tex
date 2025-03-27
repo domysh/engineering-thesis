@@ -80,24 +80,12 @@ I benchmark pertanto sono stati eseguiti con 1 secondo di durata della singola m
     \caption{Grafico Whisker sulle misure di throughput di nfproxy}\label{fig:wisker_nfproxy}
 \end{figure}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.90\textwidth]{images/chapter4/istogramma_nfproxy.png}
-    \caption{Istogramma sulle misure medie di throughput di nfproxy}\label{fig:istogramma_nfproxy}
-\end{figure}
-
 Si può notare come le performance in multi-threading di nfproxy siano migliori rispetto all'utilizzo del singolo thread. È importante sottolineare come nei benchmark non viene eseguito alcun tipo di elaborazione riguardo il parsing dei dati, pertanto il carico di elaborazione è comunque limitato.\\
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.98\textwidth]{images/chapter4/whisker_compare.png}
     \caption{Grafico Whisker sulle misure di throughput di nfproxy e nfregex}\label{fig:wisker_nfproxy_nfregex}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.98\textwidth]{images/chapter4/istrogramma_compare.png}
-    \caption{Istogramma sulle misure medie di throughput di nfproxy e nfregex}\label{fig:istogramma_nfproxy_nfregex}
 \end{figure}
 
 Dal confronto di nfproxy e nfregex si può notare come nfproxy abbia un calo di prestazioni rilevante rispetto a nfregex, che tuttavia rimane comunque abbondantemente alto per supportare anche carichi di rete molto elevati.\\
