@@ -15,10 +15,11 @@ In particolare, quelli riguardanti nfproxy sono contenuti nel file \texttt{tests
     \setlength{\parskip}{1pt}
     \item Avvia un nuovo servizio sull'interfaccia di loopback, e verifica che il traffico non sia stato compromesso dal semplice avvio del modulo.
     \item Verifica che ogni tipo di statment sia correttamente funzionante, inserendo un filtro che individua se sul segmento TCP sia presente un payload specifico, che se inviato, causi il comportamento desiderato, imposto dallo statment inserito.
-    \item Si verifica che la funzionalità di modifica funzioni correttamente, eseguendo prove sia su mangle a pacchetti più piccoli, che a pacchetti più grandi, comprovando pertanto che la traduzione degli ack e seq avvenga correttamente. Inoltre viene verificato se a seguito della modifica, il traffico di rete continui a transitare normalmente.
-    \item Si assiucura che le funzionalità di interruzione del servizio e del singolo pyfilter sia correttamente funzionante.
-    \item Per ogni tipo di datahandler, si scambiano dei payload di prova al fine di verificare se il parsing dei vari dati avvenga correttamente. Datahandler testati: \texttt{TCPInputStream}, \texttt{TCPOutputStream}, \texttt{HttpRequest}, \texttt{HttpResponse}, \texttt{HttpRequestHeader},
-    \texttt{HttpResponseHeader} includendo anche il parsing di \texttt{Frame websocket}.
+    \item Verifica che la funzionalità di modifica funzioni correttamente (nelle casistiche in cui dovrebbe), eseguendo prove sia su mangle a pacchetti più piccoli, che a pacchetti più grandi, comprovando pertanto che la traduzione degli ack e seq avvenga correttamente. Inoltre viene verificato se a seguito della modifica, il traffico di rete continui a transitare normalmente.
+    \item Si assiucura che le funzionalità di interruzione del servizio e del singolo pyfilter siano correttamente funzionanti.
+    \item Per ogni tipo di datahandler, si scambiano dei payload di prova al fine di verificare se il parsing dei vari dati avvenga correttamente per i model:\\
+    \texttt{TCPInputStream}, \texttt{TCPOutputStream}, \texttt{HttpRequest}, \texttt{HttpResponse},\\
+    \texttt{HttpRequestHeader}, \texttt{HttpResponseHeader} includendo anche il parsing di \texttt{Frame websocket}.
     \item Vengono testate tutte le API backend di nfproxy, verificando che le chiamate restituiscano i valori corretti, e si comportino in modo coerente alla loro funzione.
     \item Si verifica inoltre che vengano conteggiate correttamente le connessioni bloccate, e i pacchetti modificati nelle statistiche.
 \end{itemize}
@@ -76,7 +77,7 @@ I benchmark pertanto sono stati eseguiti con 1 secondo di durata della singola m
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.90\textwidth]{images/chapter4/whisker_nfproxy.png}
+    \includegraphics[width=0.98\textwidth]{images/chapter4/whisker_nfproxy.png}
     \caption{Grafico Whisker sulle misure di throughput di nfproxy}\label{fig:wisker_nfproxy}
 \end{figure}
 

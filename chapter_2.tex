@@ -78,7 +78,7 @@ Firegex si distingue rispetto ad altre soluzioni presenti, come \texttt{CTF prox
     \setlength{\itemsep}{1pt}
     \setlength{\parskip}{1pt}
     \item \textbf{Nginx} è una soluzione molto flessibile ed affidabile, ma richiede configurazioni complesse e non permette di applicare filtri in maniera immediata e trasparente, ha necessità di cambiare porte e non supporta nativamente filtri più avanzati come quello trattato in questa tesi. Non ha una interfaccia grafica per la gestione delle regole.
-    \item \textbf{CTF proxy} è una soluzione fortemente flessibile ed affidabile, ma richiede la creazione di configurazioni e allo stesso modo necessita di cambiare porte ai servizi originali, inoltre a suo supporto non esiste un'interfaccia semplice da usare.
+    \item \textbf{CTF proxy} è una soluzione fortemente flessibile, ma richiede la creazione di configurazioni e allo stesso modo necessita di cambiare porte ai servizi originali, inoltre a suo supporto non esiste un'interfaccia semplice da usare.
     \item \textbf{Fortinet} è una soluzione estremamente affidabile, ben riconosciuta nel settore, ma richiede configurazioni complesse ed è per questo molto lento da avviare. Il suo operato inoltre potrebbe causare diversi problemi, essendo molto invasivo nel sistema. Il suo utilizzo è poco pratico per l'utilizzo in competizioni CTF, nonostante rappresenti una delle principali soluzioni fuori da questo contesto.\@
     \item \textbf{Suricata} è una soluzione molto affidabile che offre un grado di flessibilità intermedio, ma pecca della mancanza di un'interfaccia semplice per il suo utilizzo, e richiede configurazioni per essere avviato.
 \end{itemize}
@@ -140,7 +140,7 @@ Il modulo Netfilter Queue (nfqueue) gioca un ruolo fondamentale nell'architettur
 \section{Funzionalità}
 
 All'interno di Firegex sono presenti attualmente 4 moduli principali, ognuno con delle funzionalità specifiche che permettono di applicare filtri con tecnologie e funzionalità differenti. I moduli sono \texttt{nfregex}, \texttt{firewall}, \texttt{porthijack} e \texttt{nfproxy}. All'interno di questi moduli firegex possiede una documentazione interna alla piattaforma stessa che permette di comprendere come utilizzare le funzionalità offerte, e come configurare i filtri in maniera corretta.\\
-Firegex è avviabile tramite un unico comando, supponendo che \texttt{docker}\footcite{\url{https://www.docker.com/}}{docker} sia già installato nel sistema:
+Firegex è avviabile tramite un unico comando, supponendo che \texttt{docker}\footcite{\url{https://www.docker.com/}}{docker} sia stato già installato nel sistema:
 
 \begin{listing}[H]
     \begin{minted}[
@@ -157,7 +157,7 @@ sh <(curl -sLf https://pwnzer0tt1.it/firegex.sh)
 Il modulo \texttt{nfregex} (pensato originariamente come unico e principale) possiede funzionalità per la creazione di filtri basati su espressioni regolari. Utilizzando \texttt{nfqueue} in combinazione con \texttt{nftables}, questo modulo intercetta le richieste di rete direttamente a livello kernel. La funzionalità permette l'utilizzo di regex \texttt{PCRE2}\footcite{\url{https://www.pcre.org/}}{pcre_website} compliant tramite l'utilizzo di \texttt{vectorscan}\footcite{\url{https://vectorcamp.gr/project/vectorscan/}}{vectorscan} (fork di \texttt{hyperscan}\footcite{\url{http://hyperscan.io/}}{hyperscan} compatibile con arm64) per garantire prestazioni elevate e una corretta elaborazione delle regole. La funzionalità supporta IPv4 e IPv6, e protocolli di livello superiore come TCP e UDP.\@ Per i pacchetti TCP, la regex viene applicata all'intero flusso ricostruito e ordinato, tramite le \texttt{stream regex} disponibili in vectorscan.
 
 \subsection{firewall}
-La funzionalità \texttt{firewall} di Firegex offre un controllo completo sul traffico di rete, tramite regole simili a quelle offerte da strumenti tradizionali come \texttt{ufw} o \texttt{iptables}. Dispone quindi di funzionalità basilari e risulta utile per applicare questa tipologia di regole evitando l'utilizzo di ulteriori tool di filtering che potrebbero entrare in conflitto con firegex.
+La funzionalità \texttt{firewall} di Firegex offre un controllo completo sul traffico di rete, tramite regole simili a quelle offerte da strumenti che agiscono a livello di rete e di trasporto come \texttt{ufw} o \texttt{iptables}. Dispone quindi di funzionalità basilari e risulta utile per applicare questa tipologia di regole evitando ulteriori tool di filtering che potrebbero entrare in conflitto con firegex.
 
 \subsection{porthijack}
 Il modulo \texttt{porthijack} introduce la capacità di reindirizzare il traffico destinato ad una determinata porta verso un’altra. Questa funzionalità è particolarmente utile in scenari dove si ha il bisogno di costruire un proxy personalizzato, ma si vuole evitare la riconfigurazione del servizio di base. Port hijacking infatti consente di impostare un redirect del traffico dall'interfaccia su cui il servizio viene esposto nella rete di gara, dirottandolo per un proxy in localhost, che poi tramite la stessa interfaccia di loopback inoltrerà il traffico al servizio originale.
@@ -173,7 +173,7 @@ Il modulo \texttt{porthijack} introduce la capacità di reindirizzare il traffic
     \item \textbf{Interfaccia grafica:} L'interfaccia di dettaglio del servizio permette di visualizzare in tempo reale i log e le eventuali eccezioni che si verificano durante l'esecuzione del filtro.
 \end{itemize}
 
-Il seguente modulo è stato introdotto in vista di scenari complessi dove gli elementi da individuare per il corretto filtraggio non sono facilmente individuabili tramite regex: ad esempio se il payload fraudolento fosse nei cookie JWT, sarebbe necessario eseguire il decoding per rilevare l'attacco.
+Il seguente modulo è stato introdotto in vista di scenari complessi dove gli elementi da individuare per il corretto filtraggio non sono facilmente individuabili tramite regex: ad esempio se il payload fraudolento fosse in dei token JWT, sarebbe necessario eseguire il decoding per rilevare l'attacco.
 
 \begin{figure}[H]
     \centering

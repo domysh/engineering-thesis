@@ -3,8 +3,7 @@
 Il regex filtering è un modello di filtraggio che garantisce ottime prestazioni (grazie all'elaborazione tramite linguaggi e librerie ottimizzati), ma presenta forti limitazioni nella flessibilità di analisi del traffico.
 
 Questa rigidità è particolarmente rilevante nei CTF, dove la maggior parte dei servizi utilizza protocolli come HTTP, che spesso includono contenuti compressi o codificati (es. Base64, gzip), difficilmente analizzabili tramite regex.\\
-
-A discapito di prestazioni inferiori, nfproxy introduce il vantaggio di scrivere filtri in \texttt{Python}\footcite{\url{http://python.org/}}{python}, linguaggio semplice e rapido per lo scripting, superando i limiti precedenti e offrendo:
+A discapito delle prestazioni, nfproxy introduce il vantaggio di scrivere filtri in \texttt{Python}\footcite{\url{http://python.org/}}{python}, linguaggio semplice e rapido per lo scripting, superando i limiti precedentemente descritti e offrendo:
 
 \begin{itemize}
     \setlength{\itemsep}{4pt}
@@ -92,8 +91,8 @@ Tre obiettivi hanno guidato l'implementazione della parallelizzazione:
     \setlength{\itemsep}{2pt}
     \setlength{\parskip}{2pt}
     \item \textbf{Isolamento dei dati tra processi}: Prevenire conflitti interprocesso per evitare corruzione dati, crash imprevisti e comportamenti anomali
-    \item \textbf{Minimizzazione dei lock}: Limitare l'uso di meccanismi di blocco (pur necessari per risorse condivise) per prevenire deadlock e degradazione prestazionale
-    \item \textbf{Ottimizzazione della memoria}: Eliminare copie ridondanti dei pacchetti e processi superflui, massimizzando throughput e riducendo latenza
+    \item \textbf{Minimizzazione dei lock}: Limitare l'uso di meccanismi di blocco (pur necessari per risorse condivise) per prevenire deadlock e un degrado delle prestazioni
+    \item \textbf{Ottimizzazione della memoria}: Eliminare copie ridondanti dei pacchetti e processi superflui, massimizzando throughput e riducendo la latenza
 \end{itemize}
 
 La soluzione adottata segue il pattern produttore-consumatore. Un processo produttore unico, responsabile del binding alla \texttt{nfqueue},
@@ -107,7 +106,7 @@ riceve i pacchetti dal kernel e li distribuisce a multiple code FIFO.\@ I consum
 \end{itemize}
 
 L'unica sezione critica risiede nell'accesso concorrente alle code, protetto da un sistema di lock basato su
-\texttt{std::mutex}\footcite{\url{https://en.cppreference.com/w/cpp/thread/mutex}}{std_mutex} e \texttt{std::condition\_variable}\footcite{\url{https://en.cppreference.com/w/cpp/thread/condition_variable}}{condition_variable_std}.Questa scelta, preferita alle \texttt{unix pipe}\footcite{\url{https://man7.org/linux/man-pages/man2/pipe.2.html}}{unix_pipe} per motivi prestazionali, implementa un meccanismo di \texttt{backpressure} che blocca il produttore in caso di code sature, prevenendo consumo eccessivo di memoria.
+\texttt{std::mutex}\footcite{\url{https://en.cppreference.com/w/cpp/thread/mutex}}{std_mutex} e \texttt{std::condition\_variable}\footcite{\url{https://en.cppreference.com/w/cpp/thread/condition_variable}}{condition_variable_std}. Questa scelta, preferita alle \texttt{unix pipe}\footcite{\url{https://man7.org/linux/man-pages/man2/pipe.2.html}}{unix_pipe} per motivi prestazionali, implementa inoltre un meccanismo di \texttt{backpressure} che blocca il produttore in caso di code sature, prevenendo un consumo eccessivo di memoria.
 
 L'implementazione si basa su quella pubblicata da \texttt{Arif Jaffer}\footcite{\url{https://www.bit-byter.com/blog/files/blocking-q-cpp.html}}{blocking_queue_cpp} per le code bloccanti.
 
@@ -115,7 +114,7 @@ L'implementazione si basa su quella pubblicata da \texttt{Arif Jaffer}\footcite{
 
 Una delle problematiche citate precedentemente sulla parallelizzazione riguardava una caratteristica del linguaggio Python: il \texttt{GIL}\footcite{Understanding the python gil}{beazley2010understanding} (Global Interpreter Lock). Questo meccanismo limita l'utilizzo dei thread consentendo l'esecuzione di un solo thread alla volta, necessario per prevenire conflitti nella gestione interna degli oggetti Python (come il reference counting) che non è implementata in modo thread-safe.
 
-Si osserva inoltre come, nello specifico contesto, Python gestisca operazioni \emph{CPU-bound}, accentuando ulteriormente gli svantaggi del GIL.\@
+Si osserva inoltre come, in questo specifico contesto, Python gestisca operazioni \emph{CPU-bound}, accentuando ulteriormente gli svantaggi del GIL.\@
 
 \begin{figure}[H]
     \centering
@@ -135,20 +134,17 @@ di interpreti Python indipendenti nello stesso processo, ciascuno con il proprio
     \item Integrazione trasparente tra codice C++ e Python
     \item Parallelismo reale senza overhead di processi multipli
 \end{itemize}
-
-Il principale limite di questo approccio, cioè l'impossibilità di condividere oggetti tra interpreti, non costituisce un problema nel nostro caso poichè, grazie al meccanismo di
+L'impossibilità di condividere oggetti tra interpreti, uno dei limiti di questo approccio, non costituisce un problema nel nostro caso poichè, grazie al meccanismo di
 smistamento dei pacchetti descritto nel prossimo paragrafo, ciò non sarà necessario.\\
 Per ogni nuova connessione TCP vengono eseguite le seguenti operazioni:\@
 \begin{itemize}
     \setlength{\itemsep}{2pt}
     \setlength{\parskip}{2pt}
     \item Viene inizializzato un nuovo contesto globale Python indipendente
-    \item Il bytecode del filtro viene deserializzato con \texttt{marshal}\footcite{\url{https://docs.python.org/3/library/marshal.html}}{marshal_python}
+    \item Il bytecode del filtro, precedentemente compilato, viene deserializzato tramite le funzionalità di \texttt{marshaling}\footcite{\url{https://docs.python.org/3/library/marshal.html}}{marshal_python}
     \item Il codice di inizializzazione del filtro viene eseguito sul contesto globale
 \end{itemize}
-
 Qui viene riportato il codice di inizializzazione del consumatore con il relativo interprete Python indipendente.
-
 \begin{listing}[H]
 \begin{minted}[
     frame=single,
@@ -176,8 +172,7 @@ void before_loop() {
 }
 \end{minted}
 \end{listing}
-
-L'utilizzo delle funzionalità offerte dal \texttt{PEP 684}\footcite{\url{https://peps.python.org/pep-0684/}}{pep648}, soffre tuttavia di forti limitazioni sull'utilizzo di moduli non compatibili con la \texttt{multi-phase initialization}\footcite{\url{https://peps.python.org/pep-0489/}}{pep489} (includendo tutti quelli scritti in \texttt{Cython}\footcite{\url{https://cython.org/}}{cython}) e moduli con componenti non thread-safe. Nel corso dello sviluppo, queste limitazioni sono state oggetto di diverse problematiche, affrontate e approfondite in seguito.\\
+L'utilizzo delle funzionalità offerte dal \texttt{PEP 684}\footcite{\url{https://peps.python.org/pep-0684/}}{pep648}, soffre tuttavia anche di forti limitazioni sull'utilizzo di moduli senza \texttt{multi-phase initialization}\footcite{\url{https://peps.python.org/pep-0489/}}{pep489} (includendo tutti quelli scritti in \texttt{Cython}\footcite{\url{https://cython.org/}}{cython}) e moduli con componenti non thread-safe. Nel corso dello sviluppo, queste limitazioni sono state oggetto di diverse problematiche, affrontate e approfondite in seguito.\\
 
 Un'altra possibilità considerata è stata l'utilizzo dell'interprete in \texttt{free-threaded mode} di Python 3.13\footcite{\url{https://docs.python.org/3/whatsnew/3.13.html\#whatsnew313-free-threaded-cpython}}{py13_free_threaded}, attualmente sconsigliato per:
 \begin{itemize}
@@ -322,7 +317,7 @@ PktRequest(const char* payload, size_t plen, T* ctx, mnl_socket* nl,
 \end{minted}
 \end{listing}
 
-Inoltre lo \texttt{stream\_id} è indipendente dal protocollo internet utilizzato, permettendo di identificare connessioni miste IPv4/IPv6: questo permette di utilizzare la stessa queue per interfaccie di rete differenti, carattertistica potenzialmente utile per implementare nuove feature sulla selezione del traffico da inoltrare alla queue.\\
+Inoltre lo \texttt{stream\_id} è indipendente dal protocollo internet utilizzato, identificando anche connessioni miste IPv4/IPv6: questo permette di utilizzare la stessa queue per interfaccie di rete differenti, carattertistica potenzialmente utile per implementare nuove feature sulla selezione del traffico da inoltrare alla queue.\\
 
 Ogni produttore utilizza questo dato come chiave per individurare i dati relativi ad una specifica connessione, salvandoli in una \texttt{std::map}\footcite{\url{https://en.cppreference.com/w/cpp/container/map}}{std_map} diversa per ogni singolo produttore, così implementabile per merito del meccanismo di smistamento dei pacchetti descritto precedentemente.\\
 
@@ -339,9 +334,9 @@ Come citato precedentemete, prima di inizializzare la queue, vengono inseriti tr
     \caption{NfTables Hooks}\label{fig:nftables_hooks}
 \end{figure}
 
-Il traffico in particolare viene intercettato sia in \texttt{pre-routing}, che in \texttt{post-ruoting} ad un hook prima dell'azione del modulo conntrack, ma dopo dell'azione di defrag, in particolare a prio -310 che rientra in questo range come riportato sulla \texttt{wiki ufficiale di nftables}\footcite{\url{https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks}}{netfilter_hooks}. Questo permette di ottenere dei pacchetti che hanno già subito il processo di deframmentazione a livello 3, di cui pertanto non ci dovremo preoccupare, che non hanno subito il processo di routing (che quindi volendo potremmo manipolare) e che non sono stati ancora analizzati dal modulo conntrack.\\
+Il traffico in particolare viene intercettato sia in \texttt{pre-routing}, che in \texttt{post-routing} ad un hook prima dell'azione del modulo conntrack, ma dopo dell'azione di defrag, a prio -310 che rientra in questo range come riportato sulla \texttt{wiki ufficiale di nftables}\footcite{\url{https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks}}{netfilter_hooks}. Questo permette di ottenere dei pacchetti che hanno già subito il processo di deframmentazione a livello 3, di cui pertanto non ci dovremo preoccupare, ma che non hanno subito il processo di routing (che quindi volendo potremmo manipolare) e che non sono stati ancora analizzati dal modulo conntrack.\\
 Tuttavia, qui i pacchetti non hanno subito il processo di ordinamento dei payload che avviene a livello 4, sul quale come è possibile osservare dalla Figura~\ref{fig:nftables_hooks}, non è possibile intercettare del traffico, poiché i pacchetti arriveranno direttamente alle fasi di gestioni dei dati per la loro consegna alla socket a livello applicatvo.\\
-Pertanto è dato a noi il compito di analizzare il traffico e di ordinare i pacchetti TCP per un'utilizzo dei dati coerente a quelli che saranno letti dall'applicazione.\\
+Pertanto è dato a noi il compito di analizzare il traffico, ordinando i pacchetti TCP per un'utilizzo dei dati coerente a quelli che saranno letti dall'applicazione.\\
 \texttt{Libtins} semplifica significativamente questa gestione attraverso meccanismi automatizzati gestiti dal suo \texttt{TCP follower}\footnote{Esempio TCP Follower: \url{https://libtins.github.io/examples/http-requests/}} per:  
 \begin{itemize}
     \setlength{\itemsep}{2pt}
@@ -349,13 +344,12 @@ Pertanto è dato a noi il compito di analizzare il traffico e di ordinare i pacc
     \begin{itemize}
         \setlength{\itemsep}{1pt}
         \item Analisi del traffico (flag FIN/RST)
-        \item Timeout configurabili
-        \item Rilevamento di inattività prolungata
+        \item Timeout configurabili (rilevamento di inattività)
+        \item Utilizzo eccessivo dei buffer di memoria
     \end{itemize}
-    \item Ricostruzione dello stream da segmenti non ordinati
-    \item Gestione automatica dei buffer con prevenzione su memory leak
+    \item Ricostruzione dello stream da segmenti non ordinati (o duplicati)
+    \item Gestione automatica della memoria utile alla ricostruzione
 \end{itemize}
-
 Il follower inoltre permette facilmente l'integrazione di dati gestiti esternamente, tramite il suo sistema di callback, che ne chiamerà le funzionalità compatibilmente con quanto fatto con i buffer internamente.\\
 Le callback permettono di gestire le seguenti operazioni:
 \begin{itemize}
@@ -370,10 +364,11 @@ Ogni processo consumatore ha un suo follower dedicato che analizzerà i flussi r
 \section{Modifica dei pacchetti}
 
 Il modulo \texttt{nfqueue} consente effettivamente la modifica dei pacchetti, offrendo potenzialmente la possibilità di alterare header
-IP/TCP e payload a livello di trasporto. Tuttavia, questa funzionalità, seppur teoricamente disponibile, è stata implementata solo parzialmente e non risulta pienamente affidabile.\\
+IP/TCP e payload. Tuttavia, questa funzionalità, seppur teoricamente disponibile, è stata implementata solo parzialmente e non risulta pienamente affidabile.\\
 Le limitazioni derivano da problematiche intrinseche legate all’interazione con i meccanismi di livello di trasporto. Ad esempio, modifiche al payload TCP durante connessioni attive potrebbero invalidare checksum o causare inconsistenze nei sequence number. La complessità per garantire coerenza in tutti i possibili scenari (come in caso di ritrasmissioni) rende l’implementazione robusta di questa feature particolarmente onerosa. Inoltre, se gestita male, la modifica del payload potrebbe essere soggetta a vulnerabilità di sicurezza. Valutando il rapporto rischio-beneficio, si è optato per comunque rendere disponibile la funzionalità, seppur parzialmente implementata, ma fortemente disincentivata e volutamente resa meno facilmente accessibile.\\
 L’effettiva necessità operativa risulta infatti marginale nella maggior parte degli scenari CTF, mentre i potenziali effetti collaterali verrebbero a compromettere uno degli obiettivi principali: la stabilità del servizio.\\
 Di seguito si riporta una descrizione accurata delle problematiche riscontrate e delle soluzioni proposte, o applicate con relativi limiti e valutazioni rischio/beneficio.\\
+
 \texttt{NOTA}: Le problematiche sul calcolo dei campi di integrità dei dati non sono trattate, ma considerate già risolte tramite l'utilizzo di libtins, che si occupa durante la serializzazione del pacchetto di ricalcolare questi campi nei vari layer interessati, pertanto non considerata una problematica rilevante.\\
 L'unica operazione aggiuntiva affrontata su questo, è stata la necessità di reinserire il payload del pacchetto nella catena di PDU di libtins, poiché (seppur non documentato), il follower del flusso TCP internamente separa di fatto il payload dal pacchetto\footnote{Separazione del payload nel follower: \url{https://github.com/mfontanini/libtins/blob/b7e61f4c76ac64053c9c4c9f8eadaabbe3a9381a/src/tcp_ip/data_tracker.cpp\#L68}}, rendendone necessario il reinserimento per la corretta serializzazione e calcolo di questi campi.\\
 
@@ -383,13 +378,11 @@ Come emerge dalle specifiche stesse del protocollo di trasporto TCP\footcite{RFC
 Nella trasmissione, il sequence number indica il byte da cui inizia il payload del pacchetto relativamente alla sua posizione nello stream, mentre il campo ack della risposta di conferma proveniente dal ricevente, indica fino a che punto il flusso di dati è stato ricevuto correttamente.\\
 Questo meccanismo è fondamentale per il corretto funzionamento del protocollo e per la corretta ricostruzione del flusso originale: di conseguenza la modifica alla dimensione del payload causa inevitabilmente l'incoerenza di questi valori che porteranno a comportamenti inaspettati, non conformi al normale funzionamento del protocollo.\\
 
-Per risolvere la problematica descritta, è stato implementato un sistema di traduzione bidirezionale dei campi \texttt{SEQ} (sequence number) e \texttt{ACK} (acknowledgment number).
-Questo meccanismo garantisce la coerenza logica della comunicazione riconvertendo i valori modificati in modo da preservare la corrispondenza tra la dimensione originale dei pacchetti e le aspettative del client (ma anche del server).
+Per risolvere la problematica descritta, è stato implementato un sistema di traduzione bidirezionale dei campi \texttt{SEQ} (sequence number) e \texttt{ACK} (acknowledgment number).\\
+Questo meccanismo tenta di mantenere la coerenza logica della comunicazione riconvertendo i valori modificati in modo da preservare la corrispondenza tra la dimensione originale dei pacchetti e le aspettative del client (e viceversa del server).
 Il kernel e il TCP Follower di \texttt{libtins} ricevono così numerazioni coerenti con le alterazioni applicate, mantenendo la sincronizzazione degli stati di connessione.
-Il sistema opera in modo simmetrico per entrambe le direzioni del traffico: le modifiche applicate ai pacchetti in uscita vengono compensate da una riconversione inversa per quelli in entrata.
-L'attivazione avviene automaticamente alla prima modifica di un pacchetto nella sessione TCP e rimane attiva per tutta la durata della connessione, garantendo la persistenza del contesto di traduzione.\\
-La conversione degli ack e seq pertanto avviene tramite il calcolo incrementale dell'offset che intercorre tra la dimensione del flusso originale e la dimensione del flusso modificato,
-calcolata incrementalmente come si può osservare nel seguente codice:
+Il sistema opera in modo simmetrico per entrambe le direzioni del traffico: le modifiche applicate ai pacchetti in uscita vengono compensate da una riconversione inversa per quelli in entrata. L'attivazione avviene automaticamente alla prima modifica di un pacchetto nella sessione TCP e rimane attiva per tutta la durata della connessione, garantendo la persistenza del contesto di traduzione.\\
+Questa conversione avviene tramite il calcolo incrementale dell'offset che intercorre tra la dimensione del flusso originale e la dimensione del flusso modificato, come mostrato nel seguente codice:
 
 \begin{listing}[H]
     \begin{minted}[
@@ -398,10 +391,9 @@ calcolata incrementalmente come si può osservare nel seguente codice:
         fontsize=\footnotesize,
         breaklines
       ]{cpp}
-size_t payload_offset = data_size() != _data_original_size;
-// If we are in a TCP connection, the ack and seq status context was enabled, and the payload size 
-if (tcp && ack_seq_offset && payload_offset != 0){
-    // So we incrementally update the total offset based on who sent this data.
+size_t payload_offset = data_size() - _data_original_size;
+if (tcp && payload_offset != 0){
+    // incremental update of total offset
     if (is_input){
         ack_seq_offset->in += payload_offset;
     }else{
@@ -410,9 +402,7 @@ if (tcp && ack_seq_offset && payload_offset != 0){
 }
 \end{minted}
 \end{listing}
-
-A seguito della modifica, nei prossimi pacchetti vengono compatibilmente ricalcolati gli ack e seq, su tutto il traffico come si può vedere nel seguente codice:
-
+A seguito della modifica, nei prossimi pacchetti vengono compatibilmente ricalcolati gli ack e seq, su tutto il traffico come mostrato qui:
 \begin{listing}[H]
     \begin{minted}[
         frame=single,
@@ -421,12 +411,7 @@ A seguito della modifica, nei prossimi pacchetti vengono compatibilmente ricalco
         breaklines
       ]{cpp}
 void fix_tcp_ack(){
-    // Checks if the conversion is needed
-    need_tcp_fixing = need_tcp_fix();
-    if(!need_tcp_fixing){
-        return;
-    }
-    // conversion of the ack and seq
+    // conversion of ack and seq
     if (is_input){
         tcp->seq(tcp->seq() + ack_seq_offset->in);
         tcp->ack_seq(tcp->ack_seq() - ack_seq_offset->out);
@@ -437,18 +422,13 @@ void fix_tcp_ack(){
 }
 \end{minted}
 \end{listing}
-
-
-Un'analisi preliminare e test di base suggerirebbero l'adeguatezza di questa soluzione. Tuttavia occorre sottolineare come il meccanismo presenti limitazioni intrinseche in specifiche casistiche operative. L'approccio risulta efficace esclusivamente in condizioni ideali di trasmissione, dove non si verificano fenomeni di ritrasmissione di pacchetti persi né ricezione di segmenti non ordinati.\\
-
-La criticità principale risiede nell'algoritmo di conversione, che non considera adeguatamente le ritrasmissioni di segmenti antecedenti al pacchetto modificato. In tali scenari, il calcolo dell'\texttt{ACK} relativo al segmento ritrasmesso richiederebbe una ricalibrazione temporale analoga a quella applicata ai pacchetti successivi, operazione che l'implementazione corrente non esegue. Questo deficit nasce dall'assenza di un modello contestuale capace di identificare la porzione di flusso effettivamente coinvolta nella ritrasmissione, portando a discrepanze cumulative negli stati di connessione che compromettono progressivamente la sincronizzazione degli endpoint.
-
+Un'analisi preliminare e dei test preliminari, suggerirebbero l'adeguatezza di questa soluzione. Tuttavia, a seguito di analisi più accurate, si evince come il meccanismo presenti limitazioni intrinseche in determinate casistiche di traffico. L'approccio risulta efficace esclusivamente in condizioni ideali di trasmissione, dove non si verificano fenomeni di ritrasmissione di pacchetti.\\
+La criticità principale risiede nell'algoritmo di conversione, che non considera adeguatamente le ritrasmissioni di segmenti antecedenti al pacchetto modificato. In tali scenari, il ricalcolo dell'\texttt{ACK} relativo richiederebbe l'utilizzo di un offset compatibile non all'ultimo offset calcolato, ma allo stato del flusso nella parte interessata dalla ritrasmissione, operazione che l'implementazione corrente non esegue. La problematica è diretta conseguenza della mancanza di un analisi del traffico contestuale, capace di identificare la porzione di flusso effettivamente coinvolta nella ritrasmissione, e di memorizzare le discrepanze cumulative associandole direttamente alle varie parti dello stream interessate.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.90\textwidth]{images/chapter3/TCP_ack_seq_transl_failure.drawio.png}
     \caption{Esempio di una possibile problematica nella traduzione di ack e seq implementata}\label{fig:tcp_ack_seq_transl_failure}
 \end{figure}
-
 L'analisi della Figura~\ref{fig:tcp_ack_seq_transl_failure} evidenzia come le casistiche descritte possano compromettere integralmente il sistema di traduzione implementato. Tali scenari, particolarmente probabili in condizioni di congestione di rete, rappresentano potenziali vettori d'attacco mirati a destabilizzare il servizio.
 
 Alla luce di queste considerazioni, si conclude che la soluzione proposta non possiede la robustezza necessaria per un'implementazione definitiva. La funzionalità di modifica pacchetti viene pertanto mantenuta come opzione sperimentale, accompagnata da avvertenze esplicite sul suo comportamento instabile.
@@ -459,9 +439,9 @@ Considerando il rapporto costo-beneficio e il limitato valore operativo della fu
 
 \subsection{Modifica di segmenti non ordinati}
 
-Un'ulteriore criticità emerge nella gestione dei pacchetti con payload \emph{out-of-order} da modificare. Nell'implementazione corrente, i pacchetti non ordinati vengono analizzati dal TCP Follower di \texttt{libtins} per la ricostruzione dello stream ed accettati immediatamente dopo questa elaborazione, privando tuttavia il sistema della possibilità di modificarli successivamente. Questo meccanismo, sebbene un payload malevolo venga accettato, riesce comunque a bloccarlo a livello applicativo, prima che il flusso possa essere completamente riordinato, intervenendo sul primo pacchetto disordinato, che causerebbe a quel punto la chiusura forzata della connessione.
+Un'ulteriore criticità emerge nella gestione dei pacchetti con payload \emph{out-of-order} da modificare. Nell'implementazione corrente, i pacchetti non ordinati vengono analizzati dal TCP Follower di \texttt{libtins} per la ricostruzione dello stream ed accettati immediatamente dopo questa elaborazione, privando tuttavia il sistema della possibilità di modificarli successivamente. Questo meccanismo, sebbene un payload malevolo venga accettato, riesce comunque a bloccarlo a livello applicativo, prima che il flusso possa essere completamente riordinato, intervenendo sul pacchetto con la prima parte del payload non ordinato, che normalmente andrebbe a causare il riempimento del buffer del socket a livello applicativo, ma che in questo caso causerà, grazie all'intervento di firegex, un blocco della connessione TCP.\\
 
-Una soluzione alternativa prevedrebbe il buffering dei pacchetti \emph{out-of-order} in attesa dei segmenti mancanti, applicando modifiche retroattive sui pacchetti trattenuti. Tuttavia, questo approccio introdurrebbe: una complessità significativa nel meccanismo di ricostruzione distribuita del flusso e il rischio di saturare la \texttt{nfqueue} kernel-side, con conseguente perdita di pacchetti e possibile esposizione ad attacchi \texttt{DoS} mirati a sfruttare le debolezze di questo sistema, potenzialmente portandolo ad un blocco del traffico.
+Una soluzione alternativa prevedrebbe il buffering dei pacchetti \emph{out-of-order} in attesa dei segmenti mancanti, applicando modifiche retroattive sui pacchetti trattenuti. Tuttavia, questo approccio introdurrebbe: una complessità significativa nel meccanismo di ricostruzione distribuita del flusso e il rischio di saturare la \texttt{nfqueue} kernel-side, con conseguente perdita di pacchetti e possibile esposizione ad attacchi \texttt{DoS} mirati a sfruttare le debolezze di questo sistema, potenzialmente portandolo ad un blocco del traffico non desiderato.
 
 Sulla base di queste considerazioni, si conclude che il riscontro immediato dei pacchetti è un approccio che deve essere applicato al fine di scongiurare possibili criticità riguardanti il riempimento della coda kernel, soggetta a questa tipologia di attacchi. La scelta progettuale attuale, seppur limitante, garantisce un'operatività ed un throughput stabile e prevedibile, mantiene il sistema immune a possibili vulnerabilità ma non offre la possibilità di eseguire modifiche su pacchetti non ordinati.\\
 
@@ -471,11 +451,11 @@ Sarebbe possibile progettare un sistema che eviti i problemi di saturazione dell
 
 Dall'analisi delle soluzioni esistenti per il parsing di pacchetti HTTP è emersa l'assenza di strumenti compatibili con i requisiti specifici del progetto, in particolare per quanto riguarda l'integrazione con le funzionalità introdotte dal \texttt{PEP 684}\footcite{\url{https://peps.python.org/pep-0684/}}{pep648}. La necessità di supportare l'inizializzazione multi-fase (multi-phase initialization\footcite{\url{https://peps.python.org/pep-0489/}}{pep489}) e garantire thread safety ha reso indispensabile un approccio personalizzato.
 
-La soluzione adottata si basa su un fork modificato dell'implementazione di \texttt{Derrick Lyndon Pallas}\footcite{Python wrapper per llhttp: \url{https://github.com/pallas/pyllhttp}}{original_pyllhttp_impl}, che utilizza il parser \texttt{llhttp}\footcite{\url{https://github.com/nodejs/llhttp}}{llhttp} sviluppato per \texttt{Node.js}. Questo fork, pubblicamente disponibile su GitHub\footcite{\url{https://github.com/domysh/pyllhttp}}{pyllhttp_fork} e distribuito tramite PyPI\footnote{\texttt{https://pypi.org/project/pyllhttp/}} va a risolvere le limitazioni tecniche derivanti dalla sua versione originale e preserva le capacità core di llhttp, tra cui il parsing zero-copy dei chunk, e la validazione rigorosa dello standard \texttt{HTTP/1.1}\footcite{RFC2616, Hypertext Transfer Protocol -- HTTP/1.1}{rfc2616}.
+La soluzione adottata si basa su un mio fork, che parte dall'implementazione del wrapper python di \texttt{Derrick Lyndon Pallas}\footcite{Python wrapper per llhttp: \url{https://github.com/pallas/pyllhttp}}{original_pyllhttp_impl}, del parser \texttt{llhttp}\footcite{\url{https://github.com/nodejs/llhttp}}{llhttp} sviluppato per \texttt{Node.js}. Questo fork, pubblicamente disponibile su GitHub\footcite{\url{https://github.com/domysh/pyllhttp}}{pyllhttp_fork} e distribuito tramite PyPI\footnote{\texttt{https://pypi.org/project/pyllhttp/}}, va a risolvere le limitazioni tecniche derivanti dalla sua versione originale e preserva le capacità core di llhttp, tra cui il parsing zero-copy dei dati, e la validazione rigorosa del protocollo \texttt{HTTP/1.1}\footcite{RFC2616, Hypertext Transfer Protocol -- HTTP/1.1}{rfc2616}.
 
-\subsection{Supporto agli algoritmi di compressione HTTP}
+\subsection{Supporto agli algoritmi di compressione in HTTP}
 
-Nel traffico HTTP sono spesso in uso algoritmi di compressione per ridurre la dimensione del body. Dato il loro ampio utilizzo, al fine di semplificare l'implementazione di filtri ne richiederebbero l'analisi del contenuto, si è deciso si supportare la decompressione automatica degli algoritmi supportati dal browser \texttt{chrome}:
+Nel traffico HTTP sono spesso in uso algoritmi di compressione per ridurre la dimensione del body. Dato il loro ampio utilizzo, al fine di semplificare l'implementazione di filtri che ne richiederebbero l'analisi del contenuto, si è deciso si supportare la decompressione automatica degli algoritmi supportati dal browser \texttt{chrome}:
 
 \begin{itemize}
     \setlength{\itemsep}{2pt}
@@ -483,19 +463,17 @@ Nel traffico HTTP sono spesso in uso algoritmi di compressione per ridurre la di
     \item \textbf{gzip}\footcite{RFC1952, GZIP file format specification version 4.3}{rfc1952}: Nativamente supportato in python.
     \item \textbf{brotli}\footcite{RFC7932, Brotli Compressed Data Format}{rfc7932}: supportato tramite un'implementazione eseguita da \texttt{google}\footcite{\url{https://github.com/google/brotli}}{brotli_gh}, che tuttavia non supporta il \texttt{PEP 684}, per cui anche in questo caso è stato sviluppato un fork compatibile disponibile su github\footcite{\url{https://github.com/domysh/brotli}}{brotli_fork}.
     \item \textbf{zstd}\footcite{RFC8478, Zstandard Compression and the application/zstd Media Type}{rfc8478}: supportato tramite un wrapper python sviluppato da \texttt{Sergey Dryabzhinsky}\footcite{\url{https://github.com/sergey-dryabzhinsky/python-zstd}}{zstd_ortiginal_python_wrapper}, che tuttavia, essendo anch'esso non compatibile con il \texttt{PEP 684}, è stato personalizzato in un ulteriore fork\footcite{\url{https://github.com/domysh/python-zstd}}{zstd_fork}.
-    \item \textbf{deflate}\footcite{RFC1951, DEFLATE Compressed Data Format Specification version 1.3}{rfc1951}: Implementabile tramite il modulo \texttt{zlib}.
+    \item \textbf{deflate}\footcite{RFC1951, DEFLATE Compressed Data Format Specification version 1.3}{rfc1951}: Implementabile tramite il modulo \texttt{zlib}, nativamente supportato.
 \end{itemize}
 
 L'implementazione è stata scritta seguendo le specifiche definite nell'\texttt{RFC 2616} il quale definisce la possibilità di compressioni multiple, correttamente supportate nell'implementazione finale.
     
 \subsection{Supporto alle websocket}
 
-Nell'implementazione per HTTP/1.1 è stato incluso anche il supporto alle \texttt{websocket}\footcite{RFC6455, The WebSocket Protocol}{rfc6455}, tramite l'utilizzo della principale libreria python utilizzata per le decodifica dei \texttt{Frame}, ovvero \texttt{websockets}\footcite{\url{https://websockets.readthedocs.io/en/stable/}}{python_websockets}. Da qui sono state prese le funzionalità di decodifica dei frame, e le funzionalità per il supporto all'estensione \texttt{permessage-deflate}\footcite{RFC7692, Compression Extensions for WebSocket}{rfc7692}, per permetterne la decompressione, utilizzando internamente \texttt{zlib}, già resa compatibile per \texttt{PEP 684} grazie al fork precedentemente citato. La complessità nell'implementazione delle websocket si è concentrata sulla necessità di assemblare il flusso di dati correttamente, dato il mancato supporto nativo al parsing in streaming, come invece supportato su \texttt{llhttp}. Nella fase di upgrading della connessione HTTP, vengono riconosciuti i plugin abilitati, e viene automaticamente introdotta la gestione dei websocket che si occupa di decodificare i prossimi dati sulla connessione TCP.\\
+Nell'implementazione per HTTP/1.1 è stato incluso anche il supporto alle \texttt{websocket}\footcite{RFC6455, The WebSocket Protocol}{rfc6455}, tramite l'utilizzo della principale libreria python utilizzata per le decodifica dei \texttt{Frame}, ovvero \texttt{websockets}\footcite{\url{https://websockets.readthedocs.io/en/stable/}}{python_websockets}. Da qui sono state prese le funzionalità di decodifica dei frame, e le funzionalità per il supporto all'estensione \texttt{permessage-deflate}\footcite{RFC7692, Compression Extensions for WebSocket}{rfc7692}, per permetterne la decompressione, utilizzando internamente \texttt{zlib}. La complessità nell'implementazione delle websocket si è concentrata sulla necessità di assemblare il flusso di dati correttamente, dato il mancato supporto nativo al parsing in streaming, come invece supportato su \texttt{llhttp}. Nella fase di upgrading della connessione HTTP, vengono riconosciuti i plugin abilitati, e viene automaticamente introdotta la gestione dei websocket che si occupa di decodificare i prossimi dati sulla connessione TCP.\\
 In caso di fallimento nel parsing dei frame, i dati vengono resi disponibili per il filtraggio, semplicemente come byte grezzi, stesso meccanismo usato in caso di upgrade ad HTTP/2 (non supportato attualmente).
 
 \section{Sintassi e gestione dei filtri python}
-
-
 
 I filtri Python per \texttt{nfproxy} vengono definiti in file singoli (uno per servizio) contenenti funzioni annotate con il decoratore \texttt{@pyfilter}. Queste funzioni, denominate collettivamente \texttt{pyfilters}, accettano parametri tipizzati che rappresentano i dati estratti dal traffico di rete e restituiscono istruzioni di azione (\texttt{ACCEPT}, \texttt{REJECT}, \texttt{DROP}, chiamati \texttt{statment}) determinando il comportamento finale sul pacchetto.  
 
@@ -520,18 +498,17 @@ def curl_filter(r: HttpRequest):
         return REJECT  # Blocca client curl
 \end{minted}
 \end{listing}
-
-Il sistema si appoggia alla libreria \texttt{firegex}\footcite{\url{https://pypi.org/project/firegex/}}{firegex_pypi}, che fornisce sia i decoratori per la definizione dei filtri, sia i modelli dati per l'annotazione dei parametri. Durante la fase di compilazione, \texttt{nfproxy} analizza staticamente le signature delle funzioni, sullo stesso principio di validazione tipica di \texttt{pydantic}\footcite{\url{https://docs.pydantic.dev/latest/}}{pydantic}, per determinare automaticamente quali layer di protocollo analizzare (es. HTTP, TCP), eventalmente quali campi estrarre dal payload, attivando internamente una serie di meccanismi per riuscire a soddisfare le richieste dei filtri.\\
+Il sistema si appoggia sulla libreria \texttt{firegex}\footcite{\url{https://pypi.org/project/firegex/}}{firegex_pypi}, che fornisce sia i decoratori per la definizione dei filtri, sia i modelli dati per l'annotazione dei parametri. Durante la fase di compilazione, \texttt{nfproxy} analizza le signature delle funzioni, sullo stesso principio di validazione tipica di \texttt{pydantic}\footcite{\url{https://docs.pydantic.dev/latest/}}{pydantic}, per determinare automaticamente quali layer di protocollo analizzare (es. HTTP, TCP), eventalmente quali campi estrarre dal payload, attivando internamente una serie di meccanismi per riuscire a soddisfare le richieste dei filtri.\\
 Se un filtro richiede dati non coerenti tra loro, potrebbe essere elaborato ma mai di fatto eseguito.
 L'esecuzione avviene tramite dispatch dinamico: a ogni pacchetto corrispondente ai criteri dichiarati nella signature vengono passati gli oggetti istanziati se disponibili, e ne viene successivamente dato un riscontro sull'azione da eseguire tramite il valore di ritorno. L'assenza di un'istruzione \texttt{return} o il ritorno esplicito di \texttt{None} equivalgono a un'azione \texttt{ACCEPT} implicita.\\
-I filtri continuano ad essere eseguiti fino a che tutti quelli attivi non vengono elaborati, o fino a che uno statment diverso da \texttt{ACCEPT} viene restituito.
+I filtri continuano ad essere eseguiti fino a che tutti quelli attivi non vengono elaborati, o fino a che uno statment diverso da \texttt{ACCEPT} viene restituito.\\
 Le funzionalità per la modifica del traffico sono accessibili tramite lo statment \texttt{UNSTABLE\_MANGLE}, che si occuperà di elaborare le modifiche eseguite al pacchetto, tramite il model \texttt{RawPacket}. Eventuali modifiche tuttavia non andranno ad influenzare gli altri datahandler che non le riveleranno.
 
 Ulteriori dettagli sull'utilizzo dei models (spesso chiamati anche datahandler) sono disponibili nella documentazione integrata nell'interfaccia di \texttt{firegex}.
 
 \subsection{Gestione dei buffer di memoria}
 
-La gestione di flussi di traffico con payload di grandi dimensioni richiede un'attenzione particolare al consumo di memoria, specialmente in contesti ad alto throughput. \texttt{nfproxy} implementa un sistema di bufferring che consente una dimensione massima predefinita di 1MB per ciascun tipo di \texttt{datahandler}, tentando di mantere il corretto funzionamento dei parser anche in condizioni di sovraccarico. Infatti quando la soglia viene superata, il buffer viene automaticamente svuotato sebbene ciò possa comportare perdita di informazioni utili.
+La gestione di flussi di traffico con payload di grandi dimensioni richiede un'attenzione particolare al consumo di memoria, specialmente in contesti ad alto throughput. \texttt{Nfproxy} implementa un sistema di bufferring che consente una dimensione massima predefinita di 1MB per ciascun tipo di \texttt{datahandler}, tentando di mantere il corretto funzionamento dei parser anche in condizioni di sovraccarico. Infatti quando la soglia viene superata, il buffer viene automaticamente svuotato sebbene ciò possa comportare perdita di informazioni utili.
 
 Il comportamento predefinito è configurabile attraverso variabili globali che permettono di adattare il bilanciamento tra consumo di risorse e completezza analitica. È possibile ridurre la dimensione massima dei buffer per ambienti memory-constrained o aumentarla per scenari che richiedono la ricostruzione completa di flussi complessi. In aggiunta, l'azione da intraprendere al superamento della capacità del buffer può essere personalizzata tra quattro opzioni: svuotamento controllato (\texttt{FLUSH}), accettazione passiva del traffico successivo (\texttt{ACCEPT}), rifiuto selettivo della connessione (\texttt{REJECT}), o drop dei pacchetti successivi (\texttt{DROP}).
 
@@ -556,8 +533,7 @@ FGEX_FULL_STREAM_ACTION = FullStreamAction.REJECT  # Politica di overflow
 
 \section{Proxy di simulazione}
 
-Per validare il corretto funzionamento dei filtri prima del deployment sul firewall, \texttt{firegex} integra un ambiente di simulazione basato su proxy TCP.\@ Questo strumento, accessibile tramite il comando \texttt{fgex nfproxy}, consente di testare le regole in condizioni controllate riproducendo fedelmente l'architettura operativa del modulo reale.\\
-Un tipico workflow di testing prevede l'esecuzione di un comando simile al seguente:
+Per validare il corretto funzionamento dei filtri prima del deployment sul firewall, \texttt{firegex} integra un ambiente di simulazione basato su proxy TCP.\@ Questo strumento, accessibile tramite il comando \texttt{fgex nfproxy}, consente di testare le regole in condizioni controllate riproducendo fedelmente l'architettura operativa del modulo reale. Un tipico workflow di testing prevede l'esecuzione di un comando simile al seguente:
 \begin{listing}[H]
     \begin{minted}[
         frame=single,
