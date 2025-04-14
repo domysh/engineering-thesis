@@ -1,4 +1,4 @@
-# Tesi di Laurea - Difesa di Sistemi Informativi tramite Firewall per Competizioni Attacco/Difesa
+# Tesi di Laurea - Difesa di Sistemi Informativi tramite Firewall in Competizioni Attacco/Difesa
 
 # LA TESI È ANCORA IN FASE DI SVILUPPO
 
