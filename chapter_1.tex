@@ -32,7 +32,7 @@ Si evidenzia come i checker non sfruttino mai le vulnerabilità dei servizi, ma 
 Ogni flag viene generata e inserita nel servizio dei vari team ciclicamente ad ogni tick, con una flag sempre differente dalle altre ed ha usualmente una durata massima di valenza (ad esempio 5 tick): in questo intervallo di tempo è ancora possibile rubare e consegnare la flag al gameserver ottenendo punti.\\
 Le flag infatti una volta ottenute vanno consegnate al gameserver, che tramite un calcolo che può variare in diverse competizioni, assegna punti al team che l'ha consegnata.\\
 
-Nel seguente esempio si mostra il calcolo per l'assegnazione dei punti alla consegna di una flag valida, utilizzato nel progetto CyberChallenge\footcite{\url{https://rules.ad.cyberchallenge.it/}}{cyberchallenge_ad_rules}:
+Nel seguente esempio si mostra il calcolo per l'assegnazione dei punti alla consegna di una flag valida, utilizzato nel progetto CyberChallenge\footcite{\url{https://ad.cyberchallenge.it/rules/}}{cyberchallenge_ad_rules}:
 
 \begin{listing}[H]
     \begin{minted}[
@@ -84,11 +84,11 @@ Tale valore può essere incrementato o ridotto in base a tre componenti aggiunti
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.98\textwidth]{images/chapter1/oasis_scoreboard.png}
-    \caption{Scoreboard di una competizione realizzata con Oasis al DevFest Bari 2024}\label{fig:oasis_scoreboard}
+    \includegraphics[width=0.98\textwidth]{images/chapter1/ctfbox_scoreboard.png}
+    \caption{Scoreboard di una simulazione realizzata con CTFBox}\label{fig:ctfbox_scoreboard}
 \end{figure}
 
-Di seguito si riporta come viene calcolato il punteggio nelle competizioni nazionali attack defence di Cyberchallenge\footcite{\url{https://rules.ad.cyberchallenge.it/}}{cyberchallenge_ad_rules}:
+Di seguito si riporta come viene calcolato il punteggio nelle competizioni nazionali attack defence di Cyberchallenge\footcite{\url{https://ad.cyberchallenge.it/rules/}}{cyberchallenge_ad_rules}:
 
 \begin{listing}[H]
     \begin{minted}[
@@ -131,7 +131,7 @@ for service in services:
 \subsection{Rete di gara}
 
 Per questa analisi si prende in considerazione la rete di gara in utilizzo per le competizioni
-nazionali di Cyberchallenge\footcite{\url{https://rules.ad.cyberchallenge.it/}}{cyberchallenge_ad_rules}, sottolineando come 
+nazionali di Cyberchallenge\footcite{\url{https://ad.cyberchallenge.it/rules/}}{cyberchallenge_ad_rules}, sottolineando come 
 a grandi linee la configurazione di rete è spesso simile, ma potrebbe variare in base alle competizioni e agli organizzatori.\\
 
 \begin{figure}[H]
@@ -163,7 +163,7 @@ I team iniziano a lavorare, tentando di difendersi dai primi attacchi, e a loro 
 Inoltre viene segnalato pubblicamente quali dei servizi di quale team non sono funzionanti, e perchè sono considerati down: cioè la motivazione per cui i checker hanno segnalato un mal funzionamento.
 La competizione termina ad un determinato orario di fine, dove la rete di gara viene chiusa, e il gameserver interrompe l'azione dei checker non accettando inoltre nuove submission di flag.\\
 
-\texttt{NOTA:} tutto quello descritto in questo capitolo è possibile simularlo e sperimentarlo tramite un mio progetto chiamato \texttt{Oasis}\footcite{\url{https://github.com/domysh/Oasis}}{oasis_gh}, fork del progetto originale dei TheRomanXpl0it\footcite{\url{https://theromanxpl0.it/about.html}}{theromanxploit} con cui è possibile simulare ma anche svolgere competizioni A/D di medio-piccole dimensioni in un ambiente realizzato unicamente tramite l'utilizzo di container, con funzionamento e regolamento simile a quello di CyberChallenge\footcite{\url{https://rules.ad.cyberchallenge.it/}}{cyberchallenge_ad_rules}.
+\texttt{NOTA:} tutto quello descritto in questo capitolo è possibile simularlo e sperimentarlo tramite un mio progetto chiamato \texttt{CTFBox}\footcite{\url{https://github.com/domysh/ctfbox}}{ctfbox_gh}, nato come fork di \texttt{Oasis} dei TheRomanXpl0it\footcite{\url{https://theromanxpl0.it/about.html}}{theromanxploit} con cui è possibile simulare ma anche svolgere competizioni A/D di medio-piccole dimensioni in un ambiente realizzato unicamente tramite l'utilizzo di container, con funzionamento e regolamento simile a quello di CyberChallenge\footcite{\url{https://ad.cyberchallenge.it/rules/}}{cyberchallenge_ad_rules}.
 
 \section{Tool utili}
 
