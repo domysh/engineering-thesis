@@ -15,11 +15,19 @@
 \usepackage{xspace}
 \usepackage{fontawesome5}
 \usepackage{minted}
+\usepackage[numbers]{natbib}
+\usepackage{etoolbox}
+\usepackage{listings}
+\usepackage{lmodern}
+
 \pgfplotsset{compat=1.18}
 
 \SetupFloatingEnvironment{listing}{name=Codice}
 
 \usepackage{hyperref}
+
+\usepackage[acronym,toc,nomain,nonumberlist,nopostdot]{glossaries}
+\makeglossaries
 
 \hypersetup{
     colorlinks = true,
@@ -41,7 +49,7 @@
 \def\title{DIFESA DI SISTEMI INFORMATIVI TRAMITE FIREWALL IN COMPETIZIONI ATTACCO/DIFESA}
 \def\author{Domingo Dirutigliano}
 \def\prof{Chiar.mo Prof.\ Gennaro Boggia}
-\def\supervisor{Dott.Ing. Daniele Pugliese}
+\def\supervisor{Dott. Ing. Daniele Pugliese}
 \def\subject{RETI DI TELECOMUNICAZIONI}
 \def\annoacc{2024\ -\ 2025}
 \def\beforecandidate{Laureando}
@@ -71,28 +79,43 @@
 
 \begin{document}
 
+\newcommand{\footcite}[2]{\textsuperscript{\citenum{#2}}\let\thefootnote\relax\footnote{\cite{#2} #1}}
+\newcommand{\footciteref}[1]{\textsuperscript{\citenum{#1}}}
 %\maketitle
 
 
 \input{front}
-
+\input{acronyms}
 % \cleardoublepage
 % \input{dedica}
-
 % \cleardoublepage
 
 \pagenumbering{roman}
-
 \input{abstract}
 
-\cleardoublepage
-\tableofcontents
-\cleardoublepage
 
-\newcommand{\footcite}[2]{\footnote{#1\hspace{\fill}\cite{#2}}}
+\cleardoublepage{}
+\tableofcontents
+
+\begingroup
+\renewcommand\lstlistlistingname{Elenco dei codici}
+\addtocontents{toc}{\protect\setcounter{tocdepth}{-1}}
+\listoffigures
+\addtocontents{toc}{\protect\setcounter{tocdepth}{-1}}
+\lstlistoflistings{}
+\addtocontents{toc}{\protect\setcounter{tocdepth}{-1}}
+%\listoftables
+%\addtocontents{toc}{\protect\setcounter{tocdepth}{-1}}
+\printglossary[type=\acronymtype]
+\addtocontents{toc}{\protect\setcounter{tocdepth}{-1}}
+\addtocontents{toc}{\protect\setcounter{tocdepth}{3}}
+\endgroup
 
 \pagenumbering{arabic}
-\setcounter{page}{1}
+% Don't touch! These commands needs to fix toc!!
+\chapter*{}
+\thispagestyle{empty}
+\setcounter{page}{0} % Don't touch! The real first page is 1, 0 is a phantom page needed to fix toc!!
 \include{introduction}
 \include{chapter_1}
 \include{chapter_2}
@@ -102,7 +125,9 @@
 \include{ending}
 \include{acknoweldgements}
 
-
-\bibliographystyle{unsrt}  
+\cleardoublepage{}
+\bibliographystyle{unsrt}
+\phantomsection{}
+\addcontentsline{toc}{chapter}{Bibliografia}
 \bibliography{bibliografia}
 \end{document}
