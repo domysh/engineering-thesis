@@ -1,4 +1,6 @@
-\chapter{Competizioni \gls{ctf} \gls{ad}}\label{chap:ctfad}
+\afterpage{\blankpage}
+\chapter{Competizioni CTF Attack/Defense}\label{chap:ctfad}
+\setcounter{page}{5}
 
 Le competizioni \gls{ctf} di tipo \gls{ad} sono una tipologia di competizioni in cui i partecipanti devono difendere i propri servizi e attaccare i servizi degli avversari, in un contesto di gara estremamente dinamico e competitivo. 
 In queste competizioni prendono parte diversi team, i quali vengono associati ognuno ad una macchina, solitamente linux, con in esecuzione un insieme di servizi ogniuno dei quali presenta vulnerabilità\footcite{\url{https://faustctf.net/information/attackdefense-for-beginners/}}{faustctf_attackdefense_for_beginners}.
@@ -227,3 +229,66 @@ Questi tool permettono di filtrare il traffico in modo da riconoscere e bloccare
     \includegraphics[width=0.20\textwidth]{images/chapter1/FiregexLogo.png}
     \caption{Logo di Firegex}\label{fig:firegex_logo}
 \end{figure}
+
+\section{Esempio di un servizio vulnerabile: PCSS}
+
+Consideriamo come esempio un servizio vulnerabile presente nel simulatore di competizioni \gls{ad} CTFBox\footcite{\url{https://github.com/domysh/ctfbox}}{ctfbox_gh}, denominato PCSS (Permanent Cat Storage Service).
+
+Il servizio è composto da un semplice file python e permette di memorizzare e leggere dei testi tramite una connessione \gls{tcp} attraverso un'interfaccia \gls{cli} molto semplice. Il servizio presenta un solo flag store, ma ha al suo interno due vulnerabilità, pertanto per renderlo sicuro è necessario correggerle entrambe.\\
+
+La registrazione al servizio avviene in modo anonimo: selezionando la funzione di creazione del database, il servizio fornisce un id alfanumerico del database, e un token jwt di accesso con cui è possibile accedere al medesimo in seguito.\\
+Una volta registrati, o eseguito l'accesso tramite il token, è possibile elencare i file presenti nel database, leggerne il contenuto, e crearne nuovi.\\
+A livello tecnico il servizio crea una cartella per ogni database, e all'interno di essa crea i file richiesti.
+
+Il gameserver pubblica come Flag ID l'id del database in cui si trova la flag, e il nome del file in cui è memorizzata.\\
+Come è possibile notare, i flag id non sono sufficienti per accedere alla flag, ma sono un'informazione utile per gli attaccanti per individuare più facilmente la flag all'interno del servizio, e inoltre ci è di aiuto per comprendere dove il servizio memorizza le flag, in questo caso in un file nel database.\\
+
+La prima vulnerabilità che possiamo individuare è una vulnerabilità di \gls{lfi}:
+
+\begin{listing}[H] 
+\begin{minted}[
+    frame=single,
+    framerule=0.8pt,
+    fontsize=\footnotesize,
+    breaklines
+]{python}
+def read_file():
+    file = input("Please insert the file name: ").strip()
+    print("File content:")
+    subprocess.run(["cat", f"./data/{ctx.loggined_db}/{file}"])
+    print("")
+\end{minted}
+\caption{Funzione vulnerabile a Local File Inclusion nel servizio PCSS (da CTFBox\footciteref{ctfbox_gh})}\label{lst:scorecalc}
+\end{listing}
+
+Inserendo semplicemente \texttt{`../<database\_id>/<file\_name>'} come nome del file, è possibile accedere a file esterni al database, e quindi anche alla flag.\\
+
+La seconda vulnerabilità invece è una vulnerabilità di natura crittografica causata dall'uso di una vecchia versione della libreria \texttt{jwt} (versione 0.5.4), che permette di inserire nel token come algoritmo di firma \texttt{none} e quindi di bypassare la verifica della firma, permettendo di generare un token malevolo per accedere al database.\\
+Questo è possibile poichè la prima parte del token \gls{jwt} è in chiaro, e la sua autenticità non è garantita, per cui è usualmente buona pratica specificare lato server quali algoritmi di firma sono supportati, escludendo attacchi di questo tipo. Questa vulnerabilità è la medesima riscontrata in un famoso framework di autenticazione \gls{jwt} in NodeJS e classificata come CVE-2022-23540\footcite{\url{https://nvd.nist.gov/vuln/detail/cve-2022-23540}}{cve_2022_23540}.
+
+È pertanto possibile costruire un token \gls{jwt} valido per accedere al database, e quindi alla flag, senza conoscere il segreto di firma:\\
+
+\begin{listing}[H]
+\begin{minted}[
+    frame=single,
+    framerule=0.8pt,
+    fontsize=\footnotesize,
+    breaklines
+]{python}
+def attack(team_ip: str, flag_id):
+    #The bugged jwt is encoded manually but you could also use a jwt lib to make it
+    first_part = base64.b64encode(json.dumps({"alg": "none", "typ": "JWT"}).encode()).decode().replace("=", "")
+    data_part = base64.b64encode(json.dumps({'db': flag_id['db_name']}).encode()).decode().replace("=", "")
+    jwt = f"{first_part}.{data_part}."
+    conn = CatStorage(team_ip)
+    conn.login(jwt)
+    result = conn.read_file(flag_id["filename"])
+    conn.close()
+    return result
+\end{minted}
+\caption{Funzione per eseguire un attacco tramite un token JWT malevolo su PCSS (da CTFBox\footciteref{ctfbox_gh})}\label{lst:scorecalc}
+\end{listing}
+
+La difesa di questo servizio è piuttosto semplice, ma potrebbe risultare anche facilmente soggetta ad errori che potrebbero comprometterne il funzionamento: ciò potrebbe essere causato dall'aggiornamento della libreria \texttt{jwt} che se soggetta a cambiamenti alle sue \gls{api} nelle versioni successive, potrebbe portare a malfunzionamenti imprevisti del servizio stesso, e quindi necessitare di ulteriori modifiche al servizio.\\
+
+In alternativa potremmo utilizzare sistemi come firegex\footcite{\url{https://github.com/pwnzer0tt1/firegex}}{firegex_gh} che tramite la sua nuova funzione \gls{nfproxy} può eseguire la decodifica del token \gls{jwt} per verificare che l'algoritmo nel token sia quello previsto dal servizio, interrompendo i tentativi di accesso malevoli. Inoltre filtrando anche i doppi punti nel traffico \gls{tcp} in ingresso, possiamo protteggere il servizio anche dalla vulnerabilità di \gls{lfi}.\\

@@ -19,6 +19,8 @@
 \usepackage{etoolbox}
 \usepackage{listings}
 \usepackage{lmodern}
+\usepackage{afterpage}
+\usepackage{emptypage}
 
 \pgfplotsset{compat=1.18}
 
@@ -27,7 +29,7 @@
 \usepackage{hyperref}
 
 \usepackage[acronym,toc,nomain,nonumberlist,nopostdot]{glossaries}
-\makeglossaries
+\makeglossaries{}
 
 \hypersetup{
     colorlinks = true,
@@ -38,11 +40,10 @@
 
 %%% workaround for listing
 % save the current meaning of \listing
-\let\savedlisting\listing
+\let\savedlisting\listing{}
 % at the right spot, restore the meaning
 \AtBeginDocument{\let\listing\savedlisting}
 %%% end of workaround
-
 
 \def\dept{Dipartimento di Ingegneria Elettrica e dell’Informazione}
 \def\course{Corso di Laurea triennale in Ingegneria Informatica e dell’Automazione}
@@ -59,16 +60,6 @@
 \def\beforeannoacc{Anno Accademico}
 
 \makeatletter
-\def\cleardoublepage{\clearpage\if@twoside\ifodd\c@page\else
-    \hbox{}
-    \vspace*{\fill}
-    \vspace{\fill}
-    \thispagestyle{empty}
-    \newpage
-    \if@twocolumn\hbox{}\newpage\fi\fi\fi}
-\makeatother
-
-\makeatletter
 \renewcommand{\@makefntext}[1]{%
   \scriptsize
   \parindent1em%
@@ -81,11 +72,15 @@
 
 \newcommand{\footcite}[2]{\textsuperscript{\citenum{#2}}\let\thefootnote\relax\footnote{\cite{#2} #1}}
 \newcommand{\footciteref}[1]{\textsuperscript{\citenum{#1}}}
-%\maketitle
 
+\newcommand\blankpage{%
+    \null{}
+    \thispagestyle{empty}%
+    \newpage}
 
 \input{front}
 \input{acronyms}
+
 % \cleardoublepage
 % \input{dedica}
 % \cleardoublepage
@@ -93,30 +88,25 @@
 \pagenumbering{roman}
 \input{abstract}
 
-
-\cleardoublepage{}
+\afterpage{\blankpage}
 \tableofcontents
 
 \begingroup
 \renewcommand\lstlistlistingname{Elenco dei codici}
 \addtocontents{toc}{\protect\setcounter{tocdepth}{-1}}
 \listoffigures
-\addtocontents{toc}{\protect\setcounter{tocdepth}{-1}}
 \lstlistoflistings{}
-\addtocontents{toc}{\protect\setcounter{tocdepth}{-1}}
 %\listoftables
-%\addtocontents{toc}{\protect\setcounter{tocdepth}{-1}}
 \printglossary[type=\acronymtype]
-\addtocontents{toc}{\protect\setcounter{tocdepth}{-1}}
 \addtocontents{toc}{\protect\setcounter{tocdepth}{3}}
 \endgroup
 
-\pagenumbering{arabic}
 % Don't touch! These commands needs to fix toc!!
 \chapter*{}
 \thispagestyle{empty}
-\setcounter{page}{0} % Don't touch! The real first page is 1, 0 is a phantom page needed to fix toc!!
+\counterwithout{section}{chapter}
 \include{introduction}
+\counterwithin{section}{chapter}
 \include{chapter_1}
 \include{chapter_2}
 \include{chapter_3}

@@ -8,7 +8,7 @@ Questo repository contiene il codice sorgente della tesi di laurea di **Domingo 
 
 ## 🧠 Descrizione
 
-La tesi tratta dello sviluppo di una feature per il firewall [firegex](https://github.com/pwnzer0tt1/firegex) per la difesa di sistemi informativi all'interno di competizioni "attack/defense", tipiche del contesto CTF (Capture The Flag). La feature denominata 'nfproxy' permette lo sviluppo tramite dei semplici script python che vanno definire dei filtri scritti ad hoc per la difesa dei servizi in gara. La tesi tratta tutta la parte di sviluppo, discutendo delle varie problematiche e limiti, spiegandone tecnicamente il funzionamento.
+La tesi tratta della progettazione e dello sviluppo di una feature per il firewall [firegex](https://github.com/pwnzer0tt1/firegex) per la difesa di sistemi informativi all'interno di competizioni "attack/defense", tipiche del contesto CTF (Capture The Flag). La feature denominata 'nfproxy' permette lo sviluppo tramite dei semplici script python che vanno definire dei filtri scritti ad hoc per la difesa dei servizi in gara. La tesi discute inoltre tutte  le varie problematiche e limiti, spiegandone tecnicamente le cause e proponendo soluzioni appropriate.
 
 ## 📚 Informazioni
 
