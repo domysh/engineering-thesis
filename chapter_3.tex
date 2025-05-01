@@ -332,7 +332,7 @@ Come citato precedentemete, prima di inizializzare la queue, vengono inseriti tr
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.98\textwidth]{images/chapter3/nf-hooks.png}
-    \caption{\gls{nftables} Hooks}\label{fig:nftables_hooks}
+    \caption{Grafico degli hooks di Netfilter Tables}\label{fig:nftables_hooks}
 \end{figure}
 
 Il traffico in particolare viene intercettato sia in pre-routing, che in post-routing ad un hook prima dell'azione del modulo conntrack, ma dopo dell'azione di defrag, rispettivamente a prio -310 in pre-routing e 110 in post-routing rientrando nei range corretti, come riportati sulla wiki ufficiale di \gls{nftables}\footcite{\url{https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks}}{netfilter_hooks}. Questo permette di ottenere dei pacchetti che hanno già subito il processo di deframmentazione a livello 3, di cui pertanto non ci dovremo preoccupare, ma che non hanno subito il processo di routing (che quindi volendo potremmo manipolare) e che non sono stati ancora analizzati dal modulo conntrack.\\
