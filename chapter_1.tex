@@ -4,9 +4,7 @@
 
 Le competizioni \gls{ctf} di tipo \gls{ad} sono una tipologia di competizioni in cui i partecipanti devono difendere i propri servizi e attaccare i servizi degli avversari, in un contesto di gara estremamente dinamico e competitivo.
 
-In queste competizioni prendono parte diversi team, i quali vengono associati ognuno ad una macchina, solitamente linux, con in esecuzione un insieme di servizi ogniuno dei quali presenta vulnerabilità\footcite{\url{https://faustctf.net/information/attackdefense-for-beginners/}}{faustctf_attackdefense_for_beginners}.
-
-I servizi sono accessibili tramite la rete di gara, e sono replicati su tutte le macchine.
+In queste competizioni prendono parte diversi team, i quali vengono associati ognuno ad una macchina, solitamente linux, con in esecuzione un insieme di servizi ogniuno dei quali presenta vulnerabilità\footcite{\url{https://faustctf.net/information/attackdefense-for-beginners/}}{faustctf_attackdefense_for_beginners}. I servizi sono accessibili tramite la rete di gara, e sono replicati su tutte le macchine.
 
 \section{Descrizione dell'infrastruttura}
 
@@ -30,14 +28,11 @@ Al centro di tutta la competizione c'è il gameserver, entità (che può essere 
 La competizione è strutturata in tick (o round), ovvero intervalli di tempo in cui ciclicamente il gameserver assegna punti ai team in base alle azioni compiute dagli stessi, e monitora i servizi tramite i checker.
 
 Questo tempo può variare da competizione a competizione. I checker sono dei bot che si occupano di supervisionare lo stato della gara eseguendo diverse azioni come:
-
 \begin{itemize}
     \setlength{\itemsep}{2pt}
     \setlength{\parskip}{2pt}
     \item Verificare se il servizio è funzionante e raggiungibile, andando a connettersi ed eseguendo azioni di normale utilizzo, assicurandone anche l'integrità.
-
     \item Utilizzare il servizio per memorizzare al suo interno una flag, inserita come informazione sensibile normalmente non accessibile seguendo i normali workflow del servizio.
-
     \item Verificare che le flag inserite nei tick precedenti siano ancora raggiungibili tramite un normale accesso autorizzato, e che pertanto non siano state modificate o rimosse dal team possessore di quella macchina.
 \end{itemize}
 

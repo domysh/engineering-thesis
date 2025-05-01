@@ -18,7 +18,7 @@ In particolare, quelli riguardanti \gls{nfproxy} sono contenuti nel file tests/n
     \item Avvia un nuovo servizio sull'interfaccia di loopback, e verifica che il traffico non sia stato compromesso dal semplice avvio del modulo.
     \item Verifica che ogni tipo di statment sia correttamente funzionante, inserendo un filtro che individua se sul segmento \gls{tcp} sia presente un payload specifico, che se inviato, causi il comportamento desiderato, imposto dallo statment inserito.
     \item Verifica che la funzionalità di modifica funzioni correttamente (nelle casistiche in cui dovrebbe), eseguendo prove sia su mangle a pacchetti più piccoli, che a pacchetti più grandi, comprovando pertanto che la traduzione degli \gls{ack} e \gls{seq} avvenga correttamente. Inoltre viene verificato se a seguito della modifica, il traffico di rete continui a transitare normalmente.
-    \item Si assiucura che le funzionalità di interruzione del servizio e del singolo pyfilter siano correttamente funzionanti.
+    \item Si assicura che le funzionalità di interruzione del servizio e del singolo pyfilter siano correttamente funzionanti.
     \item Per ogni tipo di datahandler, si scambiano dei payload di prova al fine di verificare se il parsing dei vari dati avvenga correttamente per i model:
     TCPInputStream, TCPOutputStream, HttpRequest, HttpResponse,
     HttpRequestHeader, HttpResponseHeader includendo anche il parsing di Frame websocket.
