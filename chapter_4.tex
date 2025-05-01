@@ -8,9 +8,7 @@ I rilasci avvengono sia per architetture x86\_64 che ARM64, al fine di supportar
 
 \section{Integrazione dei test}
 
-Tutti i test di firegex sono disponibili nel suo repository, all'interno della cartella tests.
-
-In particolare, quelli riguardanti \gls{nfproxy} sono contenuti nel file tests/nfproxy\_test.py, ed esegue la seguente serie di operazioni:
+Tutti i test di firegex sono disponibili nel suo repository, all'interno della cartella tests. In particolare, quelli riguardanti \gls{nfproxy} sono contenuti nel file tests/nfproxy\_test.py, ed esegue la seguente serie di operazioni:
 
 \begin{itemize}
     \setlength{\itemsep}{1pt}
@@ -60,6 +58,7 @@ Macbook Air M2 16GB RAM
 Su una VM avviata da OrbStack con Fedora Linux 41 (Container Image) aarch64
 Linux 6.12.13-orbstack-00304-gede1cf3337c4
 \end{minted}
+\vspace{-1em}
 \end{listing}
 
 Lo script python che esegue i benchmark, ripete la stessa misura un numero configurabile di volte, sia per il modulo \gls{nfproxy}, che per il modulo \gls{nfregex}.
@@ -74,6 +73,7 @@ I risultati sono stati raccolti e analizzati, e messi a disposizioni nei grafici
 python3 comparemark.py nfproxy -p testpassword -d 1 -s 50 -V 100
 python3 comparemark.py nfregex -p testpassword -d 1 -s 50 -V 100
 \end{minted}
+\vspace{-1em}
 \end{listing}
 
 I benchmark pertanto sono stati eseguiti con 1 secondo di durata della singola misura, 50 connessioni simultanee, e 100 misure eseguite. Il numero indicato dopo la T nei grafici indica il numero di thread con cui firegex è stato configurato: quindi eseguiti sia in single-threading che in multi-threading (con 8 thread).

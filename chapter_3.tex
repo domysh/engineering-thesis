@@ -2,7 +2,7 @@
 
 Il \gls{regex} filtering è un modello di filtraggio che garantisce ottime prestazioni (grazie all'elaborazione tramite linguaggi e librerie ottimizzati), ma presenta forti limitazioni nella flessibilità di analisi del traffico.
 
-Questa rigidità è particolarmente rilevante nei \gls{ctf}, dove la maggior parte dei servizi utilizza protocolli come \gls{http}, che spesso includono contenuti compressi o codificati (es. Base64, \gls{gzip}), difficilmente analizzabili tramite \gls{regex}.
+Questa rigidità è particolarmente rilevante nei \gls{ctf}, dove la maggior parte dei servizi utilizza protocolli come \gls{http}, che spesso includono contenuti compressi o codificati (es. Base64, gzip), difficilmente analizzabili tramite \gls{regex}.
 
 A discapito delle prestazioni, \gls{nfproxy} introduce il vantaggio di scrivere filtri in Python\footcite{\url{https://python.org/}}{python}, linguaggio semplice e rapido per lo scripting, superando i limiti precedentemente descritti e offrendo:
 
@@ -44,10 +44,10 @@ Di seguito gli obiettivi fondamentali del modulo:
     \item \textbf{Integrazione con Python}: Fornire un'interfaccia in Python per implementare le regole di filtraggio, con funzioni ottimizzate e sintassi intuitiva.
     
     \item \textbf{Analisi avanzata di \gls{http}/1.1 e WebSocket}: Interpretazione nativa dei pacchetti applicativi, con estrazione automatica dei dati decodificati/decompressi. Supporto integrato per:
-    \gls{gzip}\footcite{RFC1952, GZIP file format specification version 4.3}{rfc1952},
+    gzip\footcite{RFC1952, GZIP file format specification version 4.3}{rfc1952},
     deflate\footcite{RFC1951, DEFLATE Compressed Data Format Specification version 1.3}{rfc1951},
     brotli\footcite{RFC7932, Brotli Compressed Data Format}{rfc7932},
-    \gls{zstd}\footcite{RFC8478, Zstandard Compression and the application/zstd Media Type}{rfc8478}, 
+    zstd\footcite{RFC8478, Zstandard Compression and the application/zstd Media Type}{rfc8478}, 
     e l'estensione WebSocket permessage-deflate\footcite{RFC7692, Compression Extensions for WebSocket}{rfc7692}.
     
     \item \textbf{Ricostruzione dello stream TCP}: Accesso al payload ordinato a livello di trasporto, indipendentemente dalla frammentazione.
@@ -174,6 +174,7 @@ void before_loop() {
     handle_packet_code = unmarshal_code(...); // Deserializzazione bytecode
 }
 \end{minted}
+\vspace{-1em}
 \caption{Inizializzazione di un processo consumatore con GIL indipendente in nfproxy}\label{lst:no_gil_python_nfproxy}
 \end{listing}
 L'utilizzo delle funzionalità offerte dal \gls{pep} 684\footcite{\url{https://peps.python.org/pep-0684/}}{pep648}, soffre tuttavia anche di forti limitazioni sull'utilizzo di moduli senza multi-phase initialization\footcite{\url{https://peps.python.org/pep-0489/}}{pep489} (includendo tutti quelli scritti in Cython\footcite{\url{https://cython.org/}}{cython}) e moduli con componenti non thread-safe. Nel corso dello sviluppo, queste limitazioni sono state oggetto di diverse problematiche, affrontate e approfondite in seguito.
@@ -204,16 +205,15 @@ uint32_t hash_stream_id(const stream_id &sid) {
     addr_hash ^= max_addr[0] ^ max_addr[1] ^ max_addr[2] ^ max_addr[3];
     uint32_t ports = (static_cast<uint32_t>(sid.min_address_port) << 16) | sid.max_address_port;
     uint32_t hash = addr_hash ^ ports;
-    hash *= 0x9e3779b9; // Aggiunta di entropia (moltiplicazione con numero primo)
+    hash *= 0x9e3779b9; // Entropia nell'hashing
     return hash;
 }
-
-// Funzione di bilanciamento semplificata
-void __real_handler(PktRequest<Worker>* pkt) {
+void balancer(PktRequest<Worker>* pkt) {
     const size_t idx = hash_stream_id(pkt->sid) % pkt->ctx->size();
     converted_pkt->ctx->queue.put(converted_pkt);
 }
 \end{minted}
+\vspace{-1em}
 \caption{Funzione di hashing per stream\_id (valida per IPv4/IPv6) in \gls{nfproxy}}\label{lst:nfproxy_hash}
 \end{listing}
 
@@ -227,28 +227,21 @@ limitandosi ad un hashing basato solo sugli indirizzi \gls{ip}.\@ Ciò è dovuto
     fontsize=\footnotesize,
     breaklines
 ]{cpp}
-static inline u32
-nfqueue_hash(const struct sk_buff *skb, u16 queue, u16 queues_total, u8 family,
-	     u32 initval)
-{
-	switch (family) {
-	case NFPROTO_IPV4:
-		queue += reciprocal_scale(hash_v4(ip_hdr(skb), initval),
-					  queues_total);
-		break;
-	case NFPROTO_IPV6:
-		queue += reciprocal_scale(hash_v6(ipv6_hdr(skb), initval),
-					  queues_total);
-		break;
-	case NFPROTO_BRIDGE:
-		queue += reciprocal_scale(hash_bridge(skb, initval),
-					  queues_total);
-		break;
-	}
-	return queue;
+u32 nfqueue_hash(sk_buff *skb, u16 queue, u16 queues_total, u8 family,
+    u32 initval) {
+    switch (family) {
+    case NFPROTO_IPV4:
+        queue += reciprocal_scale(hash_v4(ip_hdr(skb), initval), queues_total);
+        break;
+    case NFPROTO_IPV6:
+        queue += reciprocal_scale(hash_v6(ipv6_hdr(skb), initval), queues_total);
+        break;
+    }
+    return queue;
 }
 \end{minted}
-\caption{funzione nfqueue\_hash dal kernel Linux (versione 6.14-rc7)}\label{lst:nfqueue_hash_linux}
+\vspace{-1em}
+\caption{funzione nfqueue\_hash dal kernel Linux (semplificata) (versione 6.14-rc7)}\label{lst:nfqueue_hash_linux}
 \end{listing}
 
 L'esclusione delle porte nell'hashing kernel\footcite{\texttt{nfqueue\_hash}, hash function for \texttt{nf\_queue} in the Linux kernel}{nfqueue_ip_hashing}
@@ -270,6 +263,7 @@ for (int i=0; i<50000; i++){
     x+=1;
 }
 \end{minted}
+\vspace{-1em}
 \caption{Algoritmo di simulazione del carico usato nei benchmark multithread di nfregex}\label{lst:nfregex_multithread_load}
 \end{listing}
 
@@ -318,6 +312,7 @@ PktRequest(const char* payload, size_t plen, T* ctx, mnl_socket* nl,
     l4_proto = fill_l4_info(); // Estrazione info layer 4
 }
 \end{minted}
+\vspace{-1em}
 \caption{Costruttore di PktRequest e parsing nel pacchetto di rete in firegex}\label{lst:pktrequest_constructor}
 \end{listing}
 
@@ -403,15 +398,13 @@ Questa conversione avviene tramite il calcolo incrementale dell'offset che inter
     breaklines
 ]{cpp}
 size_t payload_offset = data_size() - _data_original_size;
-if (tcp && payload_offset != 0){
-    // incremental update of total offset
-    if (is_input){
-        ack_seq_offset->in += payload_offset;
-    }else{
-        ack_seq_offset->out += payload_offset;
-    }
+if (is_input){ // Inbound packet
+    ack_seq_offset->in += payload_offset;
+}else{
+    ack_seq_offset->out += payload_offset;
 }
 \end{minted}
+\vspace{-1em}
 \caption{Calcolo dell'offset cumulativo nello stream TCP da correggere in modifica}\label{lst:tcp_ack_seq_transl}
 \end{listing}
 A seguito della modifica, nei prossimi pacchetti vengono compatibilmente ricalcolati gli \gls{ack} e \gls{seq}, su tutto il traffico.
@@ -422,17 +415,15 @@ A seguito della modifica, nei prossimi pacchetti vengono compatibilmente ricalco
     fontsize=\footnotesize,
     breaklines
 ]{cpp}
-void fix_tcp_ack(){
-    // conversion of ack and seq
-    if (is_input){
-        tcp->seq(tcp->seq() + ack_seq_offset->in);
-        tcp->ack_seq(tcp->ack_seq() - ack_seq_offset->out);
-    }else{
-        tcp->ack_seq(tcp->ack_seq() - ack_seq_offset->in);
-        tcp->seq(tcp->seq() + ack_seq_offset->out);
-    }
+if (is_input){ // Inbound packet
+    tcp->seq(tcp->seq() + ack_seq_offset->in);
+    tcp->ack_seq(tcp->ack_seq() - ack_seq_offset->out);
+}else{
+    tcp->ack_seq(tcp->ack_seq() - ack_seq_offset->in);
+    tcp->seq(tcp->seq() + ack_seq_offset->out);
 }
 \end{minted}
+\vspace{-1em}
 \caption{Algoritmo di traduzione di \gls{ack} e \gls{seq} numbers a seguito di mangle dei pacchetti}\label{lst:tcp_ack_seq_transl_fixing}
 \end{listing}
 Un'analisi preliminare e dei test preliminari, suggerirebbero l'adeguatezza di questa soluzione. Tuttavia, a seguito di analisi più accurate, si evince come il meccanismo presenti limitazioni intrinseche in determinate casistiche di traffico. L'approccio risulta efficace esclusivamente in condizioni ideali di trasmissione, dove non si verificano fenomeni di ritrasmissione di pacchetti.
@@ -474,9 +465,9 @@ Nel traffico \gls{http} sono spesso in uso algoritmi di compressione per ridurre
 \begin{itemize}
     \setlength{\itemsep}{2pt}
     \setlength{\parskip}{2pt}
-    \item \textbf{\gls{zstd}}\footcite{RFC1952, GZIP file format specification version 4.3}{rfc1952}: Nativamente supportato in python.
+    \item \textbf{zstd}\footcite{RFC1952, GZIP file format specification version 4.3}{rfc1952}: Nativamente supportato in python.
     \item \textbf{brotli}\footcite{RFC7932, Brotli Compressed Data Format}{rfc7932}: supportato tramite un'implementazione eseguita da google\footcite{\url{https://github.com/google/brotli}}{brotli_gh}, che tuttavia non supporta il \gls{pep} 684, per cui anche in questo caso è stato sviluppato un fork compatibile disponibile su github\footcite{\url{https://github.com/domysh/brotli}}{brotli_fork}.
-    \item \textbf{\gls{zstd}}\footcite{RFC8478, Zstandard Compression and the application/zstd Media Type}{rfc8478}: supportato tramite un wrapper python sviluppato da Sergey Dryabzhinsky\footcite{\url{https://github.com/sergey-dryabzhinsky/python-zstd}}{zstd_ortiginal_python_wrapper}, che tuttavia, essendo anch'esso non compatibile con il \gls{pep} 684, è stato personalizzato in un ulteriore fork\footcite{\url{https://github.com/domysh/python-zstd}}{zstd_fork}.
+    \item \textbf{zstd}\footcite{RFC8478, Zstandard Compression and the application/zstd Media Type}{rfc8478}: supportato tramite un wrapper python sviluppato da Sergey Dryabzhinsky\footcite{\url{https://github.com/sergey-dryabzhinsky/python-zstd}}{zstd_ortiginal_python_wrapper}, che tuttavia, essendo anch'esso non compatibile con il \gls{pep} 684, è stato personalizzato in un ulteriore fork\footcite{\url{https://github.com/domysh/python-zstd}}{zstd_fork}.
     \item \textbf{deflate}\footcite{RFC1951, DEFLATE Compressed Data Format Specification version 1.3}{rfc1951}: Implementabile tramite il modulo zlib, nativamente supportato.
 \end{itemize}
 
@@ -512,6 +503,7 @@ def curl_filter(r: HttpRequest):
         print(f"Tentativo accesso con curl: {r.user_agent}")
         return REJECT  # Blocca client curl
 \end{minted}
+\vspace{-1em}
 \caption{Esempio di un filtro python per il modulo \gls{nfproxy}}\label{lst:curl_filter_example}
 \end{listing}
 Il sistema si appoggia sulla libreria firegex\footcite{\url{https://pypi.org/project/firegex/}}{firegex_pypi}, che fornisce sia i decoratori per la definizione dei filtri, sia i modelli dati per l'annotazione dei parametri. Durante la fase di compilazione, \gls{nfproxy} analizza le signature delle funzioni, sullo stesso principio di validazione tipica di pydantic\footcite{\url{https://docs.pydantic.dev/latest/}}{pydantic}, per determinare automaticamente quali layer di protocollo analizzare (es. \gls{http}, \gls{tcp}), eventalmente quali campi estrarre dal payload, attivando internamente una serie di meccanismi per riuscire a soddisfare le richieste dei filtri.
@@ -546,6 +538,7 @@ FGEX_FULL_STREAM_ACTION = FullStreamAction.REJECT  # Politica di overflow
 # Configurazione ottimizzata per flussi medio-piccoli
 # Connessioni che superano 4KB vengono chiuse preventivamente
 \end{minted}
+\vspace{-1em}
 \caption{Esempio di configurazione di un filtro nfproxy per l'ottimizzazione del consumo di memoria}\label{lst:nfproxy_memory_limit_example}
 \end{listing}
 
@@ -561,6 +554,7 @@ Per validare il corretto funzionamento dei filtri prima del deployment sul firew
 ]{bash}
 fgex nfproxy test_http.py domy.sh 80 --proto http
 \end{minted}
+\vspace{-1em}
 \caption{Comando per avviare il simulazione di nfproxy integrato nella \gls{cli} di firegex}\label{lst:nfproxy_sim_cmd}
 \end{listing}
 

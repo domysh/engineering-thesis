@@ -8,9 +8,7 @@ In queste competizioni prendono parte diversi team, i quali vengono associati og
 
 \section{Descrizione dell'infrastruttura}
 
-L'infrastruttura di una competizione CTF Attack/Defense è composta da diversi componenti chiave che interagiscono in modo sinergico.
-
-Possiamo individuare tre elementi principali che costituiscono l'infrastruttura di gara:
+L'infrastruttura di una competizione CTF Attack/Defense è composta da diversi componenti chiave che interagiscono in modo sinergico. Possiamo individuare tre elementi principali che costituiscono l'infrastruttura di gara:
 \begin{itemize}
     \setlength{\itemsep}{2pt}
     \setlength{\parskip}{2pt}
@@ -25,9 +23,7 @@ Il funzionamento di ogniuno di questi componenti è approfondito nei paragrafi s
 
 Al centro di tutta la competizione c'è il gameserver, entità (che può essere composta da uno o più host) che prende in carico la gestione della competizione eseguento una serie di azioni e fornendo diversi servizi descritti in questo capitolo, essenziali per lo svolgimento della gara stessa.
 
-La competizione è strutturata in tick (o round), ovvero intervalli di tempo in cui ciclicamente il gameserver assegna punti ai team in base alle azioni compiute dagli stessi, e monitora i servizi tramite i checker.
-
-Questo tempo può variare da competizione a competizione. I checker sono dei bot che si occupano di supervisionare lo stato della gara eseguendo diverse azioni come:
+La competizione è strutturata in tick (o round), ovvero intervalli di tempo in cui ciclicamente il gameserver assegna punti ai team in base alle azioni compiute dagli stessi, e monitora i servizi tramite i checker. Questo tempo può variare da competizione a competizione. I checker sono dei bot che si occupano di supervisionare lo stato della gara eseguendo diverse azioni come:
 \begin{itemize}
     \setlength{\itemsep}{2pt}
     \setlength{\parskip}{2pt}
@@ -58,6 +54,7 @@ norm = ln(ln(5)) / 12
 offense_points[flag] = scale / (1+exp((sqrt(score[attacker][service]) - sqrt(score[victim][service]))*norm))
 defense_points[flag] = min(victim_score, offense_points)
 \end{minted}
+\vspace{-1em}
 \caption{Algoritmo di calcolo del valore della flag in CyberChallenge\footciteref{cyberchallenge_ad_rules}}\label{lst:flagcalc}
 \end{listing}
 
@@ -83,9 +80,7 @@ Questa informazione aggiuntiva è chiamata Flag ID e viene rilasciata per ogni t
 
 A ciascun flag store in gara viene associato un punteggio, che riflette la capacità del team di sfruttare e proteggere le relative vulnerabilità. Il calcolo del punteggio totale si ottiene tradizionalmente mediante una semplice sommatoria dei punteggi parziali.
 
-Il punteggio attribuito a un singolo store è inizialmente determinato da un valore base, soggetto a variazioni durante la competizione in relazione alle prestazioni del team.
-
-Tale valore può essere incrementato o ridotto in base a tre componenti aggiuntive:
+Il punteggio attribuito a un singolo store è inizialmente determinato da un valore base, soggetto a variazioni durante la competizione in relazione alle prestazioni del team. Tale valore può essere incrementato o ridotto in base a tre componenti aggiuntive:
 
 \begin{itemize}
     \setlength{\itemsep}{2pt}
@@ -98,12 +93,6 @@ Tale valore può essere incrementato o ridotto in base a tre componenti aggiunti
     \item \textbf{Punteggio di difesa}: tipicamente negativo, poiché quantifica l'inefficacia delle contromisure, è calcolato in base al numero di flag sottratte al team da parte degli avversari. Tale componente tende a controbilanciare, o persino ridurre, il punteggio di attacco relativo allo stesso flag store, potendolo portare anche al di sotto del valore base iniziale. La sua entità è modulata da criteri analoghi a quelli usati per il punteggio di attacco. Per mitigarne gli effetti, risulta essenziale applicare interventi correttivi (\emph{patch}) che impediscano nuovi attacchi, garantendo al contempo la piena operatività del servizio e l'integrità dei dati archiviati (comprese le flag precedenti, la cui perdita comporterebbe un deterioramento del punteggio di \gls{sla}).
 \end{itemize}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.98\textwidth]{images/chapter1/ctfbox_scoreboard.png}
-    \caption{Scoreboard di una simulazione realizzata con CTFBox\footciteref{ctfbox_gh}}\label{fig:ctfbox_scoreboard}
-\end{figure}
-
 \begin{listing}[H] 
 \begin{minted}[
     frame=single,
@@ -112,7 +101,6 @@ Tale valore può essere incrementato o ridotto in base a tre componenti aggiunti
     breaklines
 ]{python}
 # --- Total score for each service (or better said, flag store) ---
-
 # Service base points 
 score[team][service] = 5000 
             
@@ -125,9 +113,7 @@ for flag in lost_flags[team][service]:
     score[team][service] -= defense_points[flag]
 
 # --- Final team score ---
-
-total_score[team] = 0 
-        
+total_score[team] = 0   
 for service in services: 
     # Compute SLA of the service
     sla[team][service] = ticks_up[team][service] / ticks[team][service] 
@@ -135,13 +121,16 @@ for service in services:
     score[team][service] = max(0, score[team][service]) 
     # Add service score
     total_score[team] += score[team][service] * sla[team][service]
-
 \end{minted}
+\vspace{-1em}
 \caption{Algoritmo di calcolo del punteggio in CyberChallenge\footciteref{cyberchallenge_ad_rules}}\label{lst:scorecalc}
 \end{listing}
 
-\vspace{\fill}
-\newpage
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.98\textwidth]{images/chapter1/ctfbox_scoreboard.png}
+    \caption{Scoreboard di una simulazione realizzata con CTFBox\footciteref{ctfbox_gh}}\label{fig:ctfbox_scoreboard}
+\end{figure}
 
 \subsection{Rete di gara}
 
@@ -182,8 +171,7 @@ Tutto quello descritto in questo capitolo è possibile simularlo e sperimentarlo
 
 \section{Tool utili}
 
-Data l'elevata complessità nello svolgimento di una competizione \gls{ad}, spesso diventa necessario l'utilizzo di tool specializzati che permettano di automatizzare diverse operazioni necessarie durante la gara. Ogni team può sviluppare e utilizare anche tool che facilitano (o perfino che automatizzino) l'attacco e la difesa dei servizi.
-
+Data l'elevata complessità nello svolgimento di una competizione \gls{ad}, spesso diventa necessario l'utilizzo di tool specializzati che permettano di automatizzare diverse operazioni necessarie durante la gara. Ogni team può sviluppare e utilizare anche tool che facilitano (o perfino che automatizzino) l'attacco e la difesa dei servizi.\\
 In generale i tool utilizzati più frequentemente sono quelli descritti di seguito.
 
 \subsection{Traffic Analyzer}
@@ -194,7 +182,7 @@ Ad esempio Caronte\footciteref{caronte} avvantaggia particolarmente l'analisi de
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.20\textwidth]{images/chapter1/CaronteLogo.png}
+    \includegraphics[width=0.13\textwidth]{images/chapter1/CaronteLogo.png}
     \caption{Logo di caronte}\label{fig:caronte_logo}
 \end{figure}
 
@@ -216,7 +204,7 @@ La dinamicità del sistema consente modifiche in real-time, propagate immediatam
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.20\textwidth]{images/chapter1/ExploitFarmLogo.png}
+    \includegraphics[width=0.13\textwidth]{images/chapter1/ExploitFarmLogo.png}
     \caption{Logo di ExploitFarm}\label{fig:exploitfarm}
 \end{figure}
 
@@ -232,7 +220,7 @@ Questi tool permettono di filtrare il traffico in modo da riconoscere e bloccare
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.20\textwidth]{images/chapter1/FiregexLogo.png}
+    \includegraphics[width=0.13\textwidth]{images/chapter1/FiregexLogo.png}
     \caption{Logo di Firegex}\label{fig:firegex_logo}
 \end{figure}
 
@@ -245,6 +233,37 @@ Il servizio è composto da un semplice file python e permette di memorizzare e l
 La registrazione al servizio avviene in modo anonimo: selezionando la funzione di creazione del database, il servizio fornisce un id alfanumerico del database, e un token jwt di accesso con cui è possibile accedere al medesimo in seguito.
 
 Una volta registrati, o eseguito l'accesso tramite il token, è possibile elencare i file presenti nel database, leggerne il contenuto, e crearne nuovi.
+
+\begin{listing}[H] 
+\begin{minted}[
+    frame=single,
+    framerule=0.8pt,
+    fontsize=\footnotesize,
+    breaklines
+]{bash}
+PCSS - Permanent Cat Storage Service
+
+          /\_/\
+         ( o.o )  
+          > ^ <
+      __/_______\__
+     |             |
+     |   WELCOME   |
+     |_____________|
+
+Meow! I'm a cat and I'm here to help you store your files.
+A way more secure, reliable and fun way to store your files.
+
+--------------------------------------------------
+1. Create a new database
+2. Access an existing database
+3. Exit
+
+Insert your choice:
+\end{minted}
+\vspace{-1em}
+\caption{Interfaccia CLI di PCSS (da CTFBox\footciteref{ctfbox_gh})}\label{lst:pcss_interface}
+\end{listing}
 
 A livello tecnico il servizio crea una cartella per ogni database, e all'interno di essa crea i file richiesti.
 
@@ -267,6 +286,7 @@ def read_file():
     subprocess.run(["cat", f"./data/{ctx.loggined_db}/{file}"])
     print("")
 \end{minted}
+\vspace{-1em}
 \caption{Funzione vulnerabile a Local File Inclusion nel servizio PCSS (da CTFBox\footciteref{ctfbox_gh})}\label{lst:scorecalc}
 \end{listing}
 
@@ -296,6 +316,7 @@ def attack(team_ip: str, flag_id):
     conn.close()
     return result
 \end{minted}
+\vspace{-1em}
 \caption{Funzione per eseguire un attacco tramite un token JWT malevolo su PCSS (da CTFBox\footciteref{ctfbox_gh})}\label{lst:scorecalc}
 \end{listing}
 

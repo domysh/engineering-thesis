@@ -156,6 +156,7 @@ Firegex è avviabile tramite un unico comando, supponendo che docker\footcite{\u
 ]{bash}
 sh <(curl -sLf https://pwnzer0tt1.it/firegex.sh)
 \end{minted}
+\vspace{-1em}
 \caption{One-Command per l'esecuzione di Firegex}\label{lst:firegex_one_cmd}
 \end{listing}
 
@@ -179,12 +180,12 @@ Il modulo \gls{porthijack} introduce la capacità di reindirizzare il traffico d
     \item \textbf{Interfaccia grafica:} L'interfaccia di dettaglio del servizio permette di visualizzare in tempo reale i log e le eventuali eccezioni che si verificano durante l'esecuzione del filtro.
 \end{itemize}
 
-Il seguente modulo è stato introdotto in vista di scenari complessi dove gli elementi da individuare per il corretto filtraggio non sono facilmente individuabili tramite \gls{regex}: ad esempio se il payload fraudolento fosse in dei token \gls{jwt}, sarebbe necessario eseguire il decoding per rilevare l'attacco.
+Il seguente modulo è stato introdotto in vista di scenari complessi dove gli elementi da individuare per il corretto filtraggio non sono facilmente individuabili tramite \gls{regex}.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.83\textwidth]{images/chapter2/NFProxyInterface.png}
-    \caption{Interfaccia di dettaglio del servizio nel modulo \gls{nfproxy}}\label{fig:nfproxy_interface}
+    \includegraphics[width=0.6\textwidth]{images/chapter2/NFProxyInterface.png}
+    \caption{Interfaccia di dettaglio del servizio nel modulo nfproxy}\label{fig:nfproxy_interface}
 \end{figure}
 
 Nei prossimi capitoli verrà trattato in dettaglio \gls{nfproxy} con le sue funzionalità, le problematiche affrontate e le soluzioni adottate.
