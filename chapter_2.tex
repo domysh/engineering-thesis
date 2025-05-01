@@ -10,8 +10,10 @@ Firegex è un firewall innovativo e multifunzionale, ideato per essere avviato c
 
 \section{Perché nasce Firegex?}
 
-Firegex (come detto in precedenza) nasce dal gruppo che ha affrontato la gara nazionale di Cyberchallenge\footcite{\url{https://cyberchallenge.it/}}{cyberchallenge} del 2022 al Politecnico di Bari\footcite{\url{https://www.poliba.it}}{poliba_website}, come un normale proxy con filtri basati sulle \gls{regex}, che col tempo si è evoluto aggiungendo nuove funzionalità sempre più efficienti, sicure e funzionali alla competizione stessa.\\
-La sua necessità è nata proprio dalla mancanza di un sistema di difesa che fosse immediato da utilizzare, che non richiedesse configurazioni complesse per essere avviato, e che permettesse in maniera semplice di costruire dei filtri prontamente attivi, funzionanti e stabili.\\
+Firegex (come detto in precedenza) nasce dal gruppo che ha affrontato la gara nazionale di Cyberchallenge\footcite{\url{https://cyberchallenge.it/}}{cyberchallenge} del 2022 al Politecnico di Bari\footcite{\url{https://www.poliba.it}}{poliba_website}, come un normale proxy con filtri basati sulle \gls{regex}, che col tempo si è evoluto aggiungendo nuove funzionalità sempre più efficienti, sicure e funzionali alla competizione stessa.
+
+La sua necessità è nata proprio dalla mancanza di un sistema di difesa che fosse immediato da utilizzare, che non richiedesse configurazioni complesse per essere avviato, e che permettesse in maniera semplice di costruire dei filtri prontamente attivi, funzionanti e stabili.
+
 Durante la sua progettazione, ci si è sempre più focalizzati su alcuni punti chiave che lo rendono unico rispetto ad altre soluzioni presenti:
 
 \begin{itemize}
@@ -25,7 +27,7 @@ Durante la sua progettazione, ci si è sempre più focalizzati su alcuni punti c
 
 \section{Confronto con altre soluzioni}
 
-Firegex si distingue rispetto ad altre soluzioni presenti, come \gls{ctf} proxy\footcite{\url{https://github.com/ByteLeMani/ctf_proxy}}{ctf_proxy}, Nginx\footcite{\url{https://nginx.org/}}{nginx}, Suricata\footcite{\url{https://suricata.io/}}{suricata} o Fortinet\footcite{\url{https://www.fortinet.com/}}{fortinet} per diverse motivazioni:\\
+Firegex si distingue rispetto ad altre soluzioni presenti, come \gls{ctf} proxy\footcite{\url{https://github.com/ByteLeMani/ctf_proxy}}{ctf_proxy}, Nginx\footcite{\url{https://nginx.org/}}{nginx}, Suricata\footcite{\url{https://suricata.io/}}{suricata} o Fortinet\footcite{\url{https://www.fortinet.com/}}{fortinet} per diverse motivazioni:
 
 \renewcommand{\arraystretch}{2}
 \begin{table}[H]
@@ -79,7 +81,7 @@ Firegex si distingue rispetto ad altre soluzioni presenti, come \gls{ctf} proxy\
     \setlength{\parskip}{1pt}
     \item \textbf{Nginx} è una soluzione molto flessibile ed affidabile, ma richiede configurazioni complesse e non permette di applicare filtri in maniera immediata e trasparente, ha necessità di cambiare porte e non supporta nativamente filtri più avanzati come quello trattato in questa tesi. Non ha una interfaccia grafica per la gestione delle regole.
     \item \textbf{\gls{ctf} proxy} è una soluzione fortemente flessibile, ma richiede la creazione di configurazioni e allo stesso modo necessita di cambiare porte ai servizi originali, inoltre a suo supporto non esiste un'interfaccia semplice da usare.
-    \item \textbf{Fortinet} è una soluzione estremamente affidabile, ben riconosciuta nel settore, ma richiede configurazioni complesse ed è per questo molto lento da avviare. Il suo operato inoltre potrebbe causare diversi problemi, essendo molto invasivo nel sistema. Il suo utilizzo è poco pratico per l'utilizzo in competizioni CTF, nonostante rappresenti una delle principali soluzioni fuori da questo contesto.\@
+    \item \textbf{Fortinet} è una soluzione estremamente affidabile, ben riconosciuta nel settore, ma richiede configurazioni complesse ed è per questo molto lento da avviare. Il suo operato inoltre potrebbe causare diversi problemi, essendo molto invasivo nel sistema. Il suo utilizzo è poco pratico per l'utilizzo in competizioni CTF, nonostante rappresenti una delle principali soluzioni fuori da questo contesto.
     \item \textbf{Suricata} è una soluzione molto affidabile che offre un grado di flessibilità intermedio, ma pecca della mancanza di un'interfaccia semplice per il suo utilizzo, e richiede configurazioni per essere avviato.
 \end{itemize}
 
@@ -139,7 +141,8 @@ Il modulo \gls{nfqueue} gioca un ruolo fondamentale nell'architettura di Firegex
 
 \section{Funzionalità}
 
-All'interno di Firegex sono presenti attualmente 4 moduli principali, ognuno con delle funzionalità specifiche che permettono di applicare filtri con tecnologie e funzionalità differenti. I moduli sono \gls{nfregex}, firewall, \gls{porthijack} e \gls{nfproxy}. All'interno di questi moduli firegex possiede una documentazione interna alla piattaforma stessa che permette di comprendere come utilizzare le funzionalità offerte, e come configurare i filtri in maniera corretta.\\
+All'interno di Firegex sono presenti attualmente 4 moduli principali, ognuno con delle funzionalità specifiche che permettono di applicare filtri con tecnologie e funzionalità differenti. I moduli sono \gls{nfregex}, firewall, \gls{porthijack} e \gls{nfproxy}. All'interno di questi moduli firegex possiede una documentazione interna alla piattaforma stessa che permette di comprendere come utilizzare le funzionalità offerte, e come configurare i filtri in maniera corretta.
+
 Firegex è avviabile tramite un unico comando, supponendo che docker\footcite{\url{https://www.docker.com/}}{docker} sia stato già installato nel sistema.
 
 \begin{listing}[H]
@@ -155,7 +158,7 @@ sh <(curl -sLf https://pwnzer0tt1.it/firegex.sh)
 \end{listing}
 
 \subsection{nfregex}
-Il modulo \gls{nfregex} (pensato originariamente come unico e principale) possiede funzionalità per la creazione di filtri basati su espressioni regolari. Utilizzando \gls{nfqueue} in combinazione con \gls{nftables}, questo modulo intercetta le richieste di rete direttamente a livello kernel. La funzionalità permette l'utilizzo di \gls{regex} \gls{pcre}\footcite{\url{https://www.pcre.org/}}{pcre_website} compliant tramite l'utilizzo di vectorscan\footcite{\url{https://vectorcamp.gr/project/vectorscan/}}{vectorscan} (fork di hyperscan\footcite{\url{https://hyperscan.io/}}{hyperscan} compatibile con arm64) per garantire prestazioni elevate e una corretta elaborazione delle regole. La funzionalità supporta \gls{ipv4} e \gls{ipv6}, e protocolli di livello superiore come \gls{tcp} e \gls{udp}.\@ Per i pacchetti \gls{tcp}, la \gls{regex} viene applicata all'intero flusso ricostruito e ordinato, tramite le stream \gls{regex} disponibili in vectorscan.
+Il modulo \gls{nfregex} (pensato originariamente come unico e principale) possiede funzionalità per la creazione di filtri basati su espressioni regolari. Utilizzando \gls{nfqueue} in combinazione con \gls{nftables}, questo modulo intercetta le richieste di rete direttamente a livello kernel. La funzionalità permette l'utilizzo di \gls{regex} \gls{pcre}\footcite{\url{https://www.pcre.org/}}{pcre_website} compliant tramite l'utilizzo di vectorscan\footcite{\url{https://vectorcamp.gr/project/vectorscan/}}{vectorscan} (fork di hyperscan\footcite{\url{https://hyperscan.io/}}{hyperscan} compatibile con arm64) per garantire prestazioni elevate e una corretta elaborazione delle regole. La funzionalità supporta \gls{ipv4} e \gls{ipv6}, e protocolli di livello superiore come \gls{tcp} e \gls{udp}. Per i pacchetti \gls{tcp}, la \gls{regex} viene applicata all'intero flusso ricostruito e ordinato, tramite le stream \gls{regex} disponibili in vectorscan.
 
 \subsection{firewall}
 La funzionalità firewall di Firegex offre un controllo completo sul traffico di rete, tramite regole simili a quelle offerte da strumenti che agiscono a livello di rete e di trasporto come \gls{ufw} o iptables. Dispone quindi di funzionalità basilari e risulta utile per applicare questa tipologia di regole evitando ulteriori tool di filtering che potrebbero entrare in conflitto con firegex.

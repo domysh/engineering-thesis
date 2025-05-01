@@ -2,7 +2,8 @@
 
 Il \gls{regex} filtering è un modello di filtraggio che garantisce ottime prestazioni (grazie all'elaborazione tramite linguaggi e librerie ottimizzati), ma presenta forti limitazioni nella flessibilità di analisi del traffico.
 
-Questa rigidità è particolarmente rilevante nei \gls{ctf}, dove la maggior parte dei servizi utilizza protocolli come \gls{http}, che spesso includono contenuti compressi o codificati (es. Base64, \gls{gzip}), difficilmente analizzabili tramite \gls{regex}.\\
+Questa rigidità è particolarmente rilevante nei \gls{ctf}, dove la maggior parte dei servizi utilizza protocolli come \gls{http}, che spesso includono contenuti compressi o codificati (es. Base64, \gls{gzip}), difficilmente analizzabili tramite \gls{regex}.
+
 A discapito delle prestazioni, \gls{nfproxy} introduce il vantaggio di scrivere filtri in Python\footcite{\url{https://python.org/}}{python}, linguaggio semplice e rapido per lo scripting, superando i limiti precedentemente descritti e offrendo:
 
 \begin{itemize}
@@ -84,7 +85,8 @@ In primo luogo, il backend configura le regole di \gls{nftables}\footcite{\url{h
 \section{Elaborazione parallelizzata dei pacchetti}
 
 Uno dei principali ostacoli progettuali ha riguardato la parallelizzazione dei processi di elaborazione, legata a tre fattori critici:  
-il funzionamento intrinseco di \gls{nfqueue}, alcune peculiarità del linguaggio Python e l'integrazione ibrida C++/Python.\\
+il funzionamento intrinseco di \gls{nfqueue}, alcune peculiarità del linguaggio Python e l'integrazione ibrida C++/Python.
+
 Tre obiettivi hanno guidato l'implementazione della parallelizzazione:  
 
 \begin{itemize}
@@ -135,7 +137,8 @@ di interpreti Python indipendenti nello stesso processo, ciascuno con il proprio
     \item Parallelismo reale senza overhead di processi multipli
 \end{itemize}
 L'impossibilità di condividere oggetti tra interpreti, uno dei limiti di questo approccio, non costituisce un problema nel nostro caso poichè, grazie al meccanismo di
-smistamento dei pacchetti descritto nel prossimo paragrafo, ciò non sarà necessario.\\
+smistamento dei pacchetti descritto nel prossimo paragrafo, ciò non sarà necessario.
+
 Per ogni nuova connessione \gls{tcp} vengono eseguite le seguenti operazioni:\@
 \begin{itemize}
     \setlength{\itemsep}{2pt}
@@ -173,7 +176,7 @@ void before_loop() {
 \end{minted}
 \caption{Inizializzazione di un processo consumatore con GIL indipendente in nfproxy}\label{lst:no_gil_python_nfproxy}
 \end{listing}
-L'utilizzo delle funzionalità offerte dal \gls{pep} 684\footcite{\url{https://peps.python.org/pep-0684/}}{pep648}, soffre tuttavia anche di forti limitazioni sull'utilizzo di moduli senza multi-phase initialization\footcite{\url{https://peps.python.org/pep-0489/}}{pep489} (includendo tutti quelli scritti in Cython\footcite{\url{https://cython.org/}}{cython}) e moduli con componenti non thread-safe. Nel corso dello sviluppo, queste limitazioni sono state oggetto di diverse problematiche, affrontate e approfondite in seguito.\\
+L'utilizzo delle funzionalità offerte dal \gls{pep} 684\footcite{\url{https://peps.python.org/pep-0684/}}{pep648}, soffre tuttavia anche di forti limitazioni sull'utilizzo di moduli senza multi-phase initialization\footcite{\url{https://peps.python.org/pep-0489/}}{pep489} (includendo tutti quelli scritti in Cython\footcite{\url{https://cython.org/}}{cython}) e moduli con componenti non thread-safe. Nel corso dello sviluppo, queste limitazioni sono state oggetto di diverse problematiche, affrontate e approfondite in seguito.
 
 Un'altra possibilità considerata è stata l'utilizzo dell'interprete in free-threaded mode di Python 3.13\footcite{\url{https://docs.python.org/3/whatsnew/3.13.html\#whatsnew313-free-threaded-cpython}}{py13_free_threaded}, attualmente sconsigliato per:
 \begin{itemize}
@@ -186,7 +189,7 @@ Un'altra possibilità considerata è stata l'utilizzo dell'interprete in free-th
 
 \subsection{Bilanciamento del carico}
 
-Per il bilanciamento del carico tra i processi consumatori, finalizzato all'isolamento e alla distribuzione equa dei pacchetti, è stato implementato un meccanismo di hashing basato su indirizzi \gls{ip} e porte di origine/destinazione. Questo approccio garantisce una distribuzione uniforme dei pacchetti tra i consumatori, evitando sovraccarichi e assicurando un'elaborazione parallela efficiente, oltre che a instradare i pacchetti di una stessa connessione sempre verso lo stesso thread.\\
+Per il bilanciamento del carico tra i processi consumatori, finalizzato all'isolamento e alla distribuzione equa dei pacchetti, è stato implementato un meccanismo di hashing basato su indirizzi \gls{ip} e porte di origine/destinazione. Questo approccio garantisce una distribuzione uniforme dei pacchetti tra i consumatori, evitando sovraccarichi e assicurando un'elaborazione parallela efficiente, oltre che a instradare i pacchetti di una stessa connessione sempre verso lo stesso thread.
 
 \begin{listing}[H]
 \begin{minted}[
@@ -318,16 +321,16 @@ PktRequest(const char* payload, size_t plen, T* ctx, mnl_socket* nl,
 \caption{Costruttore di PktRequest e parsing nel pacchetto di rete in firegex}\label{lst:pktrequest_constructor}
 \end{listing}
 
-Inoltre lo stream\_id è indipendente dal protocollo internet utilizzato, identificando anche connessioni miste IPv4/IPv6: questo permette di utilizzare la stessa queue per interfaccie di rete differenti, carattertistica potenzialmente utile per implementare nuove feature sulla selezione del traffico da inoltrare alla queue.\\
+Inoltre lo stream\_id è indipendente dal protocollo internet utilizzato, identificando anche connessioni miste IPv4/IPv6: questo permette di utilizzare la stessa queue per interfaccie di rete differenti, carattertistica potenzialmente utile per implementare nuove feature sulla selezione del traffico da inoltrare alla queue.
 
-Ogni produttore utilizza questo dato come chiave per individurare i dati relativi ad una specifica connessione, salvandoli in una std::map\footcite{\url{https://en.cppreference.com/w/cpp/container/map}}{std_map} diversa per ogni singolo produttore, così implementabile per merito del meccanismo di smistamento dei pacchetti descritto precedentemente.\\
+Ogni produttore utilizza questo dato come chiave per individurare i dati relativi ad una specifica connessione, salvandoli in una std::map\footcite{\url{https://en.cppreference.com/w/cpp/container/map}}{std_map} diversa per ogni singolo produttore, così implementabile per merito del meccanismo di smistamento dei pacchetti descritto precedentemente.
 
-Il produttore, ricevuto il pacchetto, lo ingloba in un oggetto PktRequest, che contiene tutte le informazioni necessarie per l'elaborazione del pacchetto, e lo inserisce nella coda condivisa del produttore di riferimento.\\
+Il produttore, ricevuto il pacchetto, lo ingloba in un oggetto PktRequest, che contiene tutte le informazioni necessarie per l'elaborazione del pacchetto, e lo inserisce nella coda condivisa del produttore di riferimento.
 Sarà il produttore che una volta elaborato il pacchetto ed inviato il verdetto al kernel, deallocherà questa struttura passando all'elaborazione del prossimo pacchetto. Nessuna copia in memoria è pertanto necessaria in questo passaggio.
 
 \section{Gestione dei pacchetti TCP}
 
-Come citato precedentemete, prima di inizializzare la queue, vengono inseriti tramite \gls{nftables} le regole per intercettare il traffico in un certo punto della catena di netfilter, per essere mandato alla queue che determinerà un verdetto sul pacchetto.\\
+Come citato precedentemete, prima di inizializzare la queue, vengono inseriti tramite \gls{nftables} le regole per intercettare il traffico in un certo punto della catena di netfilter, per essere mandato alla queue che determinerà un verdetto sul pacchetto.
 
 \begin{figure}[H]
     \centering
@@ -335,9 +338,9 @@ Come citato precedentemete, prima di inizializzare la queue, vengono inseriti tr
     \caption{Grafico degli hooks di Netfilter Tables}\label{fig:nftables_hooks}
 \end{figure}
 
-Il traffico in particolare viene intercettato sia in pre-routing, che in post-routing ad un hook prima dell'azione del modulo conntrack, ma dopo dell'azione di defrag, rispettivamente a prio -310 in pre-routing e 110 in post-routing rientrando nei range corretti, come riportati sulla wiki ufficiale di \gls{nftables}\footcite{\url{https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks}}{netfilter_hooks}. Questo permette di ottenere dei pacchetti che hanno già subito il processo di deframmentazione a livello 3, di cui pertanto non ci dovremo preoccupare, ma che non hanno subito il processo di routing (che quindi volendo potremmo manipolare) e che non sono stati ancora analizzati dal modulo conntrack.\\
-Tuttavia, qui i pacchetti non hanno subito il processo di ordinamento dei payload che avviene a livello 4, sul quale come è possibile osservare dalla Figura~\ref{fig:nftables_hooks}, non è possibile intercettare del traffico, poiché i pacchetti arriveranno direttamente alle fasi di gestioni dei dati per la loro consegna alla socket a livello applicatvo.\\
-Pertanto è dato a noi il compito di analizzare il traffico, ordinando i pacchetti \gls{tcp} per un'utilizzo dei dati coerente a quelli che saranno letti dall'applicazione.\\
+Il traffico in particolare viene intercettato sia in pre-routing, che in post-routing ad un hook prima dell'azione del modulo conntrack, ma dopo dell'azione di defrag, rispettivamente a prio -310 in pre-routing e 110 in post-routing rientrando nei range corretti, come riportati sulla wiki ufficiale di \gls{nftables}\footcite{\url{https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks}}{netfilter_hooks}. Questo permette di ottenere dei pacchetti che hanno già subito il processo di deframmentazione a livello 3, di cui pertanto non ci dovremo preoccupare, ma che non hanno subito il processo di routing (che quindi volendo potremmo manipolare) e che non sono stati ancora analizzati dal modulo conntrack.
+Tuttavia, qui i pacchetti non hanno subito il processo di ordinamento dei payload che avviene a livello 4, sul quale come è possibile osservare dalla Figura~\ref{fig:nftables_hooks}, non è possibile intercettare del traffico, poiché i pacchetti arriveranno direttamente alle fasi di gestioni dei dati per la loro consegna alla socket a livello applicatvo.
+Pertanto è dato a noi il compito di analizzare il traffico, ordinando i pacchetti \gls{tcp} per un'utilizzo dei dati coerente a quelli che saranno letti dall'applicazione.
 Libtins semplifica significativamente questa gestione attraverso meccanismi automatizzati gestiti dal suo \gls{tcp} follower\footcite{Esempio \gls{tcp} Follower: \url{https://libtins.github.io/examples/http-requests/}}{libtins_tcp_follower_gh} per:  
 \begin{itemize}
     \setlength{\itemsep}{2pt}
@@ -351,7 +354,7 @@ Libtins semplifica significativamente questa gestione attraverso meccanismi auto
     \item Ricostruzione dello stream da segmenti non ordinati (o duplicati)
     \item Gestione automatica della memoria utile alla ricostruzione
 \end{itemize}
-Il follower inoltre permette facilmente l'integrazione di dati gestiti esternamente, tramite il suo sistema di callback, che ne chiamerà le funzionalità compatibilmente con quanto fatto con i buffer internamente.\\
+Il follower inoltre permette facilmente l'integrazione di dati gestiti esternamente, tramite il suo sistema di callback, che ne chiamerà le funzionalità compatibilmente con quanto fatto con i buffer internamente.
 Le callback permettono di gestire le seguenti operazioni:
 \begin{itemize}
     \setlength{\itemsep}{2pt}
@@ -365,24 +368,31 @@ Ogni processo consumatore ha un suo follower dedicato che analizzerà i flussi r
 \section{Modifica dei pacchetti}
 
 Il modulo \gls{nfqueue} consente effettivamente la modifica dei pacchetti, offrendo potenzialmente la possibilità di alterare header
-\gls{ip}/\gls{tcp} e payload. Tuttavia, questa funzionalità, seppur teoricamente disponibile, è stata implementata solo parzialmente e non risulta pienamente affidabile.\\
-Le limitazioni derivano da problematiche intrinseche legate all’interazione con i meccanismi di livello di trasporto. Ad esempio, modifiche al payload \gls{tcp} durante connessioni attive potrebbero invalidare checksum o causare inconsistenze nei \gls{seq}uence number. La complessità per garantire coerenza in tutti i possibili scenari (come in caso di ritrasmissioni) rende l’implementazione robusta di questa feature particolarmente onerosa. Inoltre, se gestita male, la modifica del payload potrebbe essere soggetta a vulnerabilità di sicurezza. Valutando il rapporto rischio-beneficio, si è optato per comunque rendere disponibile la funzionalità, seppur parzialmente implementata, ma fortemente disincentivata e volutamente resa meno facilmente accessibile.\\
-L’effettiva necessità operativa risulta infatti marginale nella maggior parte degli scenari \gls{ctf}, mentre i potenziali effetti collaterali verrebbero a compromettere uno degli obiettivi principali: la stabilità del servizio.\\
-Di seguito si riporta una descrizione accurata delle problematiche riscontrate e delle soluzioni proposte, o applicate con relativi limiti e valutazioni rischio/beneficio.\\
+\gls{ip}/\gls{tcp} e payload. Tuttavia, questa funzionalità, seppur teoricamente disponibile, è stata implementata solo parzialmente e non risulta pienamente affidabile.
 
-Le problematiche sul calcolo dei campi di integrità dei dati non sono trattate, ma considerate già risolte tramite l'utilizzo di libtins, che si occupa durante la serializzazione del pacchetto di ricalcolare questi campi nei vari layer interessati, pertanto non considerata una problematica rilevante.\\
-L'unica operazione aggiuntiva affrontata su questo, è stata la necessità di reinserire il payload del pacchetto nella catena di \gls{pdu} di libtins, poiché (seppur non documentato), il follower del flusso \gls{tcp} internamente separa di fatto il payload dal pacchetto\footcite{Libtins, istruzione per la separazione del payload nel follower (std::move del payload)}{libtins_payload_move_gh}, rendendone necessario il reinserimento per la corretta serializzazione e calcolo di questi campi.\\
+Le limitazioni derivano da problematiche intrinseche legate all’interazione con i meccanismi di livello di trasporto. Ad esempio, modifiche al payload \gls{tcp} durante connessioni attive potrebbero invalidare checksum o causare inconsistenze nei \gls{seq}uence number. La complessità per garantire coerenza in tutti i possibili scenari (come in caso di ritrasmissioni) rende l’implementazione robusta di questa feature particolarmente onerosa. Inoltre, se gestita male, la modifica del payload potrebbe essere soggetta a vulnerabilità di sicurezza. Valutando il rapporto rischio-beneficio, si è optato per comunque rendere disponibile la funzionalità, seppur parzialmente implementata, ma fortemente disincentivata e volutamente resa meno facilmente accessibile.
+
+L’effettiva necessità operativa risulta infatti marginale nella maggior parte degli scenari \gls{ctf}, mentre i potenziali effetti collaterali verrebbero a compromettere uno degli obiettivi principali: la stabilità del servizio.
+
+Di seguito si riporta una descrizione accurata delle problematiche riscontrate e delle soluzioni proposte, o applicate con relativi limiti e valutazioni rischio/beneficio.
+
+Le problematiche sul calcolo dei campi di integrità dei dati non sono trattate, ma considerate già risolte tramite l'utilizzo di libtins, che si occupa durante la serializzazione del pacchetto di ricalcolare questi campi nei vari layer interessati, pertanto non considerata una problematica rilevante.
+
+L'unica operazione aggiuntiva affrontata su questo, è stata la necessità di reinserire il payload del pacchetto nella catena di \gls{pdu} di libtins, poiché (seppur non documentato), il follower del flusso \gls{tcp} internamente separa di fatto il payload dal pacchetto\footcite{Libtins, istruzione per la separazione del payload nel follower (std::move del payload)}{libtins_payload_move_gh}, rendendone necessario il reinserimento per la corretta serializzazione e calcolo di questi campi.
 
 \subsection{Cambio di dimensione del payload}
 
 Come emerge dalle specifiche stesse del protocollo di trasporto \gls{tcp}\footcite{RFC9293, Transmission Control Protocol (TCP)}{rfc9293}, questo tiene traccia dello stato della corretta recezione dei pacchetti tramite un meccanismo di piggybacking che fa utilizzo dei campi numerici \gls{ack} e \gls{seq}.
-Nella trasmissione, il \gls{seq} number indica il byte da cui inizia il payload del pacchetto relativamente alla sua posizione nello stream, mentre il campo \gls{ack} della risposta di conferma proveniente dal ricevente, indica fino a che punto il flusso di dati è stato ricevuto correttamente.\\
-Questo meccanismo è fondamentale per il corretto funzionamento del protocollo e per la corretta ricostruzione del flusso originale: di conseguenza la modifica alla dimensione del payload causa inevitabilmente l'incoerenza di questi valori che porteranno a comportamenti inaspettati, non conformi al normale funzionamento del protocollo.\\
+Nella trasmissione, il \gls{seq} number indica il byte da cui inizia il payload del pacchetto relativamente alla sua posizione nello stream, mentre il campo \gls{ack} della risposta di conferma proveniente dal ricevente, indica fino a che punto il flusso di dati è stato ricevuto correttamente.
 
-Per risolvere la problematica descritta, è stato implementato un sistema di traduzione bidirezionale dei campi \gls{seq} number e \gls{ack} number.\\
+Questo meccanismo è fondamentale per il corretto funzionamento del protocollo e per la corretta ricostruzione del flusso originale: di conseguenza la modifica alla dimensione del payload causa inevitabilmente l'incoerenza di questi valori che porteranno a comportamenti inaspettati, non conformi al normale funzionamento del protocollo.
+
+Per risolvere la problematica descritta, è stato implementato un sistema di traduzione bidirezionale dei campi \gls{seq} number e \gls{ack} number.
+
 Questo meccanismo tenta di mantenere la coerenza logica della comunicazione riconvertendo i valori modificati in modo da preservare la corrispondenza tra la dimensione originale dei pacchetti e le aspettative del client (e viceversa del server).
 Il kernel e il \gls{tcp} Follower di libtins ricevono così numerazioni coerenti con le alterazioni applicate, mantenendo la sincronizzazione degli stati di connessione.
-Il sistema opera in modo simmetrico per entrambe le direzioni del traffico: le modifiche applicate ai pacchetti in uscita vengono compensate da una riconversione inversa per quelli in entrata. L'attivazione avviene automaticamente alla prima modifica di un pacchetto nella sessione \gls{tcp} e rimane attiva per tutta la durata della connessione, garantendo la persistenza del contesto di traduzione.\\
+Il sistema opera in modo simmetrico per entrambe le direzioni del traffico: le modifiche applicate ai pacchetti in uscita vengono compensate da una riconversione inversa per quelli in entrata. L'attivazione avviene automaticamente alla prima modifica di un pacchetto nella sessione \gls{tcp} e rimane attiva per tutta la durata della connessione, garantendo la persistenza del contesto di traduzione.
+
 Questa conversione avviene tramite il calcolo incrementale dell'offset che intercorre tra la dimensione del flusso originale e la dimensione del flusso modificato.
 
 \begin{listing}[H]
@@ -425,7 +435,8 @@ void fix_tcp_ack(){
 \end{minted}
 \caption{Algoritmo di traduzione di \gls{ack} e \gls{seq} numbers a seguito di mangle dei pacchetti}\label{lst:tcp_ack_seq_transl_fixing}
 \end{listing}
-Un'analisi preliminare e dei test preliminari, suggerirebbero l'adeguatezza di questa soluzione. Tuttavia, a seguito di analisi più accurate, si evince come il meccanismo presenti limitazioni intrinseche in determinate casistiche di traffico. L'approccio risulta efficace esclusivamente in condizioni ideali di trasmissione, dove non si verificano fenomeni di ritrasmissione di pacchetti.\\
+Un'analisi preliminare e dei test preliminari, suggerirebbero l'adeguatezza di questa soluzione. Tuttavia, a seguito di analisi più accurate, si evince come il meccanismo presenti limitazioni intrinseche in determinate casistiche di traffico. L'approccio risulta efficace esclusivamente in condizioni ideali di trasmissione, dove non si verificano fenomeni di ritrasmissione di pacchetti.
+
 La criticità principale risiede nell'algoritmo di conversione, che non considera adeguatamente le ritrasmissioni di segmenti antecedenti al pacchetto modificato. In tali scenari, il ricalcolo dell'\gls{ack} relativo richiederebbe l'utilizzo di un offset compatibile non all'ultimo offset calcolato, ma allo stato del flusso nella parte interessata dalla ritrasmissione, operazione che l'implementazione corrente non esegue. La problematica è diretta conseguenza della mancanza di un analisi del traffico contestuale, capace di identificare la porzione di flusso effettivamente coinvolta nella ritrasmissione, e di memorizzare le discrepanze cumulative associandole direttamente alle varie parti dello stream interessate.
 \begin{figure}[H]
     \centering
@@ -442,13 +453,13 @@ Considerando il rapporto costo-beneficio e il limitato valore operativo della fu
 
 \subsection{Modifica di segmenti non ordinati}
 
-Un'ulteriore criticità emerge nella gestione dei pacchetti con payload \emph{out-of-order} da modificare. Nell'implementazione corrente, i pacchetti non ordinati vengono analizzati dal \gls{tcp} Follower di libtins per la ricostruzione dello stream ed accettati immediatamente dopo questa elaborazione, privando tuttavia il sistema della possibilità di modificarli successivamente. Questo meccanismo, sebbene un payload malevolo venga accettato, riesce comunque a bloccarlo a livello applicativo, prima che il flusso possa essere completamente riordinato, intervenendo sul pacchetto con la prima parte del payload non ordinato, che normalmente andrebbe a causare il riempimento del buffer del socket a livello applicativo, ma che in questo caso causerà, grazie all'intervento di firegex, un blocco della connessione \gls{tcp}.\\
+Un'ulteriore criticità emerge nella gestione dei pacchetti con payload \emph{out-of-order} da modificare. Nell'implementazione corrente, i pacchetti non ordinati vengono analizzati dal \gls{tcp} Follower di libtins per la ricostruzione dello stream ed accettati immediatamente dopo questa elaborazione, privando tuttavia il sistema della possibilità di modificarli successivamente. Questo meccanismo, sebbene un payload malevolo venga accettato, riesce comunque a bloccarlo a livello applicativo, prima che il flusso possa essere completamente riordinato, intervenendo sul pacchetto con la prima parte del payload non ordinato, che normalmente andrebbe a causare il riempimento del buffer del socket a livello applicativo, ma che in questo caso causerà, grazie all'intervento di firegex, un blocco della connessione \gls{tcp}.
 
 Una soluzione alternativa prevedrebbe il buffering dei pacchetti \emph{out-of-order} in attesa dei segmenti mancanti, applicando modifiche retroattive sui pacchetti trattenuti. Tuttavia, questo approccio introdurrebbe: una complessità significativa nel meccanismo di ricostruzione distribuita del flusso e il rischio di saturare la \gls{nfqueue} kernel-side, con conseguente perdita di pacchetti e possibile esposizione ad attacchi DoS mirati a sfruttare le debolezze di questo sistema, potenzialmente portandolo ad un blocco del traffico non desiderato.
 
-Sulla base di queste considerazioni, si conclude che il riscontro immediato dei pacchetti è un approccio che deve essere applicato al fine di scongiurare possibili criticità riguardanti il riempimento della coda kernel, soggetta a questa tipologia di attacchi. La scelta progettuale attuale, seppur limitante, garantisce un'operatività ed un throughput stabile e prevedibile, mantiene il sistema immune a possibili vulnerabilità ma non offre la possibilità di eseguire modifiche su pacchetti non ordinati.\\
+Sulla base di queste considerazioni, si conclude che il riscontro immediato dei pacchetti è un approccio che deve essere applicato al fine di scongiurare possibili criticità riguardanti il riempimento della coda kernel, soggetta a questa tipologia di attacchi. La scelta progettuale attuale, seppur limitante, garantisce un'operatività ed un throughput stabile e prevedibile, mantiene il sistema immune a possibili vulnerabilità ma non offre la possibilità di eseguire modifiche su pacchetti non ordinati.
 
-Sarebbe possibile progettare un sistema che eviti i problemi di saturazione della coda kernel, implementando ad esempio un meccanismo basato su dei timeout che evitino la saturazione della coda eliminando i pacchetti potenzialmente fraudolenti. Tuttavia simili implementazioni richiederebbero un'attenta analisi ed uno studio molto più approfondito rispetto a quanto fatto finora, considerando anche un vasto spettro di casistiche insidiose che non si ritiene necessario affrontare in questa tesi e ai fini dello sviluppo di questo modulo.\\
+Sarebbe possibile progettare un sistema che eviti i problemi di saturazione della coda kernel, implementando ad esempio un meccanismo basato su dei timeout che evitino la saturazione della coda eliminando i pacchetti potenzialmente fraudolenti. Tuttavia simili implementazioni richiederebbero un'attenta analisi ed uno studio molto più approfondito rispetto a quanto fatto finora, considerando anche un vasto spettro di casistiche insidiose che non si ritiene necessario affrontare in questa tesi e ai fini dello sviluppo di questo modulo.
 
 \section{Parsing dei pacchetti HTTP}
 
@@ -473,7 +484,8 @@ L'implementazione è stata scritta seguendo le specifiche definite nell'RFC 2616
     
 \subsection{Supporto alle websocket}
 
-Nell'implementazione per \gls{http}/1.1 è stato incluso anche il supporto alle websocket\footcite{RFC6455, The WebSocket Protocol}{rfc6455}, tramite l'utilizzo della principale libreria python utilizzata per le decodifica dei Frame, ovvero websockets\footcite{\url{https://websockets.readthedocs.io/en/stable/}}{python_websockets}. Da qui sono state prese le funzionalità di decodifica dei frame, e le funzionalità per il supporto all'estensione permessage-deflate\footcite{RFC7692, Compression Extensions for WebSocket}{rfc7692}, per permetterne la decompressione, utilizzando internamente zlib. La complessità nell'implementazione delle websocket si è concentrata sulla necessità di assemblare il flusso di dati correttamente, dato il mancato supporto nativo al parsing in streaming, come invece supportato su llhttp. Nella fase di upgrading della connessione \gls{http}, vengono riconosciuti i plugin abilitati, e viene automaticamente introdotta la gestione dei websocket che si occupa di decodificare i prossimi dati sulla connessione \gls{tcp}.\\
+Nell'implementazione per \gls{http}/1.1 è stato incluso anche il supporto alle websocket\footcite{RFC6455, The WebSocket Protocol}{rfc6455}, tramite l'utilizzo della principale libreria python utilizzata per le decodifica dei Frame, ovvero websockets\footcite{\url{https://websockets.readthedocs.io/en/stable/}}{python_websockets}. Da qui sono state prese le funzionalità di decodifica dei frame, e le funzionalità per il supporto all'estensione permessage-deflate\footcite{RFC7692, Compression Extensions for WebSocket}{rfc7692}, per permetterne la decompressione, utilizzando internamente zlib. La complessità nell'implementazione delle websocket si è concentrata sulla necessità di assemblare il flusso di dati correttamente, dato il mancato supporto nativo al parsing in streaming, come invece supportato su llhttp. Nella fase di upgrading della connessione \gls{http}, vengono riconosciuti i plugin abilitati, e viene automaticamente introdotta la gestione dei websocket che si occupa di decodificare i prossimi dati sulla connessione \gls{tcp}.
+
 In caso di fallimento nel parsing dei frame, i dati vengono resi disponibili per il filtraggio, semplicemente come byte grezzi, stesso meccanismo usato in caso di upgrade ad \gls{http}/2 (non supportato attualmente).
 
 \section{Sintassi e gestione dei filtri python}
@@ -502,10 +514,13 @@ def curl_filter(r: HttpRequest):
 \end{minted}
 \caption{Esempio di un filtro python per il modulo \gls{nfproxy}}\label{lst:curl_filter_example}
 \end{listing}
-Il sistema si appoggia sulla libreria firegex\footcite{\url{https://pypi.org/project/firegex/}}{firegex_pypi}, che fornisce sia i decoratori per la definizione dei filtri, sia i modelli dati per l'annotazione dei parametri. Durante la fase di compilazione, \gls{nfproxy} analizza le signature delle funzioni, sullo stesso principio di validazione tipica di pydantic\footcite{\url{https://docs.pydantic.dev/latest/}}{pydantic}, per determinare automaticamente quali layer di protocollo analizzare (es. \gls{http}, \gls{tcp}), eventalmente quali campi estrarre dal payload, attivando internamente una serie di meccanismi per riuscire a soddisfare le richieste dei filtri.\\
+Il sistema si appoggia sulla libreria firegex\footcite{\url{https://pypi.org/project/firegex/}}{firegex_pypi}, che fornisce sia i decoratori per la definizione dei filtri, sia i modelli dati per l'annotazione dei parametri. Durante la fase di compilazione, \gls{nfproxy} analizza le signature delle funzioni, sullo stesso principio di validazione tipica di pydantic\footcite{\url{https://docs.pydantic.dev/latest/}}{pydantic}, per determinare automaticamente quali layer di protocollo analizzare (es. \gls{http}, \gls{tcp}), eventalmente quali campi estrarre dal payload, attivando internamente una serie di meccanismi per riuscire a soddisfare le richieste dei filtri.
+
 Se un filtro richiede dati non coerenti tra loro, potrebbe essere elaborato ma mai di fatto eseguito.
-L'esecuzione avviene tramite dispatch dinamico: a ogni pacchetto corrispondente ai criteri dichiarati nella signature vengono passati gli oggetti istanziati se disponibili, e ne viene successivamente dato un riscontro sull'azione da eseguire tramite il valore di ritorno. L'assenza di un'istruzione return o il ritorno esplicito di None equivalgono a un'azione ACCEPT implicita.\\
-I filtri continuano ad essere eseguiti fino a che tutti quelli attivi non vengono elaborati, o fino a che uno statment diverso da ACCEPT viene restituito.\\
+L'esecuzione avviene tramite dispatch dinamico: a ogni pacchetto corrispondente ai criteri dichiarati nella signature vengono passati gli oggetti istanziati se disponibili, e ne viene successivamente dato un riscontro sull'azione da eseguire tramite il valore di ritorno. L'assenza di un'istruzione return o il ritorno esplicito di None equivalgono a un'azione ACCEPT implicita.
+
+I filtri continuano ad essere eseguiti fino a che tutti quelli attivi non vengono elaborati, o fino a che uno statment diverso da ACCEPT viene restituito.
+
 Le funzionalità per la modifica del traffico sono accessibili tramite lo statment UNSTABLE\_MANGLE, che si occuperà di elaborare le modifiche eseguite al pacchetto, tramite il model RawPacket. Eventuali modifiche tuttavia non andranno ad influenzare gli altri datahandler che non le riveleranno.
 
 Ulteriori dettagli sull'utilizzo dei models (spesso chiamati anche datahandler) sono disponibili nella documentazione integrata nell'interfaccia di firegex.
@@ -550,9 +565,12 @@ fgex nfproxy test_http.py domy.sh 80 --proto http
 \end{listing}
 
 Questo comando avvia un proxy sull'indirizzo specificato (in questo caso domy.sh:80) applicando i filtri definiti in test\_http.py.
-Per verificare gli effetti che i filtri avrebbero sul nostro server, possiamo configurare il simulatore per inoltrare il traffico al nostro server reale, interagendoci però tramite la connessione aperta dal simulatore stesso. In questo modo possiamo testare l'effettiva applicazione delle regole senza compromettere il funzionamento del server nella rete di gara.  \\
-Inoltre il simulatore supporta l'hot-reload dei filtri, rilevando automaticamente le modifiche ai file Python senza richiedere riavvii. Questo sistema permette di testare rapidamente le modifiche ai filtri, riducendo il tempo di sviluppo e semplificando il processo di debugging.\\
-Si specifica che il simulatore si occupa unicamente di replicare a grandi linee il comportamento della parte c++ del modulo, ma utilizza esattamente lo stesso codice per eseguire il parsing e per l'esecuzione dei filtri, permettendo nella maggior parte dei casi di avere un comportamento pressochè identico a quello che si avrebbe in produzione.\\
+Per verificare gli effetti che i filtri avrebbero sul nostro server, possiamo configurare il simulatore per inoltrare il traffico al nostro server reale, interagendoci però tramite la connessione aperta dal simulatore stesso. In questo modo possiamo testare l'effettiva applicazione delle regole senza compromettere il funzionamento del server nella rete di gara.
+
+Inoltre il simulatore supporta l'hot-reload dei filtri, rilevando automaticamente le modifiche ai file Python senza richiedere riavvii. Questo sistema permette di testare rapidamente le modifiche ai filtri, riducendo il tempo di sviluppo e semplificando il processo di debugging.
+
+Si specifica che il simulatore si occupa unicamente di replicare a grandi linee il comportamento della parte c++ del modulo, ma utilizza esattamente lo stesso codice per eseguire il parsing e per l'esecuzione dei filtri, permettendo nella maggior parte dei casi di avere un comportamento pressochè identico a quello che si avrebbe in produzione.
+
 La Figura~\ref{fig:nfproxy_sim} illustra l'output del simulatore durante l'esecuzione di un filtro \gls{http}, mostrando anche l'auto-reload eseguito in seguito all'esecuzione di modifiche.
 
 \begin{figure}[H]

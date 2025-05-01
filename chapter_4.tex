@@ -1,13 +1,15 @@
 \chapter{Testing e Benchmarking}\label{chap:tests}
 
-Ai fini di verificare il corretto funzionamento del sistema e valutarne le prestazioni, sono stati sviluppati una serie di test e benchmark. Firegex già presentava un set di test, che con l'integrazione di \gls{nfproxy} sono stati ampliati e migliorati, al fine di coprire anche le nuove
-feature introdotte.\\
-I test sono eseguiti prima di ogni rilascio in automatico, al fine di garantire che le modifiche apportate non abbiano introdotto regressioni. I rilasci di firegex avvengono tramite GitHub Actions, che ad ogni rilascio su GitHub esegue i test e, in caso di successo, pubblica l'immagine del container su \gls{ghcr} (ghcr.io/pwnzer0tt1/firegex) e rilascia una nuova versione della libreria, inclusa nello stesso repository, su \gls{pypi}.\\
+Ai fini di verificare il corretto funzionamento del sistema e valutarne le prestazioni, sono stati sviluppati una serie di test e benchmark. Firegex già presentava un set di test, che con l'integrazione di \gls{nfproxy} sono stati ampliati e migliorati, al fine di coprire anche le nuove feature introdotte.
+
+I test sono eseguiti prima di ogni rilascio in automatico, al fine di garantire che le modifiche apportate non abbiano introdotto regressioni. I rilasci di firegex avvengono tramite GitHub Actions, che ad ogni rilascio su GitHub esegue i test e, in caso di successo, pubblica l'immagine del container su \gls{ghcr} (ghcr.io/pwnzer0tt1/firegex) e rilascia una nuova versione della libreria, inclusa nello stesso repository, su \gls{pypi}.
+
 I rilasci avvengono sia per architetture x86\_64 che ARM64, al fine di supportare il maggior numero di macchine possibile.
 
 \section{Integrazione dei test}
 
-Tutti i test di firegex sono disponibili nel suo repository, all'interno della cartella tests.\\
+Tutti i test di firegex sono disponibili nel suo repository, all'interno della cartella tests.
+
 In particolare, quelli riguardanti \gls{nfproxy} sono contenuti nel file tests/nfproxy\_test.py, ed esegue la seguente serie di operazioni:
 
 \begin{itemize}
@@ -17,8 +19,8 @@ In particolare, quelli riguardanti \gls{nfproxy} sono contenuti nel file tests/n
     \item Verifica che ogni tipo di statment sia correttamente funzionante, inserendo un filtro che individua se sul segmento \gls{tcp} sia presente un payload specifico, che se inviato, causi il comportamento desiderato, imposto dallo statment inserito.
     \item Verifica che la funzionalità di modifica funzioni correttamente (nelle casistiche in cui dovrebbe), eseguendo prove sia su mangle a pacchetti più piccoli, che a pacchetti più grandi, comprovando pertanto che la traduzione degli \gls{ack} e \gls{seq} avvenga correttamente. Inoltre viene verificato se a seguito della modifica, il traffico di rete continui a transitare normalmente.
     \item Si assiucura che le funzionalità di interruzione del servizio e del singolo pyfilter siano correttamente funzionanti.
-    \item Per ogni tipo di datahandler, si scambiano dei payload di prova al fine di verificare se il parsing dei vari dati avvenga correttamente per i model:\\
-    TCPInputStream, TCPOutputStream, HttpRequest, HttpResponse,\\
+    \item Per ogni tipo di datahandler, si scambiano dei payload di prova al fine di verificare se il parsing dei vari dati avvenga correttamente per i model:
+    TCPInputStream, TCPOutputStream, HttpRequest, HttpResponse,
     HttpRequestHeader, HttpResponseHeader includendo anche il parsing di Frame websocket.
     \item Vengono testate tutte le \gls{api} backend di \gls{nfproxy}, verificando che le chiamate restituiscano i valori corretti, e si comportino in modo coerente alla loro funzione.
     \item Si verifica inoltre che vengano conteggiate correttamente le connessioni bloccate, e i pacchetti modificati nelle statistiche.
@@ -26,7 +28,8 @@ In particolare, quelli riguardanti \gls{nfproxy} sono contenuti nel file tests/n
 
 \section{Benchmark}
 
-I benchmark sono stati realizzati tramite uno script python con l'ausilio di iperf3\footcite{\url{https://iperf.fr/}}{iperf_website}.\\
+I benchmark sono stati realizzati tramite uno script python con l'ausilio di iperf3\footcite{\url{https://iperf.fr/}}{iperf_website}.
+
 Le casistiche utilizzate sono di semplice natura: verificano le prestazioni in termini di throughput, e lo fanno sia a servizio attivo senza filtri, che con un filtro che applica la seguente \gls{regex} al payload \gls{tcp} (\gls{regex} per il matching di email):
 \begin{verbatim}
 (?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+
@@ -43,8 +46,8 @@ Le casistiche utilizzate sono di semplice natura: verificano le prestazioni in t
                 \\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])
 \end{verbatim}
 
-A differenza dei test, i benchmark non hanno lo scopo di applicare i filtri su un traffico da bloccare, ma si inserisce la seguente regola all'unico scopo di
-misurare l'overhead causato dalla presenza del filtro stesso.\\
+A differenza dei test, i benchmark non hanno lo scopo di applicare i filtri su un traffico da bloccare, ma si inserisce la seguente regola all'unico scopo di misurare l'overhead causato dalla presenza del filtro stesso.
+
 I benchmark sono stati eseguiti su una macchina con le seguenti caratteristiche:
 \begin{listing}[H]
 \begin{minted}[
@@ -81,7 +84,7 @@ I benchmark pertanto sono stati eseguiti con 1 secondo di durata della singola m
     \caption{Grafico Whisker sulle misure di throughput di \gls{nfproxy}}\label{fig:wisker_nfproxy}
 \end{figure}
 
-Si può notare come le performance in multi-threading di \gls{nfproxy} siano migliori rispetto all'utilizzo del singolo thread. È importante sottolineare come nei benchmark non viene eseguito alcun tipo di elaborazione riguardo il parsing dei dati, pertanto il carico di elaborazione è comunque limitato.\\
+Si può notare come le performance in multi-threading di \gls{nfproxy} siano migliori rispetto all'utilizzo del singolo thread. È importante sottolineare come nei benchmark non viene eseguito alcun tipo di elaborazione riguardo il parsing dei dati, pertanto il carico di elaborazione è comunque limitato.
 
 \begin{figure}[H]
     \centering
@@ -89,4 +92,4 @@ Si può notare come le performance in multi-threading di \gls{nfproxy} siano mig
     \caption{Grafico Whisker sulle misure di throughput di \gls{nfproxy} e \gls{nfregex}}\label{fig:wisker_nfproxy_nfregex}
 \end{figure}
 
-Dal confronto di \gls{nfproxy} e \gls{nfregex} si può notare come \gls{nfproxy} abbia un calo di prestazioni rilevante rispetto a \gls{nfregex}, che tuttavia rimane comunque abbondantemente alto per supportare anche carichi di rete molto elevati.\\
+Dal confronto di \gls{nfproxy} e \gls{nfregex} si può notare come \gls{nfproxy} abbia un calo di prestazioni rilevante rispetto a \gls{nfregex}, che tuttavia rimane comunque abbondantemente alto per supportare anche carichi di rete molto elevati.
