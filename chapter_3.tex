@@ -2,7 +2,7 @@
 
 Il \gls{regex} filtering è un modello di filtraggio che garantisce ottime prestazioni (grazie all'elaborazione tramite linguaggi e librerie ottimizzati), ma presenta forti limitazioni nella flessibilità di analisi del traffico.
 
-Questa rigidità è particolarmente rilevante nei \gls{ctf}, dove la maggior parte dei servizi utilizza protocolli come \gls{http}, che spesso includono contenuti compressi o codificati (es. Base64, gzip), difficilmente analizzabili tramite \gls{regex}.
+Questa rigidità è particolarmente rilevante nei \gls{ctf}, dove la maggior parte dei servizi utilizza protocolli come \gls{http}, che spesso includono contenuti compressi o codificati (e.g., Base64, gzip), difficilmente analizzabili tramite \gls{regex}.
 
 A discapito delle prestazioni, \gls{nfproxy} introduce il vantaggio di scrivere filtri in Python\footcite{\url{https://python.org/}}{python}, linguaggio semplice e rapido per lo scripting, superando i limiti precedentemente descritti e offrendo:
 
@@ -20,7 +20,7 @@ che permette un controllo sul traffico paragonabile ad un proxy classico, ma con
 
 Va riportata l'esistenza di limitazioni nella modifica dei pacchetti, che tuttavia non rappresenta uno scenario d'uso necessario per la difesa del servizio.
 
-Il sistema combina C++ per un gestione efficiente dei pacchetti e Python per eseguire il parsing dei protocolli applicativi.
+Il sistema combina C++ per una gestione efficiente dei pacchetti e Python per eseguire il parsing dei protocolli applicativi.
 
 Questo approccio ibrido permette di sfruttare al meglio le caratteristiche di entrambi i linguaggi, garantendo prestazioni elevate e flessibilità nello sviluppo dei filtri.
 
@@ -282,7 +282,7 @@ All'arrivo dei pacchetti nella \gls{nfqueue}, viene eseguita un'analisi immediat
 libtins\footcite{\url{https://libtins.github.io/}}{libtins}, che ricostruisce ricorsivamente gli header di rete e trasporto. 
 
 La libreria genera automaticamente lo stream\_id, struttura dati univoca per identificare connessioni TCP/UDP attraverso
-una coppia di tuple (\gls{ip}:porta) sorgente/destinazione, che sono ordinate considerano la singola tupla come unica entità, e quindi non slegando mai
+una coppia di tuple (\gls{ip}:porta) sorgente/destinazione, che sono ordinate considerando la singola tupla come unica entità, e quindi non slegando mai
 \gls{ip} e porta tra loro. Questo approccio permette di identificare univocamente una connessione, indipendentemente dalla direzione del traffico (ingresso/uscita).
 
 \begin{listing}[H]
