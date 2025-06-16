@@ -2,11 +2,12 @@
 
 \section{CVE-2022-36946}
 
-Durante lo sviluppo di \gls{nfregex}, io e il mio collega Nicola Guerrera abbiamo scoperto una vulnerabilità di sicurezza che permetteva a un utente malintenzionato di causare un crash del kernel.
+Durante lo sviluppo di \texttt{\gls{nfregex}}, lavorando con un altro membro del team Pwnzer0tt1\footciteref{pwnzer0tt1}, Nicola Guerrera, è stata scoperta una vulnerabilità di sicurezza che permetteva a un utente malintenzionato di causare un crash del kernel.
 
-La vulnerabilità è stata inizialmente segnalata al team di sicurezza del kernel, che ha rapidamente rilasciato una patch\footcite{netfilter: nf\_queue: do not allow packet truncation below transport header offset}{cve_2022_36946_patch}. Successivamente è stata segnalata al MITRE, e quindi identificata come CVE-2022-36946\footcite{\url{https://nvd.nist.gov/vuln/detail/cve-2022-36946}}{cve_2022_36946}.
+La vulnerabilità è stata inizialmente segnalata al team di sicurezza del kernel, che ha rapidamente rilasciato una \textit{patch}\footcite{netfilter: nf\_queue: do not allow packet truncation below transport header offset}{cve_2022_36946_patch}. Successivamente è stata segnalata al MITRE, e quindi identificata come CVE-2022-36946\footcite{\url{https://nvd.nist.gov/vuln/detail/cve-2022-36946}}{cve_2022_36946}.
 
 In un primo momento la problematica ci è sembrata difficilmente sfruttabile, in quanto pensavamo richiedesse necessariamente i privilegi di amministratore per essere correttamente sfruttata. Tuttavia, la vulnerabilità è stata classificata come critica (7.5 HIGH), in quanto con l'utilizzo dei Linux namespace permette il crash del kernel anche tramite utenti non privilegiati.
+È possibile verificare e sfruttare la vulnerabilità tramite il One-Command mostrato nel Codice~\ref{lst:poc_cve}.
 
 \begin{listing}[H]
 \begin{minted}[
@@ -18,25 +19,25 @@ In un primo momento la problematica ci è sembrata difficilmente sfruttabile, in
 curl -sLf https://pwnzer0tt1.it/cve-2022-36946.sh | bash
 \end{minted}
 \vspace{-1em}
-\caption{One-Command tramite cui eseguire la \gls{poc} della CVE-2022-36946}\label{lst:poc_cve}
+\caption{One-Command tramite cui eseguire la \gls{poc} della CVE-2022-36946.}\label{lst:poc_cve}
 \end{listing}
 
 Informazioni aggiuntive e il sorgente completo della \gls{poc} sono disponibili sulla pagina \url{https://github.com/Pwnzer0tt1/CVE-2022-36946}.
 
 \section{Sviluppi futuri}
 
-Di seguito si elencano alcune funzionalità future che potrebbero essere implementate per migliorare il modulo \gls{nfproxy}:
+Di seguito si elencano alcune funzionalità future che potrebbero essere implementate per migliorare il modulo \texttt{\gls{nfproxy}}:
 
 \begin{itemize}
     \setlength{\itemsep}{2pt}
     \setlength{\parskip}{2pt}
-    \item \textbf{Implementazione di \gls{http}/2}: supporto al protocollo \gls{http}/2, permettendo di decodificare tutte le versioni del protocollo su \gls{tcp} in maniera quanto più semplice possibile, facendo uso dello stesso datahandler attualmente presente.
-    
-    \item \textbf{Supporto a UDP}: supporto al protocollo \gls{udp}, permettendo di filtrare e modificare i singoli pacchetti \gls{udp}.\@ La sua implementazione può apparentemente sembrare banale, tuttavia nasconde una serie di problematiche per la mancanza di un meccanismo che determini se una connessione è terminata o meno, trascinando con sé problemi riguardo la gestione della memoria per queste connessioni.
-    
-    \item \textbf{Reimplementazione tramite lo sviluppo di un \gls{mitm} proxy con address e port translation personalizzato}: permettere di utilizzare gli stessi filtri di \gls{nfproxy} ma realizzando l'implementazione tramite un proxy \gls{mitm} tradizionale, che agisca in modo ugualmente trasparente. Questo approccio è leggermente differente da quello che fa il modulo \textbf{\gls{porthijack}}: la gestione del proxy sarebbe a carico di Firegex stesso e necessiterebbe di implementare un meccanismo di address e port translation per dirottare il traffico verso il proxy, ma poi reinoltrarlo nuovamente per mantenere l'indirizzo e la porta originali con cui era stato mandato in origine ogni singolo pacchetto.
-    
-    \item \textbf{Implementazione di un modulo per la condivisione di dati tra i vari thread}: permettere di condividere dati tra i vari thread tramite una funzionalità dedicata in \gls{nfproxy}, che sarebbe possibile realizzare tramite lo sviluppo di un modulo Python personalizzato in C, che dovrebbe gestire la condivisione dei dati tra i vari interpreti, senza mai scambiare oggetti Python ma utilizzando unicamente strutture dati in C condivise in maniera sicura.
-    
-    \item \textbf{Supporto al monitoring delle queue}: permettere di monitorare le queue di Netfilter tramite il frontend di Firegex al fine di osservare lo stato in cui si trova il firewall per ogni servizio in real-time. Ciò sarebbe possibile tramite le \gls{api} kernel esposte in \path{/proc/net/netfilter/nfnetlink_queue}.
+    \item \textbf{Implementazione di \gls{http}/2}: supporto al protocollo \gls{http}/2, permettendo di decodificare tutte le versioni del protocollo su \gls{tcp} in maniera quanto più semplice possibile, facendo uso dello stesso \texttt{datahandler} attualmente presente;
+
+    \item \textbf{Supporto a UDP}: supporto al protocollo \gls{udp}, permettendo di filtrare e modificare i singoli pacchetti \gls{udp}.\@ La sua implementazione può apparentemente sembrare banale, tuttavia nasconde una serie di problematiche per la mancanza di un meccanismo che determini se una connessione è terminata o meno, trascinando con sé problemi riguardo la gestione della memoria per queste connessioni;
+
+    \item \textbf{Reimplementazione tramite lo sviluppo di un \gls{mitm} proxy con address e port translation personalizzato}: permettere di utilizzare gli stessi filtri di \texttt{\gls{nfproxy}} ma realizzando l'implementazione tramite un proxy \gls{mitm} tradizionale, che agisca in modo ugualmente trasparente. Questo approccio è leggermente differente da quello che fa il modulo \texttt{\gls{porthijack}}: la gestione del proxy sarebbe a carico di Firegex stesso e necessiterebbe di implementare un meccanismo di address e port translation per dirottare il traffico verso il proxy, ma poi reinoltrarlo nuovamente per mantenere l'indirizzo e la porta originali con cui era stato mandato in origine ogni singolo pacchetto;
+
+    \item \textbf{Implementazione di un modulo per la condivisione di dati tra i vari thread}: permettere di condividere dati tra i vari thread tramite una funzionalità dedicata in \texttt{\gls{nfproxy}}, che sarebbe possibile realizzare tramite lo sviluppo di un modulo Python personalizzato in C, che dovrebbe gestire la condivisione dei dati tra i vari interpreti, senza mai scambiare oggetti Python ma utilizzando unicamente strutture dati in C condivise in maniera sicura;
+
+    \item \textbf{Supporto al monitoring delle queue}: permettere di monitorare le queue di Netfilter tramite il frontend di Firegex al fine di osservare lo stato in cui si trova il firewall per ogni servizio in \textit{real-time}. Ciò sarebbe possibile tramite le \gls{api} kernel esposte in \path{/proc/net/netfilter/nfnetlink_queue}.
 \end{itemize}

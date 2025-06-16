@@ -4,35 +4,28 @@
 \setcounter{page}{1}
 
 L'era digitale, caratterizzata da una connettività globale senza precedenti, ha portato con sé una crescente esposizione a minacce informatiche sofisticate. Attacchi ransomware, violazioni di dati sensibili, phishing avanzato e exploit zero-day rappresentano oggi una realtà quotidiana, con impatti devastanti su infrastrutture critiche, istituzioni finanziarie e diritti individuali.
-
 Secondo il Global Risk Report 2025 del World Economic Forum\footcite{Global Risks Report 2025: \url{https://www.weforum.org/publications/global-risks-report-2025/}}{weforumGRR2025}, la cybersecurity si colloca tra i primi cinque rischi globali in termini di probabilità e gravità, sottolineando l'urgente necessità di rafforzare la resilienza dei sistemi e formare professionisti capaci di anticipare, contenere e neutralizzare queste minacce.
 
 In questo contesto, la domanda di esperti con competenze tecniche multidisciplinari: dalla crittografia all'analisi forense, dalla sicurezza di rete alla psicologia degli attaccanti, ha superato l'offerta creando un divario che richiede approcci innovativi alla formazione. Le tradizionali metodologie didattiche, spesso teoriche e frammentate, si rivelano insufficienti per preparare figure capaci di operare in scenari dinamici, dove la rapidità decisionale e la creatività strategica sono determinanti.
 
-Un ruolo chiave in questa transizione formativa è svolto dalle competizioni \gls{ctf}, che combinano gamification e simulazione di scenari reali per offrire un addestramento immersivo. Queste sfide, strutturate in categorie come jeopardy, \gls{ad} o Boot-to-Root, ricreano ambienti controllati in cui i partecipanti devono identificare vulnerabilità, sfruttare exploit, difendere servizi e analizzare tracce malevole. Non solo favoriscono l'acquisizione di competenze tecniche, ma allenano il problem solving under pressure, la collaborazione in team e la capacità di adattamento a tattiche in continua evoluzione. Eventi internazionali come il Google \gls{ctf}\footcite{\url{https://capturetheflag.withgoogle.com/}}{google_ctf}, patrocinato da aziende leader del settore, attirano migliaia di partecipanti, trasformandosi in vetrine per il reclutamento di talenti e laboratori per testare strumenti all'avanguardia.
+Un ruolo chiave in questa transizione formativa è svolto dalle competizioni \gls{ctf}, che combinano gamification e simulazione di scenari reali per offrire un addestramento immersivo. Queste sfide, strutturate in categorie come jeopardy, \gls{ad} o Boot-to-Root, ricreano ambienti controllati in cui i partecipanti devono identificare vulnerabilità, sfruttare exploit, difendere servizi e analizzare tracce malevole. Non solo favoriscono l'acquisizione di competenze tecniche, ma allenano il \textit{problem solving under pressure}, la collaborazione in team e la capacità di adattamento a tattiche in continua evoluzione. Eventi internazionali come il Google \gls{ctf}\footcite{\url{https://capturetheflag.withgoogle.com/}}{google_ctf}, patrocinato da aziende leader del settore, attirano migliaia di partecipanti, trasformandosi in vetrine per il reclutamento di talenti e laboratori per testare strumenti all'avanguardia.
 
 L'obiettivo in queste competizioni è rubare la flag: una stringa di testo segreta, con un formato ben riconoscibile, ottenibile sfruttando vulnerabilità volutamente esposte nei sistemi. La flag rappresenta pertanto la prova univoca che attesta la risoluzione della sfida da parte dei partecipanti.
-
 Queste competizioni costituiscono un ottimo strumento per approfondire le proprie competenze nel settore anche per i più esperti, che spesso ricoprono sia il ruolo di giocatori che di organizzatori in diverse competizioni, alimentando un ciclo virtuoso di apprendimento, innovazione e crescita collettiva all'interno dell'ecosistema cybersecurity\footcite{\url{https://www.hackthebox.com/blog/what-is-ctf/}}{hackthebox_ctf}.
 
 Particolare rilevanza assumono le competizioni di tipo \gls{ad}, in cui i team devono simultaneamente proteggere i propri sistemi dagli avversari e compromettere quelli altrui. Questa modalità richiede una comprensione profonda delle dinamiche offensive e difensive, oltre alla capacità di implementare contromisure in tempo reale.
 
 Questa tesi tratta la progettazione e lo sviluppo di un firewall orientato alle competizioni \gls{ctf} di tipologia \gls{ad}, le quali richiedono tool flessibili in grado di adattarsi dinamicamente alle varie fasi della competizione. Verranno analizzate le funzionalità attualmente presenti nel progetto, i punti critici e le possibili migliorie per aumentarne l'efficienza e le prestazioni.
-
 In particolare, l'attenzione si concentrerà su una nuova funzionalità sviluppata che consente l'applicazione di filtri in modo totalmente trasparente dal punto di vista dell'applicativo, che mira a minimizzare l'impatto sulla rete, e permette di definire le regole di filtraggio utilizzando istruzioni in linguaggio Python.
-
 Il firewall oggetto di questa tesi è Firegex\footcite{\url{https://github.com/Pwnzer0tt1/firegex}}{firegex_gh}, sviluppato per il team del Politecnico di Bari\footcite{\url{https://www.poliba.it}}{poliba_website} in occasione della competizione nazionale di Cyberchallenge\footcite{\url{https://cyberchallenge.it/}}{cyberchallenge} del 2022. In tale contesto è nato lo stesso team \gls{ctf} che ne ha supportato lo sviluppo, Pwnzer0tt1\footcite{\url{https://pwnzer0tt1.it/}}{pwnzer0tt1}.
-
-La nuova funzionalità implementata, denominata \gls{nfproxy}, simula il funzionamento di un proxy tradizionale per il filtraggio del traffico. Il suo funzionamento e caratteristiche tecniche saranno oggetto del Capitolo~\ref{chap:nfproxy}.
-\\\\La struttura del documento è organizzata come segue:\\
-
-Nel Capitolo~\ref{chap:ctfad} verranno forniti i dettagli relativi alle competizioni \gls{ctf} \gls{ad}, descrivendo l'infrastruttura tipica di gara, il funzionamento dei componenti principali e gli strumenti comunemente utilizzati dai partecipanti.
-
-Il Capitolo~\ref{chap:firegex} presenterà Firegex analizzandone le motivazioni alla base dello sviluppo, il confronto con soluzioni esistenti, l'architettura interna e le principali funzionalità offerte.
-
-Il Capitolo~\ref{chap:nfproxy} si focalizzerà sulla progettazione e sviluppo del modulo nfproxy, approfondendo le scelte architetturali, le problematiche nell'elaborazione parallela dei pacchetti e le soluzioni implementate per la gestione del traffico \gls{tcp} e \gls{http}.
-
-Il Capitolo~\ref{chap:tests} descriverà la metodologia adottata per i test di funzionalità e performance, inclusi i benchmark comparativi e i risultati ottenuti.
-
-Infine, il Capitolo~\ref{chap:notes} conterrà considerazioni finali su possibili sviluppi futuri ed in particolare una vulnerabilità emersa durante il progetto nel kernel linux.
-
+La nuova funzionalità implementata, denominata \texttt{\gls{nfproxy}}, simula il funzionamento di un proxy tradizionale per il filtraggio del traffico. Il suo funzionamento e caratteristiche tecniche saranno oggetto del Capitolo~\ref{chap:nfproxy}.
+\\La struttura del documento è organizzata come segue:
+\begin{itemize}
+  \setlength{\itemsep}{1pt}
+  \setlength{\parskip}{1pt}
+  \item Nel Capitolo~\ref{chap:ctfad} verranno forniti i dettagli relativi alle competizioni \gls{ctf} \gls{ad}, descrivendo l'infrastruttura tipica di gara, il funzionamento dei componenti principali e gli strumenti comunemente utilizzati dai partecipanti;
+  \item Il Capitolo~\ref{chap:firegex} presenterà Firegex analizzandone le motivazioni alla base dello sviluppo, il confronto con soluzioni esistenti, l'architettura interna e le principali funzionalità offerte;
+  \item Il Capitolo~\ref{chap:nfproxy} si focalizzerà sulla progettazione e sviluppo del modulo \texttt{nfproxy}, approfondendo le scelte architetturali, le problematiche nell'elaborazione parallela dei pacchetti e le soluzioni implementate per la gestione del traffico \gls{tcp} e \gls{http};
+  \item Il Capitolo~\ref{chap:tests} descriverà la metodologia adottata per i test di funzionalità e performance, inclusi i benchmark comparativi e i risultati ottenuti;
+  \item Infine, il Capitolo~\ref{chap:notes} conterrà considerazioni finali su possibili sviluppi futuri ed in particolare una vulnerabilità emersa durante il progetto nel kernel linux.
+\end{itemize}

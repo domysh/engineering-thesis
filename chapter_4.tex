@@ -1,6 +1,6 @@
 \chapter{Testing e Benchmarking}\label{chap:tests}
 
-Ai fini di verificare il corretto funzionamento del sistema e valutarne le prestazioni, sono stati sviluppati una serie di test e benchmark. Firegex già presentava un set di test, che con l'integrazione di \gls{nfproxy} sono stati ampliati e migliorati, al fine di coprire anche le nuove feature introdotte.
+Ai fini di verificare il corretto funzionamento del sistema e valutarne le prestazioni, sono stati sviluppati una serie di test e benchmark. Firegex già presentava un set di test, che con l'integrazione di \texttt{\gls{nfproxy}} sono stati ampliati e migliorati, al fine di coprire anche le nuove feature introdotte.
 
 I test sono eseguiti prima di ogni rilascio in automatico, al fine di garantire che le modifiche apportate non abbiano introdotto regressioni. I rilasci di firegex avvengono tramite GitHub Actions, che ad ogni rilascio su GitHub esegue i test e, in caso di successo, pubblica l'immagine del container su \gls{ghcr} (ghcr.io/pwnzer0tt1/firegex) e rilascia una nuova versione della libreria, inclusa nello stesso repository, su \gls{pypi}.
 
@@ -8,23 +8,23 @@ I rilasci avvengono sia per architetture x86\_64 che ARM64, al fine di supportar
 
 \section{Integrazione dei test}
 
-Tutti i test di firegex sono disponibili nel suo repository, all'interno della cartella tests. In particolare, quelli riguardanti \gls{nfproxy} sono contenuti nel file tests/nfproxy\_test.py, ed esegue la seguente serie di operazioni:
+Tutti i test di firegex sono disponibili nel suo repository, all'interno della cartella tests. In particolare, quelli riguardanti \texttt{\gls{nfproxy}} sono contenuti nel file tests/nfproxy\_test.py, ed esegue la seguente serie di operazioni:
 
 \begin{itemize}
     \setlength{\itemsep}{1pt}
     \setlength{\parskip}{1pt}
-    \item Avvia un nuovo servizio sull'interfaccia di loopback, e verifica che il traffico non sia stato compromesso dal semplice avvio del modulo.
-    \item Verifica che ogni tipo di statment sia correttamente funzionante, inserendo un filtro che individua se sul segmento \gls{tcp} sia presente un payload specifico, che se inviato, causi il comportamento desiderato, imposto dallo statment inserito.
-    \item Verifica che la funzionalità di modifica funzioni correttamente (nelle casistiche in cui dovrebbe), eseguendo prove sia su mangle a pacchetti più piccoli, che a pacchetti più grandi, comprovando pertanto che la traduzione degli \gls{ack} e \gls{seq} avvenga correttamente. Inoltre viene verificato se a seguito della modifica, il traffico di rete continui a transitare normalmente.
-    \item Si assicura che le funzionalità di interruzione del servizio e del singolo pyfilter siano correttamente funzionanti.
-    \item Per ogni tipo di datahandler, si scambiano dei payload di prova al fine di verificare se il parsing dei vari dati avvenga correttamente per i model:
+    \item Avvia un nuovo servizio sull'interfaccia di loopback, e verifica che il traffico non sia stato compromesso dal semplice avvio del modulo;
+    \item Verifica che ogni tipo di statment sia correttamente funzionante, inserendo un filtro che individua se sul segmento \gls{tcp} sia presente un payload specifico, che se inviato, causi il comportamento desiderato, imposto dallo statment inserito;
+    \item Verifica che la funzionalità di modifica funzioni correttamente (nelle casistiche in cui dovrebbe), eseguendo prove sia su mangle a pacchetti più piccoli, che a pacchetti più grandi, comprovando pertanto che la traduzione degli \gls{ack} e \gls{seq} avvenga correttamente. Inoltre viene verificato se a seguito della modifica, il traffico di rete continui a transitare normalmente;
+    \item Si assicura che le funzionalità di interruzione del servizio e del singolo pyfilter siano correttamente funzionanti;
+    \item Per ogni tipo di \texttt{datahandler}, si scambiano dei payload di prova al fine di verificare se il \textit{parsing} dei vari dati avvenga correttamente per i model:
     TCPInputStream, TCPOutputStream, HttpRequest, HttpResponse,
-    HttpRequestHeader, HttpResponseHeader includendo anche il parsing di Frame websocket.
-    \item Vengono testate tutte le \gls{api} backend di \gls{nfproxy}, verificando che le chiamate restituiscano i valori corretti, e si comportino in modo coerente alla loro funzione.
+    HttpRequestHeader, HttpResponseHeader includendo anche il \textit{parsing} di Frame websocket;
+    \item Vengono testate tutte le \gls{api} backend di \texttt{\gls{nfproxy}}, verificando che le chiamate restituiscano i valori corretti, e si comportino in modo coerente alla loro funzione;
     \item Si verifica inoltre che vengano conteggiate correttamente le connessioni bloccate, e i pacchetti modificati nelle statistiche.
 \end{itemize}
 
-\section{Benchmark}
+\section{Benchmark \texttt{nfproxy}}
 
 I benchmark sono stati realizzati tramite uno script python con l'ausilio di iperf3\footcite{\url{https://iperf.fr/}}{iperf_website}.
 
@@ -46,23 +46,10 @@ Le casistiche utilizzate sono di semplice natura: verificano le prestazioni in t
 
 A differenza dei test, i benchmark non hanno lo scopo di applicare i filtri su un traffico da bloccare, ma si inserisce la seguente regola all'unico scopo di misurare l'overhead causato dalla presenza del filtro stesso.
 
-I benchmark sono stati eseguiti su una macchina con le seguenti caratteristiche:
-\begin{listing}[H]
-\begin{minted}[
-    frame=single,
-    framerule=0.8pt,
-    fontsize=\footnotesize,
-    breaklines
-]{text}
-Macbook Air M2 16GB RAM
-Su una VM avviata da OrbStack con Fedora Linux 41 (Container Image) aarch64
-Linux 6.12.13-orbstack-00304-gede1cf3337c4
-\end{minted}
-\vspace{-1em}
-\end{listing}
+I benchmark sono stati eseguiti su un Macbook Air M2 16GB RAM tramite una VM avviata da OrbStack con Fedora Linux 41 (Container Image) con kernel aarch64 Linux 6.12.13-orbstack-00304-gede1cf3337c4.
 
-Lo script python che esegue i benchmark ripete la stessa misura un numero configurabile di volte, sia per il modulo \gls{nfproxy}, sia per il modulo \gls{nfregex}.
-I risultati sono stati raccolti e analizzati, e messi a disposizioni nei grafici in seguito, eseguiti con i seguenti comandi:
+Lo script python che esegue i benchmark ripete la stessa misura un numero configurabile di volte, sia per il modulo \texttt{\gls{nfproxy}}, sia per il modulo \texttt{\gls{nfregex}}.
+I risultati sono stati raccolti e analizzati, e messi a disposizioni nei grafici in seguito, eseguiti con i comandi mostrati nel Codice~\ref{fig:benchmark_cmd}.
 \begin{listing}[H]
 \begin{minted}[
     frame=single,
@@ -73,6 +60,7 @@ I risultati sono stati raccolti e analizzati, e messi a disposizioni nei grafici
 python3 comparemark.py nfproxy -p testpassword -d 1 -s 50 -V 100
 python3 comparemark.py nfregex -p testpassword -d 1 -s 50 -V 100
 \end{minted}
+\caption{Comandi per l'esecuzione dei benchmark su \texttt{nfproxy} e \texttt{nfregex}}\label{fig:benchmark_cmd}
 \vspace{-1em}
 \end{listing}
 
@@ -81,15 +69,45 @@ I benchmark pertanto sono stati eseguiti con 1 secondo di durata della singola m
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.98\textwidth]{images/chapter4/whisker_nfproxy.png}
-    \caption{Grafico Whisker sulle misure di throughput di \gls{nfproxy}}\label{fig:wisker_nfproxy}
+    \caption{Grafico Whisker sulle misure di throughput di \texttt{nfproxy}.}\label{fig:wisker_nfproxy}
 \end{figure}
 
-Si può notare come le performance in multi-threading di \gls{nfproxy} siano migliori rispetto all'utilizzo del singolo thread. È importante sottolineare come nei benchmark non viene eseguito alcun tipo di elaborazione riguardo il parsing dei dati, pertanto il carico di elaborazione è comunque limitato.
+Dalla Figura~\ref{fig:wisker_nfproxy} si può notare come le performance in \textit{multi-threading} di \texttt{\gls{nfproxy}} siano migliori rispetto all'utilizzo del singolo thread. È importante sottolineare come nei benchmark non viene eseguito alcun tipo di elaborazione riguardo il \textit{parsing} dei dati, pertanto il carico di elaborazione è comunque limitato.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.98\textwidth]{images/chapter4/whisker_compare.png}
-    \caption{Grafico Whisker sulle misure di throughput di \gls{nfproxy} e \gls{nfregex}}\label{fig:wisker_nfproxy_nfregex}
+    \caption{Grafico Whisker sulle misure di throughput di \texttt{nfproxy} e \texttt{nfregex}.}\label{fig:wisker_nfproxy_nfregex}
 \end{figure}
 
-Dal confronto di \gls{nfproxy} e \gls{nfregex} si può notare come \gls{nfproxy} abbia un calo di prestazioni rilevante rispetto a \gls{nfregex}, che tuttavia rimane comunque abbondantemente alto per supportare anche carichi di rete molto elevati.
+Dal confronto di \texttt{\gls{nfproxy}} e \texttt{\gls{nfregex}} che emerge dalla Figura~\ref{fig:wisker_nfproxy_nfregex} si può notare come \texttt{\gls{nfproxy}} abbia un calo di prestazioni rilevante rispetto a \texttt{\gls{nfregex}}, che tuttavia rimane comunque abbondantemente alto per supportare anche carichi di rete molto elevati.
+
+\section{Benchmark sul sistema di balancing}\label{balancing_benchmark}
+
+INTEGRARE MEGLIO QUESTA PARTE TODO !!!!!!
+
+I benchmark sul sistema di balancing descritto nel Capitolo~\ref{custom_balancing_system} sono stati eseguiti sul modulo \texttt{\gls{nfregex}} con carico simulato (mediante il Codice~\ref{lst:nfregex_multithread_load}), mostrano il beneficio che porta questo sistema come visibile dai risultati in Figura~\ref{fig:nfproxy_multithread_benchmark}.
+
+\begin{listing}[H]
+\begin{minted}[
+    frame=single,
+    framerule=0.8pt,
+    fontsize=\footnotesize,
+    breaklines
+  ]{cpp}
+volatile int x = 0;
+for (int i=0; i<50000; i++){
+    x+=1;
+}
+\end{minted}
+\vspace{-1em}
+\caption{Algoritmo di simulazione del carico usato nei benchmark \textit{multi-thread} di \texttt{nfregex}.}\label{lst:nfregex_multithread_load}
+\end{listing}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.98\textwidth]{images/chapter3/Benchmark-chart-with-load.png}
+    \caption{Benchmark di \texttt{\gls{nfproxy}} con load balancing personalizzato (1 vs 8 thread).}\label{fig:nfproxy_multithread_benchmark}
+\end{figure}
+
+I medesimi vantaggi prestazionali si possono riscontrare in \texttt{\gls{nfproxy}}, che condivide la stessa base di codice per l'implementazione del bilanciamento del carico (come già mensionato nel Capitolo~\ref{custom_balancing_system})
