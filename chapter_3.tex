@@ -133,7 +133,7 @@ di interpreti Python indipendenti nello stesso processo, ciascuno con il proprio
     \item Integrazione trasparente tra codice C++ e Python;
     \item Parallelismo reale senza overhead di processi multipli.
 \end{itemize}
-L'impossibilità di condividere oggetti tra interpreti, uno dei limiti di questo approccio, non costituisce un problema nel nostro caso poichè, grazie al meccanismo di
+L'impossibilità di condividere oggetti tra interpreti, uno dei limiti di questo approccio, non costituisce un problema nel nostro caso poiché, grazie al meccanismo di
 smistamento dei pacchetti descritto nel prossimo paragrafo, ciò non sarà necessario.
 
 L'eseguibile C++ una volta avviato, sarà in attesa del codice python da utilizzare come filtro: una volta arrivato il codice, questo viene compilato in bytecode tramite la funzione \texttt{compile} integrata in python e successivamente, al fine di rendere duplicabile il bytecode compilato nei vari interpreti inizializzati, ne eseguiamo il marshaling\footcite{\url{https://docs.python.org/3/library/marshal.html}}{marshal_python}, ottenendone una rappresentazione seria.
@@ -248,7 +248,7 @@ u32 nfqueue_hash(sk_buff *skb, u16 queue, u16 queues_total, u8 family,
 \end{listing}
 
 L'esclusione delle porte nell'hashing kernel\footcite{\texttt{nfqueue\_hash}, hash function for \texttt{nf\_queue} in the Linux kernel}{nfqueue_ip_hashing}
-nel sistema di \textit{balancing}\footcite{\texttt{nfqueue\_tg\_v3}, balancing function for \texttt{nf\_queue} in the linux kernel}{nfqueue_ip_balancing} integrato in \gls{nfqueue}
+nel sistema di \textit{balancing}\footcite{\texttt{nfqueue\_tg\_v3}, balancing function for \texttt{nf\_queue} in the Linux kernel}{nfqueue_ip_balancing} integrato in \gls{nfqueue}
 rappresenta un limite critico in scenari \gls{ctf} con \gls{nat}, dove tutto il traffico anonimizzato verrebbe gestito da un singolo consumatore.
 Questo è il motivo che ha spinto alla scelta di un approccio più sofisticato, che garantisce un effettivo bilanciamento del carico sui vari thread.
 
@@ -305,9 +305,9 @@ Sarà il produttore che una volta elaborato il pacchetto ed inviato il verdetto 
 
 \section{Gestione dei pacchetti TCP}
 
-Come citato precedentemete, prima di inizializzare la queue, vengono inseriti tramite \gls{nftables} le regole per intercettare il traffico in un certo punto della catena di netfilter, per essere mandato alla queue che determinerà un verdetto sul pacchetto.
+Prima di inizializzare la queue, vengono (dal backend python) inserite tramite \gls{nftables} le regole per intercettare il traffico in un certo punto della catena di netfilter, per essere mandato alla queue che determinerà un verdetto sul pacchetto.
 
-Il traffico in particolare viene intercettato sia in pre-routing, che in post-routing ad un hook prima dell'azione del modulo \texttt{conntrack}, ma dopo dell'azione di defrag, rispettivamente a \texttt{prio} -310 in \texttt{pre-routing} e 110 in \texttt{post-routing} rientrando nei range corretti, come riportati sulla wiki ufficiale di \gls{nftables}\footcite{\url{https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks}}{netfilter_hooks}. Questo permette di ottenere dei pacchetti che hanno già subito il processo di deframmentazione a livello 3, di cui pertanto non ci dovremo preoccupare, ma che non hanno subito il processo di routing (che quindi volendo potremmo manipolare) e che non sono stati ancora analizzati dal modulo \texttt{conntrack}.
+Il traffico in particolare viene intercettato sia in \texttt{pre-routing}, che in \texttt{post-routing} ad un hook prima dell'azione del modulo \texttt{conntrack}, ma dopo dell'azione di defrag, rispettivamente a \texttt{prio} -310 in \texttt{pre-routing} e 110 in \texttt{post-routing} rientrando nei range corretti, come riportati sulla wiki ufficiale di \gls{nftables}\footcite{\url{https://wiki.nftables.org/wiki-nftables/index.php/Netfilter_hooks}}{netfilter_hooks}. Questo permette di ottenere dei pacchetti che hanno già subito il processo di deframmentazione a livello 3, di cui pertanto non ci dovremo preoccupare, ma che non hanno subito il processo di routing (che quindi volendo potremmo manipolare) e che non sono stati ancora analizzati dal modulo \texttt{conntrack}.
 Tuttavia, qui i pacchetti non hanno subito il processo di ordinamento dei payload che avviene a livello 4, sul quale come è possibile osservare dalla Figura~\ref{fig:nftables_hooks}, non è possibile intercettare del traffico, poiché i pacchetti arriveranno direttamente alle fasi di gestioni dei dati per la loro consegna alla socket a livello applicatvo.
 Pertanto è dato a noi il compito di analizzare il traffico, ordinando i pacchetti \gls{tcp} per un'utilizzo dei dati coerente a quelli che saranno letti dall'applicazione.
 Libtins semplifica significativamente questa gestione attraverso meccanismi automatizzati gestiti dal suo \gls{tcp} follower\footcite{Esempio \gls{tcp} Follower: \url{https://libtins.github.io/examples/http-requests/}}{libtins_tcp_follower_gh} per:
@@ -336,7 +336,7 @@ Ogni processo consumatore ha un suo follower dedicato che analizzerà i flussi r
 
 \section{Modifica dei pacchetti}
 
-Il modulo \gls{nfqueue} consente effettivamente la modifica dei pacchetti, mediante l'invio al kernel linux del pacchetto modificato, offrendo la possibilità di alterare header
+Il modulo \gls{nfqueue} consente effettivamente la modifica dei pacchetti, mediante l'invio al kernel Linux del pacchetto modificato, offrendo la possibilità di alterare header
 \gls{ip}, \gls{tcp} ed il relativo payload. Tuttavia la funzionalità di modifica in \texttt{nfproxy} è stata implementata solo parzialmente e non risulta pienamente affidabile.
 
 Le limitazioni derivano da problematiche intrinseche legate all’interazione con i meccanismi di livello di trasporto. Ad esempio, modifiche al payload \gls{tcp} durante connessioni attive potrebbero invalidare checksum o causare inconsistenze nei \gls{seq}. La complessità per garantire coerenza in tutti i possibili scenari (come in caso di ritrasmissioni) rende l’implementazione robusta di questa feature particolarmente onerosa. Inoltre, se gestita male, la modifica del payload potrebbe essere soggetta a vulnerabilità di sicurezza. Valutando il rapporto rischio-beneficio, si è optato per comunque rendere disponibile la funzionalità, seppur parzialmente implementata, ma fortemente disincentivata e volutamente resa meno facilmente accessibile.
@@ -404,7 +404,7 @@ Un'analisi preliminare e dei test preliminari, suggerirebbero l'adeguatezza di q
 La criticità principale risiede nell'algoritmo di conversione, che non considera adeguatamente le ritrasmissioni di segmenti antecedenti al pacchetto modificato. In tali scenari, il ricalcolo dell'\gls{ack} relativo richiederebbe l'utilizzo di un offset compatibile non all'ultimo offset calcolato, ma allo stato del flusso nella parte interessata dalla ritrasmissione, operazione che l'implementazione corrente non esegue. La problematica è diretta conseguenza della mancanza di un analisi del traffico contestuale, capace di identificare la porzione di flusso effettivamente coinvolta nella ritrasmissione, e di memorizzare le discrepanze cumulative associandole direttamente alle varie parti dello stream interessate.
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.90\textwidth]{images/chapter3/TCP_ack_seq_transl_failure.drawio.png}
+    \includesvg[width=0.90\textwidth]{images/chapter3/TCP_ack_seq_transl_failure.drawio.svg}
     \caption{Esempio di una possibile problematica nella traduzione di \gls{ack} e \gls{seq} implementata.}\label{fig:tcp_ack_seq_transl_failure}
 \end{figure}
 L'analisi della Figura~\ref{fig:tcp_ack_seq_transl_failure} evidenzia come le casistiche descritte possano compromettere integralmente il sistema di traduzione implementato. Tali scenari, particolarmente probabili in condizioni di congestione di rete, rappresentano potenziali vettori d'attacco mirati a destabilizzare il servizio.
@@ -453,7 +453,7 @@ In caso di fallimento nel \textit{parsing} dei frame, i dati vengono resi dispon
 
 \section{Sintassi e gestione dei filtri python}
 
-I filtri Python per \texttt{\gls{nfproxy}} vengono definiti in file singoli (uno per servizio) contenenti funzioni annotate con il decoratore \texttt{@pyfilter}. Queste funzioni, denominate collettivamente pyfilters, accettano parametri tipizzati che rappresentano i dati estratti dal traffico di rete e restituiscono istruzioni di azione (ACCEPT, REJECT, DROP, chiamati statment) determinando il comportamento finale sul pacchetto.
+I filtri Python per \texttt{\gls{nfproxy}} vengono definiti in file singoli (uno per servizio) contenenti funzioni annotate con il decoratore \texttt{@pyfilter}. Queste funzioni, denominate collettivamente pyfilters, accettano parametri tipizzati che rappresentano i dati estratti dal traffico di rete e restituiscono istruzioni di azione (ACCEPT, REJECT, DROP, chiamati \textit{statement}) determinando il comportamento finale sul pacchetto.
 
 L'esempio nel Codice~\ref{lst:curl_filter_example} illustra un filtro che blocca le richieste \gls{http} contenenti la stringa `curl' nell'header \texttt{User-Agent} e impedisce gli \textit{upgrade} a WebSocket:
 
@@ -520,7 +520,7 @@ Tutti i modelli supportano decompressione automatica (gzip, brotli, deflate, zst
 
 \subsection{Gestione dei buffer di memoria}
 
-La gestione di flussi di traffico con payload di grandi dimensioni richiede un'attenzione particolare al consumo di memoria, specialmente in contesti ad alto throughput.\@ \texttt{\gls{nfproxy}} implementa un sistema di bufferring che consente una dimensione massima predefinita di 1MB per ciascun tipo di \texttt{datahandler}, tentando di mantere il corretto funzionamento dei parser anche in condizioni di sovraccarico. Infatti quando la soglia viene superata, il buffer viene automaticamente svuotato sebbene ciò possa comportare perdita di informazioni utili.
+La gestione di flussi di traffico con payload di grandi dimensioni richiede un'attenzione particolare al consumo di memoria, specialmente in contesti ad alto throughput.\@ \texttt{\gls{nfproxy}} implementa un sistema di buffering che consente una dimensione massima predefinita di 1MB per ciascun tipo di \texttt{datahandler}, tentando di mantenere il corretto funzionamento dei parser anche in condizioni di sovraccarico. Infatti quando la soglia viene superata, il buffer viene automaticamente svuotato sebbene ciò possa comportare perdita di informazioni utili.
 
 Il comportamento predefinito è configurabile attraverso variabili globali che permettono di adattare il bilanciamento tra consumo di risorse e completezza analitica. È possibile ridurre la dimensione massima dei buffer per ambienti memory-constrained o aumentarla per scenari che richiedono la ricostruzione completa di flussi complessi. In aggiunta, l'azione da intraprendere al superamento della capacità del buffer può essere personalizzata tra quattro opzioni: svuotamento controllato (FLUSH), accettazione passiva del traffico successivo (ACCEPT), rifiuto selettivo della connessione (REJECT), o drop dei pacchetti successivi (DROP). Nel Codice~\ref{lst:nfproxy_memory_limit_example} è disponibile un esempio di configurazione personalizzata del sistema di gestione dei buffer di memoria.
 
@@ -545,7 +545,7 @@ FGEX_FULL_STREAM_ACTION = FullStreamAction.REJECT  # Politica di overflow
 
 \section{Proxy di simulazione}
 
-Per validare il corretto funzionamento dei filtri prima del deployment sul firewall, firegex integra un ambiente di simulazione basato su proxy \gls{tcp}.\@ Questo strumento, accessibile tramite il comando fgex \texttt{\gls{nfproxy}}, consente di testare le regole in condizioni controllate riproducendo fedelmente l'architettura operativa del modulo reale.
+Per validare il corretto funzionamento dei filtri prima del deployment sul firewall, firegex integra un ambiente di simulazione basato su proxy \gls{tcp}.\@ Questo strumento, accessibile tramite il comando fgex \texttt{\gls{nfproxy}}, consente di testare le regole in condizioni controllate riproducendo fedelmente l'architettura operativa del modulo reale, basata su un proxy TCP.
 \begin{listing}[H]
 \begin{minted}[
     frame=single,

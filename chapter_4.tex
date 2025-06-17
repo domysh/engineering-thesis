@@ -14,7 +14,7 @@ Tutti i test di firegex sono disponibili nel suo repository, all'interno della c
     \setlength{\itemsep}{1pt}
     \setlength{\parskip}{1pt}
     \item Avvia un nuovo servizio sull'interfaccia di loopback, e verifica che il traffico non sia stato compromesso dal semplice avvio del modulo;
-    \item Verifica che ogni tipo di statment sia correttamente funzionante, inserendo un filtro che individua se sul segmento \gls{tcp} sia presente un payload specifico, che se inviato, causi il comportamento desiderato, imposto dallo statment inserito;
+    \item Verifica che ogni tipo di \textit{statement} sia correttamente funzionante, inserendo un filtro che individua se sul segmento \gls{tcp} sia presente un payload specifico, che se inviato, causi il comportamento desiderato, imposto dallo \textit{statement} inserito;
     \item Verifica che la funzionalità di modifica funzioni correttamente (nelle casistiche in cui dovrebbe), eseguendo prove sia su mangle a pacchetti più piccoli, che a pacchetti più grandi, comprovando pertanto che la traduzione degli \gls{ack} e \gls{seq} avvenga correttamente. Inoltre viene verificato se a seguito della modifica, il traffico di rete continui a transitare normalmente;
     \item Si assicura che le funzionalità di interruzione del servizio e del singolo pyfilter siano correttamente funzionanti;
     \item Per ogni tipo di \texttt{datahandler}, si scambiano dei payload di prova al fine di verificare se il \textit{parsing} dei vari dati avvenga correttamente per i model:
