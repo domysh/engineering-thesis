@@ -316,9 +316,6 @@ La difesa di questo servizio è piuttosto semplice, ma potrebbe risultare anche 
 
 In alternativa potremmo utilizzare sistemi come firegex\footcite{\url{https://github.com/pwnzer0tt1/firegex}}{firegex_gh} che tramite la sua nuova funzione \texttt{\gls{nfproxy}} può eseguire la decodifica del token \gls{jwt} per verificare che l'algoritmo nel token sia quello previsto dal servizio, interrompendo i tentativi di accesso malevoli. Inoltre, filtrando anche i doppi punti nel traffico \gls{tcp} in ingresso, possiamo protteggere il servizio anche dalla vulnerabilità di \gls{lfi}.
 
-SEZIONE PER LA DESCRIZIONE DEL NETWORKING SU LINUX !!!! TODO
-
-
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.98\textwidth]{images/chapter3/nf-hooks.png}

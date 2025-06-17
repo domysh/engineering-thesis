@@ -80,11 +80,13 @@ Dalla Figura~\ref{fig:wisker_nfproxy} si può notare come le performance in \tex
     \caption{Grafico Whisker sulle misure di throughput di \texttt{nfproxy} e \texttt{nfregex}.}\label{fig:wisker_nfproxy_nfregex}
 \end{figure}
 
-Dal confronto di \texttt{\gls{nfproxy}} e \texttt{\gls{nfregex}} che emerge dalla Figura~\ref{fig:wisker_nfproxy_nfregex} si può notare come \texttt{\gls{nfproxy}} abbia un calo di prestazioni rilevante rispetto a \texttt{\gls{nfregex}}, che tuttavia rimane comunque abbondantemente alto per supportare anche carichi di rete molto elevati.
+Dal confronto di \gls{nfproxy} e \gls{nfregex} emerge chiaramente l'impatto prestazionale dell'introduzione di Python nel processo di elaborazione. Nella configurazione single-thread (senza carico), \gls{nfregex} raggiunge un throughput medio di 3548 MB/s con una deviazione standard contenuta (ampiezza whisker di circa 375 MB/s), mentre \gls{nfproxy} si attesta a 1357.16 MB/s con però una minore variabilità (ampiezza whisker di circa 250 MB/s). 
+
+Il passaggio alla configurazione multi-thread (8 thread) mostra miglioramenti significativi per entrambi i moduli, ma soprattutto per \gls{nfproxy} avendo più carico di base da sostenere: \gls{nfregex} sale a 3716.94 (+4.55\% rispetto al single-thread) mantenendo una variabilità simile (300 MB/s circa), mentre \gls{nfproxy} raggiunge 1816.05 MB/s (+25.27\% rispetto al single-thread), dimostrando una maggiore capacità di beneficiare della parallelizzazione grazie al superamento delle limitazioni del \gls{gil} tramite il \gls{pep} 684.
+
+Nonostante il calo prestazionale del 51.14\% rispetto a \gls{nfregex} nella configurazione multi-thread, \gls{nfproxy} mantiene un throughput abbondantemente sufficiente per scenari \gls{ctf} \gls{ad}, dove i carichi di rete tipici raramente superano qualche MB/s.
 
 \section{Benchmark sul sistema di balancing}\label{balancing_benchmark}
-
-INTEGRARE MEGLIO QUESTA PARTE TODO !!!!!!
 
 I benchmark sul sistema di balancing descritto nel Capitolo~\ref{custom_balancing_system} sono stati eseguiti sul modulo \texttt{\gls{nfregex}} con carico simulato (mediante il Codice~\ref{lst:nfregex_multithread_load}), mostrano il beneficio che porta questo sistema come visibile dai risultati in Figura~\ref{fig:nfproxy_multithread_benchmark}.
 
@@ -110,4 +112,4 @@ for (int i=0; i<50000; i++){
     \caption{Benchmark di \texttt{\gls{nfproxy}} con load balancing personalizzato (1 vs 8 thread).}\label{fig:nfproxy_multithread_benchmark}
 \end{figure}
 
-I medesimi vantaggi prestazionali si possono riscontrare in \texttt{\gls{nfproxy}}, che condivide la stessa base di codice per l'implementazione del bilanciamento del carico (come già mensionato nel Capitolo~\ref{custom_balancing_system})
+I medesimi vantaggi prestazionali si possono riscontrare in \texttt{\gls{nfproxy}}, che condivide la stessa base di codice per l'implementazione del bilanciamento del carico (come già mensionato nel Capitolo~\ref{custom_balancing_system}). Si noti come con questo carico simulato registriamo un throughput migliorato circa del 44\% grazie al multithreading e al bilanciamento del carico.

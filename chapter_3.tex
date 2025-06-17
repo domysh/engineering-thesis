@@ -2,7 +2,7 @@
 
 Il \gls{regex} filtering è un modello di filtraggio che garantisce ottime prestazioni (grazie all'elaborazione tramite linguaggi e librerie ottimizzati), ma presenta forti limitazioni nella flessibilità di analisi del traffico.
 Questa rigidità è particolarmente rilevante nei \gls{ctf}, dove la maggior parte dei servizi utilizza protocolli come \gls{http}, che spesso includono contenuti compressi o codificati (e.g., Base64, gzip), difficilmente analizzabili tramite \gls{regex}.
-A discapito delle prestazioni, \texttt{\gls{nfproxy}} introduce il vantaggio di scrivere filtri in Python\footcite{\url{https://python.org/}}{python}, linguaggio semplice e rapido per lo scripting, superando i limiti precedentemente descritti e offrendo:
+A discapito delle prestazioni, \texttt{\gls{nfproxy}} introduce il vantaggio di scrivere filtri in Python\footcite{\url{https://python.org/}}{python}, linguaggio semplice e rapido per lo scripting offrendo:
 
 \begin{itemize}
     \setlength{\itemsep}{4pt}
@@ -110,7 +110,7 @@ L'implementazione si basa su quella pubblicata da Arif Jaffer\footcite{\url{http
 
 \subsection{A Per-Interpreter Global Interpreter Lock}
 
-Una delle problematiche citate precedentemente sulla parallelizzazione riguardava una caratteristica del linguaggio Python: il \gls{gil}\footcite{\textit{Understanding the python gil}}{beazley2010understanding}. Questo meccanismo limita l'utilizzo dei thread consentendo l'esecuzione di un solo thread alla volta, necessario per prevenire conflitti nella gestione interna degli oggetti Python (come per il \textit{reference counting}) che non è implementata in modo \textit{thread-safe}.
+Una problematica riguardo la parallelizzazione riguarda una caratteristica del linguaggio Python: il \gls{gil}\footcite{\textit{Understanding the python gil}}{beazley2010understanding}. Questo meccanismo limita l'utilizzo dei thread consentendo l'esecuzione di un solo thread alla volta, necessario per prevenire conflitti nella gestione interna degli oggetti Python (come per il \textit{reference counting}) che non è implementata in modo \textit{thread-safe}.
 
 Si osserva inoltre come, in questo specifico contesto, Python gestisca operazioni \textit{\gls{cpu}-bound}, accentuando ulteriormente gli svantaggi del \gls{gil}.
 In Figura~\ref{fig:py_gil_schema} è possibile visualizzare uno schema estratto da \textit{Understanding the python gil}\footciteref{beazley2010understanding} che descrive il funzionamento del Python \gls{gil}
@@ -299,7 +299,7 @@ PktRequest(const char* payload, size_t plen, T* ctx, mnl_socket* nl,
 
 Inoltre, lo stream\_id è indipendente dal protocollo internet utilizzato, identificando anche connessioni miste IPv4/IPv6 (usando indirizzi IPv6 \textit{IPv4-Compatible}): questo permette di utilizzare la stessa queue per interfaccie di rete differenti, caratteristica potenzialmente utile per implementare nuove feature sulla selezione del traffico da inoltrare alla queue.
 
-Ogni produttore utilizza questo dato come chiave per individuare i dati relativi ad una specifica connessione, salvandoli in una std::map\footcite{\url{https://en.cppreference.com/w/cpp/container/map}}{std_map} diversa per ogni singolo produttore, così implementabile per merito del meccanismo di smistamento dei pacchetti descritto precedentemente.
+Ogni produttore utilizza questo dato come chiave per individuare i dati relativi ad una specifica connessione, salvandoli in una std::map\footcite{\url{https://en.cppreference.com/w/cpp/container/map}}{std_map} diversa per ogni singolo produttore, così implementabile per merito del meccanismo di smistamento dei pacchetti descritto nel Capitolo~\ref{custom_balancing_system}.
 Il produttore, ricevuto il pacchetto, lo ingloba in un oggetto PktRequest, che contiene tutte le informazioni necessarie per l'elaborazione del pacchetto, e lo inserisce nella coda condivisa del produttore di riferimento.
 Sarà il produttore che una volta elaborato il pacchetto ed inviato il verdetto al kernel, deallocherà questa struttura passando all'elaborazione del prossimo pacchetto. Nessuna copia in memoria è pertanto necessaria in questo passaggio.
 
@@ -478,14 +478,45 @@ def curl_filter(r: HttpRequest):
 \vspace{-1em}
 \caption{Esempio di un filtro python per il modulo \texttt{\gls{nfproxy}}.}\label{lst:curl_filter_example}
 \end{listing}
-Il sistema si appoggia sulla libreria firegex\footcite{\url{https://pypi.org/project/firegex/}}{firegex_pypi}, che fornisce sia i decoratori per la definizione dei filtri, sia i modelli dati per l'annotazione dei parametri. Durante la fase di compilazione, \texttt{\gls{nfproxy}} analizza le signature delle funzioni, sullo stesso principio di validazione tipica di pydantic\footcite{\url{https://docs.pydantic.dev/latest/}}{pydantic}, per determinare automaticamente quali layer di protocollo analizzare (es. \gls{http}, \gls{tcp}), eventalmente quali campi estrarre dal payload, attivando internamente una serie di meccanismi per riuscire a soddisfare le richieste dei filtri.
+Il sistema si appoggia sulla libreria firegex\footcite{\url{https://pypi.org/project/firegex/}}{firegex_pypi}, che fornisce sia i decoratori per la definizione dei filtri, sia i modelli dati per l'annotazione dei parametri. Durante la fase di compilazione, \texttt{\gls{nfproxy}} analizza le signature delle funzioni, sullo stesso principio di validazione tipica di pydantic\footcite{\url{https://docs.pydantic.dev/latest/}}{pydantic}, per determinare automaticamente quali layer di protocollo analizzare (e.g., \gls{http}, \gls{tcp}), eventualmente quali campi estrarre dal payload, attivando internamente una serie di meccanismi per riuscire a soddisfare le richieste dei filtri.
 
-Se un filtro richiede dati non coerenti tra loro, potrebbe essere elaborato ma mai di fatto eseguito.
-L'esecuzione avviene tramite \textit{dispatch} dinamico: a ogni pacchetto corrispondente ai criteri dichiarati nella signature vengono passati gli oggetti istanziati se disponibili, e ne viene successivamente dato un riscontro sull'azione da eseguire tramite il valore di ritorno. L'assenza di un'istruzione return o il ritorno esplicito di None equivalgono a un'azione ACCEPT implicita.
-I filtri continuano ad essere eseguiti fino a che tutti quelli attivi non vengono elaborati, o fino a che uno statment diverso da ACCEPT viene restituito.
+La Tabella~\ref{tab:nfproxy_datahandlers} riassume tutti i modelli di dati (\texttt{datahandlers}) disponibili per la definizione dei filtri, specificando per ciascuno il protocollo di riferimento, il momento di attivazione e le principali proprietà accessibili.
 
-Le funzionalità per la modifica del traffico sono accessibili tramite lo statment UNSTABLE\_MANGLE, che si occuperà di elaborare le modifiche eseguite al pacchetto, tramite il model RawPacket. Eventuali modifiche tuttavia non andranno ad influenzare gli altri \texttt{datahandler} che non le riveleranno.
-Ulteriori dettagli sull'utilizzo dei \texttt{models} (spesso chiamati anche \texttt{datahandler}) sono disponibili nella documentazione integrata nell'interfaccia di firegex.
+\renewcommand{\arraystretch}{1.3}
+\begin{table}[H]
+    \centering
+    \footnotesize
+    \begin{tabular}{|l|c|p{3.5cm}|p{6cm}|}
+        \hline
+        \textbf{Model} & \textbf{Proto} & \textbf{Trigger} & \textbf{Principali Proprietà} \\
+        \hline
+        \texttt{RawPacket} & TCP & Ogni pacchetto & 
+        \texttt{data}, \texttt{is\_input}, \texttt{is\_ipv6}, \texttt{is\_tcp}, \texttt{l4\_size}, \texttt{raw\_packet}, \texttt{l4\_data} (modificabili) \\
+        \hline
+        \texttt{TCPInputStream} & TCP & Solo pacchetti in ingresso & 
+        \texttt{data}, \texttt{total\_stream\_size}, \texttt{is\_ipv6} (stream completo) \\
+        \hline
+        \texttt{TCPOutputStream} & TCP & Solo pacchetti in uscita & 
+        \texttt{data}, \texttt{total\_stream\_size}, \texttt{is\_ipv6} (stream completo) \\
+        \hline
+        \texttt{HttpRequest} & HTTP & Header completi e/o body completo & 
+        \texttt{url}, \texttt{method}, \texttt{headers}, \texttt{user\_agent}, \texttt{body}, \texttt{body\_decoded}, \texttt{upgrading\_to\_ws}, \texttt{ws\_stream} \\
+        \hline
+        \texttt{HttpRequestHeader} & HTTP & Solo header completi & 
+        Come \texttt{HttpRequest} ma \texttt{body} sempre \texttt{None} \\
+        \hline
+        \texttt{HttpResponse} & HTTP & Header completi e/o body completo & 
+        \texttt{url}, \texttt{status\_code}, \texttt{headers}, \texttt{content\_encoding}, \texttt{body}, \texttt{body\_decoded}, \texttt{upgrading\_to\_ws}, \texttt{ws\_stream} \\
+        \hline
+        \texttt{HttpResponseHeader} & HTTP & Solo header completi & 
+        Come \texttt{HttpResponse} ma \texttt{body} sempre \texttt{None} \\
+        \hline
+    \end{tabular}
+    \caption{Modelli di dati disponibili in \texttt{nfproxy} per la definizione dei filtri.}\label{tab:nfproxy_datahandlers}
+\end{table}
+\renewcommand{\arraystretch}{1}
+
+Tutti i modelli supportano decompressione automatica (gzip, brotli, deflate, zstd) e gestione delle WebSocket con estensione permessage-deflate. I modelli \texttt{Http*} includono funzioni di utilità come \texttt{get\_header()} per accesso case-insensitive agli header e proprietà booleane per identificare upgrade di protocollo (\texttt{upgrading\_to\_h2}, \texttt{upgrading\_to\_ws}).
 
 \subsection{Gestione dei buffer di memoria}
 

