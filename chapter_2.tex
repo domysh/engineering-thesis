@@ -126,9 +126,9 @@ In Firegex, \gls{nftables} costituisce il meccanismo fondamentale per intercetta
 
 \begin{itemize}
     \item \textbf{Applicare regole di sicurezza:} Le regole di firewall tradizionali vengono implementate direttamente tramite \gls{nftables}, sfruttando le sue capacità native di filtraggio per bloccare, accettare o modificare il traffico in base a criteri specifici (indirizzi IP, porte, protocolli);
-    
+
     \item \textbf{Reindirizzamento del traffico:} La funzionalità \texttt{\gls{porthijack}} utilizza le regole di \gls{nat} di \gls{nftables} per deviare trasparentemente il traffico da una porta a un'altra, permettendo l'inserimento di proxy intermedi senza modifiche alla configurazione dei servizi;
-    
+
     \item \textbf{Integrazione con \gls{nfqueue}:} \gls{nftables} fornisce la base per l'attivazione del modulo \gls{nfqueue}, definendo quando e quali pacchetti devono essere trasferiti dallo spazio kernel allo spazio utente per elaborazioni avanzate.
 \end{itemize}
 
@@ -154,11 +154,11 @@ Questa architettura offre vantaggi significativi per Firegex:
     \setlength{\itemsep}{1pt}
     \setlength{\parskip}{1pt}
     \item \textbf{Accesso completo ai pacchetti:} L'applicazione userspace riceve l'intero pacchetto, inclusi header di rete e trasporto, permettendo analisi approfondite e modifiche precise non possibili con proxy tradizionali;
-    
+
     \item \textbf{Trasparenza totale:} L'intercettazione avviene a livello kernel senza richiedere modifiche alla configurazione dei servizi applicativi, che rimangono completamente ignari del processo di filtraggio;
-    
+
     \item \textbf{Flessibilità nell'elaborazione:} Lo spazio utente permette l'implementazione di logiche complesse (parsing di protocolli, analisi con machine learning, integrazione con database) mantenendo la stabilità del kernel;
-    
+
     \item \textbf{Controllo granulare del flusso:} La possibilità di modificare pacchetti e restituire verdict personalizzati offre un controllo fine sul comportamento della rete.
 \end{itemize}
 
@@ -166,13 +166,13 @@ I moduli \texttt{\gls{nfregex}} e \texttt{\gls{nfproxy}} di Firegex sfruttano in
 
 \section{Architettura}
 
-Firegex, avendo un interfaccia web, è composto da un frontend scritto in react\footcite{\url{https://react.dev/}}{react} (usando vite\footcite{\url{https://vite.dev/}}{vite}) e un backend sviluppato con fastapi\footcite{\url{https://fastapi.tiangolo.com/}}{fastapi}. Il backend utilizza inoltre dei moduli scritti in C++ per le funzionalità più critiche, come per lo scambio dei pacchetti lato kernel e l'elaborazione in tempo reale delle espressioni regolari. Inoltre per funzionare, fa intenso utilizzo delle funzionalità di \gls{nftables}\footcite{\url{https://netfilter.org/projects/nftables/}}{nftables}, e di \gls{nfqueue}\footcite{\url{https://netfilter.org/projects/libnetfilter_queue/}}{netfilter_queue}. L'intera infrastruttura è avviata tramite docker\footcite{\url{https://www.docker.com/}}{docker} che ne permette un avvio immediato e senza configurare parametri: docker è usualmente lo strumento principale per l'avvio di servizi in competizioni \gls{ctf}, pertanto nella maggior parte dei casi è già presente e configurato correttamente. In Figura~\ref{fig:firegex_arch} è mostrato uno schema generale dell'architettura di Firegex.
-
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.98\textwidth]{images/chapter2/FiregexInternals.png}
     \caption{Schema generale dell'architettura di Firegex.}\label{fig:firegex_arch}
 \end{figure}
+
+Firegex, avendo un interfaccia web, è composto da un frontend scritto in react\footcite{\url{https://react.dev/}}{react} (usando vite\footcite{\url{https://vite.dev/}}{vite}) e un backend sviluppato con fastapi\footcite{\url{https://fastapi.tiangolo.com/}}{fastapi}. Il backend utilizza inoltre dei moduli scritti in C++ per le funzionalità più critiche, come per lo scambio dei pacchetti lato kernel e l'elaborazione in tempo reale delle espressioni regolari. Inoltre per funzionare, fa intenso utilizzo delle funzionalità di \gls{nftables}\footcite{\url{https://netfilter.org/projects/nftables/}}{nftables}, e di \gls{nfqueue}\footcite{\url{https://netfilter.org/projects/libnetfilter_queue/}}{netfilter_queue}. L'intera infrastruttura è avviata tramite docker\footcite{\url{https://www.docker.com/}}{docker} che ne permette un avvio immediato e senza configurare parametri: docker è usualmente lo strumento principale per l'avvio di servizi in competizioni \gls{ctf}, pertanto nella maggior parte dei casi è già presente e configurato correttamente. In Figura~\ref{fig:firegex_arch} è mostrato uno schema generale dell'architettura di Firegex.
 
 \subsection{Frontend e Backend}
 \begin{itemize}
@@ -195,7 +195,7 @@ Le parti critiche di networking gestite da Firegex sono implementate in C++. I m
 
 \section{Funzionalità}
 
-All'interno di Firegex sono presenti attualmente 4 moduli principali, ognuno con delle funzionalità specifiche che permettono di applicare filtri con tecnologie e funzionalità differenti. I moduli sono \texttt{\gls{nfregex}}, \texttt{firewall}, \texttt{\gls{porthijack}} e \texttt{\gls{nfproxy}}. All'interno di questi moduli firegex possiede una documentazione interna alla piattaforma stessa che permette di comprendere come utilizzare le funzionalità offerte, e come configurare i filtri in maniera corretta.
+All'interno di Firegex sono presenti attualmente quattro moduli principali, ognuno con delle funzionalità specifiche che permettono di applicare filtri con tecnologie e funzionalità differenti. I moduli sono \texttt{\gls{nfregex}}, \texttt{firewall}, \texttt{\gls{porthijack}} e \texttt{\gls{nfproxy}}. All'interno di questi moduli firegex possiede una documentazione interna alla piattaforma stessa che permette di comprendere come utilizzare le funzionalità offerte, e come configurare i filtri in maniera corretta.
 
 Firegex è avviabile tramite un unico comando mostrato in Figura~\ref{lst:firegex_one_cmd}, supponendo che docker\footcite{\url{https://www.docker.com/}}{docker} sia stato già installato nel sistema.
 
@@ -212,16 +212,16 @@ sh <(curl -sLf https://pwnzer0tt1.it/firegex.sh)
 \caption{One-Command per l'esecuzione di Firegex.}\label{lst:firegex_one_cmd}
 \end{listing}
 
-\subsection{Modulo \texttt{nfregex}}
+\subsection{Modulo nfregex}
 Il modulo \texttt{\gls{nfregex}} (pensato originariamente come unico e principale) possiede funzionalità per la creazione di filtri basati su espressioni regolari. Utilizzando \gls{nfqueue} in combinazione con \gls{nftables}, questo modulo intercetta le richieste di rete direttamente a livello kernel. La funzionalità permette l'utilizzo di \gls{regex} \gls{pcre}\footcite{\url{https://www.pcre.org/}}{pcre_website} \textit{compliant} tramite l'utilizzo di vectorscan\footcite{\url{https://vectorcamp.gr/project/vectorscan/}}{vectorscan} (fork di hyperscan\footcite{\url{https://www.usenix.org/system/files/nsdi19-wang-xiang.pdf}}{wang2019hyperscan} compatibile con arm64) per garantire prestazioni elevate e una corretta elaborazione delle regole. La funzionalità supporta \gls{ipv4} e \gls{ipv6}, e protocolli di livello superiore come \gls{tcp} e \gls{udp}. Per i pacchetti \gls{tcp}, la \gls{regex} viene applicata all'intero flusso ricostruito e ordinato, tramite le stream \gls{regex} disponibili in vectorscan.
 
-\subsection{Modulo \texttt{firewall}}
+\subsection{Modulo firewall}
 La funzionalità \texttt{firewall} di Firegex offre un controllo completo sul traffico di rete, tramite regole simili a quelle offerte da strumenti che agiscono a livello di rete e di trasporto come \gls{ufw} o iptables. Dispone quindi di funzionalità basilari e risulta utile per applicare questa tipologia di regole evitando ulteriori tool di filtering che potrebbero entrare in conflitto con firegex.
 
-\subsection{Modulo \texttt{porthijack}}
+\subsection{Modulo porthijack}
 Il modulo \texttt{\gls{porthijack}} introduce la capacità di reindirizzare il traffico destinato ad una determinata porta verso un’altra. Questa funzionalità è particolarmente utile in scenari dove si ha il bisogno di costruire un proxy personalizzato, ma si vuole evitare la riconfigurazione del servizio di base. \texttt{Porthijack} infatti consente di impostare un redirect del traffico dall'interfaccia su cui il servizio viene esposto nella rete di gara, dirottandolo per un proxy in \textit{localhost}, che poi tramite la stessa interfaccia di \textit{loopback} inoltrerà il traffico al servizio originale.
 
-\subsection{Modulo \texttt{nfproxy}}
+\subsection{Modulo nfproxy}
 \texttt{\gls{nfproxy}}, il modulo trattato in questo lavoro di tesi, sfrutta le funzionalità di \texttt{\gls{nfqueue}} per l'intercettazione del traffico, simulando lato utilizzatore il comportamento di un tradizionale proxy python. Le caratteristiche principali del modulo sono:
 \begin{itemize}
     \setlength{\itemsep}{1pt}
@@ -236,8 +236,8 @@ Il seguente modulo è stato introdotto in vista di scenari complessi dove gli el
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.6\textwidth]{images/chapter2/NFProxyInterface.png}
-    \caption{Interfaccia di dettaglio del servizio nel modulo \texttt{nfproxy}.}\label{fig:nfproxy_interface}
+    \includegraphics[width=0.98\textwidth]{images/chapter2/NFProxyInterface.png}
+    \caption{Interfaccia di dettaglio del servizio nel modulo nfproxy.}\label{fig:nfproxy_interface}
 \end{figure}
 
 Nei prossimi capitoli verrà trattato in dettaglio \texttt{\gls{nfproxy}} con le sue funzionalità, le problematiche affrontate e le soluzioni adottate.

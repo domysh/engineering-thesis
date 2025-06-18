@@ -1,4 +1,4 @@
-\chapter{Progettazione e sviluppo del modulo \texttt{nfproxy}}\label{chap:nfproxy}
+\chapter{Progettazione e sviluppo del modulo nfproxy}\label{chap:nfproxy}
 
 Il \gls{regex} filtering è un modello di filtraggio che garantisce ottime prestazioni (grazie all'elaborazione tramite linguaggi e librerie ottimizzati), ma presenta forti limitazioni nella flessibilità di analisi del traffico.
 Questa rigidità è particolarmente rilevante nei \gls{ctf}, dove la maggior parte dei servizi utilizza protocolli come \gls{http}, che spesso includono contenuti compressi o codificati (e.g., Base64, gzip), difficilmente analizzabili tramite \gls{regex}.
@@ -75,7 +75,7 @@ In primo luogo, il backend configura le regole di \gls{nftables}\footcite{\url{h
 \begin{figure}[H]
     \centering
     \includesvg[width=0.90\textwidth]{images/chapter3/nfproxy.drawio.svg}
-    \caption{Architettura del modulo \gls{nfqueue}.}\label{fig:firegex_nfproxy_arch}
+    \caption{Architettura del modulo nfqueue.}\label{fig:firegex_nfproxy_arch}
 \end{figure}
 
 \section{Elaborazione parallelizzata dei pacchetti}
@@ -167,10 +167,9 @@ void before_loop() {
 }
 \end{minted}
 \vspace{-1em}
-\caption{Inizializzazione di un processo consumatore con GIL indipendente in \texttt{nfproxy}.}\label{lst:no_gil_python_nfproxy}
+\caption{Inizializzazione di un processo consumatore con GIL indipendente in nfproxy.}\label{lst:no_gil_python_nfproxy}
 \end{listing}
-
-Per ogni nuova connessione \gls{tcp} inoltre, vengono eseguite le seguenti operazioni:
+Per ogni nuova connessione TCP inoltre, vengono eseguite le seguenti operazioni:
 \begin{itemize}
     \setlength{\itemsep}{2pt}
     \setlength{\parskip}{2pt}
@@ -193,7 +192,7 @@ Un'altra possibilità considerata è stata l'utilizzo dell'interprete in \textit
 
 \subsection{Bilanciamento del carico}\label{custom_balancing_system}
 
-Per il bilanciamento del carico tra i processi consumatori, finalizzato all'isolamento e alla distribuzione equa dei pacchetti, è stato implementato un meccanismo di hashing basato su indirizzi \gls{ip} e porte di origine/destinazione mostrato nel Codice~\ref{lst:nfproxy_hash}. Questo approccio garantisce una distribuzione uniforme dei pacchetti tra i consumatori, evitando sovraccarichi e assicurando un'elaborazione parallela efficiente, oltre che a instradare i pacchetti di una stessa connessione sempre verso lo stesso thread. Il seguente meccanismo è stato re-integrato anche nel modulo \texttt{nfproxy} e anche progettato anche per essere facilmente utilizzato in futuri moduli di Firegex.
+Per il bilanciamento del carico tra i processi consumatori, finalizzato all'isolamento e alla distribuzione equa dei pacchetti, è stato implementato un meccanismo di hashing basato su indirizzi \gls{ip} e porte di origine/destinazione mostrato nel Codice~\ref{lst:nfproxy_hash}.
 
 \begin{listing}[H]
 \begin{minted}[
@@ -217,8 +216,10 @@ void balancer(PktRequest<Worker>* pkt) {
 }
 \end{minted}
 \vspace{-1em}
-\caption{Funzione di hashing per stream\_id (valida per IPv4/IPv6) in \texttt{\gls{nfproxy}}.}\label{lst:nfproxy_hash}
+\caption{Funzione di hashing per stream\_id (valida per IPv4/IPv6) in nfproxy.}\label{lst:nfproxy_hash}
 \end{listing}
+
+Questo approccio garantisce una distribuzione uniforme dei pacchetti tra i consumatori, evitando sovraccarichi e assicurando un'elaborazione parallela efficiente, oltre che a instradare i pacchetti di una stessa connessione sempre verso lo stesso thread. Il seguente meccanismo è stato re-integrato anche nel modulo \texttt{nfproxy} e anche progettato anche per essere facilmente utilizzato in futuri moduli di Firegex.
 
 La tecnica riprende i meccanismi di bilanciamento usati kernel space da \gls{nfqueue}, che tuttavia non considera le porte di origine/destinazione,
 limitandosi ad un hashing basato solo sugli indirizzi \gls{ip} come mostrato nel Codice~\ref{lst:nfqueue_hash_linux}.\@ Ciò è dovuto alla necessità di adattare l'algoritmo anche a protocolli diversi da \gls{tcp} e \gls{udp}, come \gls{icmp} che non prevede porte.
@@ -294,7 +295,7 @@ PktRequest(const char* payload, size_t plen, T* ctx, mnl_socket* nl,
 }
 \end{minted}
 \vspace{-1em}
-\caption{Costruttore di PktRequest e \textit{parsing} nel pacchetto di rete in firegex.}\label{lst:pktrequest_constructor}
+\caption{Costruttore di PktRequest ed elaborazione del pacchetto di rete in firegex.}\label{lst:pktrequest_constructor}
 \end{listing}
 
 Inoltre, lo stream\_id è indipendente dal protocollo internet utilizzato, identificando anche connessioni miste IPv4/IPv6 (usando indirizzi IPv6 \textit{IPv4-Compatible}): questo permette di utilizzare la stessa queue per interfaccie di rete differenti, caratteristica potenzialmente utile per implementare nuove feature sulla selezione del traffico da inoltrare alla queue.
@@ -313,9 +314,11 @@ Pertanto è dato a noi il compito di analizzare il traffico, ordinando i pacchet
 Libtins semplifica significativamente questa gestione attraverso meccanismi automatizzati gestiti dal suo \gls{tcp} follower\footcite{Esempio \gls{tcp} Follower: \url{https://libtins.github.io/examples/http-requests/}}{libtins_tcp_follower_gh} per:
 \begin{itemize}
     \setlength{\itemsep}{2pt}
+    \setlength{\parskip}{2pt}
     \item Chiusura dei flussi \gls{tcp} basata su:
     \begin{itemize}
         \setlength{\itemsep}{1pt}
+        \setlength{\parskip}{1pt}
         \item Analisi del traffico (flag FIN/RST);
         \item Timeout configurabili (rilevamento di inattività);
         \item Utilizzo eccessivo dei buffer di memoria.
@@ -327,6 +330,7 @@ Il follower inoltre permette facilmente l'integrazione di dati gestiti estername
 Le callback permettono di gestire le seguenti operazioni:
 \begin{itemize}
     \setlength{\itemsep}{2pt}
+    \setlength{\parskip}{2pt}
     \item Inizializzazione contesti;
     \item Pulizia risorse;
     \item Propagazione di eventi critici (per chiusure anomale dei flussi).
@@ -361,8 +365,6 @@ Questo meccanismo tenta di mantenere la coerenza logica della comunicazione rico
 Il kernel e il \gls{tcp} Follower di libtins ricevono così numerazioni coerenti con le alterazioni applicate, mantenendo la sincronizzazione degli stati di connessione.
 Il sistema opera in modo simmetrico per entrambe le direzioni del traffico: le modifiche applicate ai pacchetti in uscita vengono compensate da una riconversione inversa per quelli in entrata. L'attivazione avviene automaticamente alla prima modifica di un pacchetto nella sessione \gls{tcp} e rimane attiva per tutta la durata della connessione, garantendo la persistenza del contesto di traduzione.
 
-Questa conversione avviene tramite il calcolo incrementale dell'offset che intercorre tra la dimensione del flusso originale e la dimensione del flusso modificato come mostrato nel Codice~\ref{lst:tcp_ack_seq_transl}.
-
 \begin{listing}[H]
 \begin{minted}[
     frame=single,
@@ -371,15 +373,19 @@ Questa conversione avviene tramite il calcolo incrementale dell'offset che inter
     breaklines
 ]{cpp}
 size_t payload_offset = data_size() - _data_original_size;
-if (is_input){ // Inbound packet
+if (is_input){ // Inbound packets
     ack_seq_offset->in += payload_offset;
-}else{
+}else{ // Outbound packets
     ack_seq_offset->out += payload_offset;
 }
 \end{minted}
 \vspace{-1em}
 \caption{Calcolo dell'offset cumulativo nello stream TCP da correggere in modifica.}\label{lst:tcp_ack_seq_transl}
 \end{listing}
+
+Questa conversione avviene tramite il calcolo incrementale dell'offset che intercorre tra la dimensione del flusso originale e la dimensione del flusso modificato come mostrato nel Codice~\ref{lst:tcp_ack_seq_transl}.
+
+
 A seguito della modifica, nei prossimi pacchetti vengono compatibilmente ricalcolati gli \gls{ack} e \gls{seq}, su tutto il traffico come mostrato nel Codice~\ref{lst:tcp_ack_seq_transl_fixing}.
 \begin{listing}[H]
 \begin{minted}[
@@ -388,10 +394,10 @@ A seguito della modifica, nei prossimi pacchetti vengono compatibilmente ricalco
     fontsize=\footnotesize,
     breaklines
 ]{cpp}
-if (is_input){ // Inbound packet
+if (is_input){ // Inbound packets
     tcp->seq(tcp->seq() + ack_seq_offset->in);
     tcp->ack_seq(tcp->ack_seq() - ack_seq_offset->out);
-}else{
+}else{ // Outbound packets
     tcp->ack_seq(tcp->ack_seq() - ack_seq_offset->in);
     tcp->seq(tcp->seq() + ack_seq_offset->out);
 }
@@ -402,15 +408,17 @@ if (is_input){ // Inbound packet
 Un'analisi preliminare e dei test preliminari, suggerirebbero l'adeguatezza di questa soluzione. Tuttavia, a seguito di analisi più accurate, si evince come il meccanismo presenti limitazioni intrinseche in determinate casistiche di traffico. L'approccio risulta efficace esclusivamente in condizioni ideali di trasmissione, dove non si verificano fenomeni di ritrasmissione di pacchetti.
 
 La criticità principale risiede nell'algoritmo di conversione, che non considera adeguatamente le ritrasmissioni di segmenti antecedenti al pacchetto modificato. In tali scenari, il ricalcolo dell'\gls{ack} relativo richiederebbe l'utilizzo di un offset compatibile non all'ultimo offset calcolato, ma allo stato del flusso nella parte interessata dalla ritrasmissione, operazione che l'implementazione corrente non esegue. La problematica è diretta conseguenza della mancanza di un analisi del traffico contestuale, capace di identificare la porzione di flusso effettivamente coinvolta nella ritrasmissione, e di memorizzare le discrepanze cumulative associandole direttamente alle varie parti dello stream interessate.
-\begin{figure}[H]
-    \centering
-    \includesvg[width=0.90\textwidth]{images/chapter3/TCP_ack_seq_transl_failure.drawio.svg}
-    \caption{Esempio di una possibile problematica nella traduzione di \gls{ack} e \gls{seq} implementata.}\label{fig:tcp_ack_seq_transl_failure}
-\end{figure}
+
 L'analisi della Figura~\ref{fig:tcp_ack_seq_transl_failure} evidenzia come le casistiche descritte possano compromettere integralmente il sistema di traduzione implementato. Tali scenari, particolarmente probabili in condizioni di congestione di rete, rappresentano potenziali vettori d'attacco mirati a destabilizzare il servizio.
 Alla luce di queste considerazioni, si conclude che la soluzione proposta non possiede la robustezza necessaria per un'implementazione definitiva. La funzionalità di modifica pacchetti viene pertanto mantenuta come opzione sperimentale, accompagnata da avvertenze esplicite sul suo comportamento instabile.
 
 Una soluzione teoricamente più solida richiederebbe la memorizzazione di informazioni aggiuntive riguardo i vari punti del flusso dove il traffico è stato modificato, insieme agli offset applicati in quegli specifici intervalli, per tutta la finestra di trasmissione ancora non riscontrata dal ricevente. Inoltre, sarebbe necessaria una logica di traduzione più complessa per gli \gls{ack}/\gls{seq}, che vada ad esguire un calcolo corerente di questi valori, basato sul posizionamento che il segmento ha in trasmissione o riscontro nel flusso complessivo, sfruttando le nuove informazioni memorizzate.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.98\textwidth]{images/chapter3/TCP_ack_seq_transl_failure.drawio.svg}
+    \caption{Esempio di una possibile problematica nella traduzione di ACK e SEQ implementata.}\label{fig:tcp_ack_seq_transl_failure}
+\end{figure}
 
 Considerando il rapporto costo-beneficio e il limitato valore operativo della funzionalità, si è optato per mantenere lo stato corrente dello sviluppo, consapevoli delle possibili criticità che può portare, non essendo una soluzione definitiva.
 
@@ -424,7 +432,7 @@ Sulla base di queste considerazioni, si conclude che il riscontro immediato dei 
 
 Sarebbe possibile progettare un sistema che eviti i problemi di saturazione della coda kernel, implementando ad esempio un meccanismo basato su dei timeout che evitino la saturazione della coda eliminando i pacchetti potenzialmente fraudolenti. Tuttavia simili implementazioni richiederebbero un'attenta analisi ed uno studio molto più approfondito rispetto a quanto fatto finora, considerando anche un vasto spettro di casistiche insidiose che non si ritiene necessario affrontare in questa tesi e ai fini dello sviluppo di questo modulo.
 
-\section{\textit{Parsing} dei pacchetti HTTP}
+\section{Elaborazione dei pacchetti HTTP}
 
 Dall'analisi delle soluzioni esistenti per il \textit{parsing} di pacchetti \gls{http} è emersa l'assenza di strumenti compatibili con i requisiti specifici del progetto, in particolare per quanto riguarda l'integrazione con le funzionalità introdotte dal \gls{pep} 684\footcite{\url{https://peps.python.org/pep-0684/}}{pep648}. La necessità di supportare l'inizializzazione multi-fase (multi-phase initialization\footcite{\url{https://peps.python.org/pep-0489/}}{pep489}) e garantire thread safety ha reso indispensabile un approccio personalizzato.
 
@@ -476,7 +484,7 @@ def curl_filter(r: HttpRequest):
         return REJECT  # Blocca client curl
 \end{minted}
 \vspace{-1em}
-\caption{Esempio di un filtro python per il modulo \texttt{\gls{nfproxy}}.}\label{lst:curl_filter_example}
+\caption{Esempio di un filtro python per il modulo nfproxy.}\label{lst:curl_filter_example}
 \end{listing}
 Il sistema si appoggia sulla libreria firegex\footcite{\url{https://pypi.org/project/firegex/}}{firegex_pypi}, che fornisce sia i decoratori per la definizione dei filtri, sia i modelli dati per l'annotazione dei parametri. Durante la fase di compilazione, \texttt{\gls{nfproxy}} analizza le signature delle funzioni, sullo stesso principio di validazione tipica di pydantic\footcite{\url{https://docs.pydantic.dev/latest/}}{pydantic}, per determinare automaticamente quali layer di protocollo analizzare (e.g., \gls{http}, \gls{tcp}), eventualmente quali campi estrarre dal payload, attivando internamente una serie di meccanismi per riuscire a soddisfare le richieste dei filtri.
 
@@ -490,29 +498,29 @@ La Tabella~\ref{tab:nfproxy_datahandlers} riassume tutti i modelli di dati (\tex
         \hline
         \textbf{Model} & \textbf{Proto} & \textbf{Trigger} & \textbf{Principali Proprietà} \\
         \hline
-        \texttt{RawPacket} & TCP & Ogni pacchetto & 
+        \texttt{RawPacket} & TCP & Ogni pacchetto &
         \texttt{data}, \texttt{is\_input}, \texttt{is\_ipv6}, \texttt{is\_tcp}, \texttt{l4\_size}, \texttt{raw\_packet}, \texttt{l4\_data} (modificabili) \\
         \hline
-        \texttt{TCPInputStream} & TCP & Solo pacchetti in ingresso & 
+        \texttt{TCPInputStream} & TCP & Solo pacchetti in ingresso &
         \texttt{data}, \texttt{total\_stream\_size}, \texttt{is\_ipv6} (stream completo) \\
         \hline
-        \texttt{TCPOutputStream} & TCP & Solo pacchetti in uscita & 
+        \texttt{TCPOutputStream} & TCP & Solo pacchetti in uscita &
         \texttt{data}, \texttt{total\_stream\_size}, \texttt{is\_ipv6} (stream completo) \\
         \hline
-        \texttt{HttpRequest} & HTTP & Header completi e/o body completo & 
+        \texttt{HttpRequest} & HTTP & Header completi e/o body completo &
         \texttt{url}, \texttt{method}, \texttt{headers}, \texttt{user\_agent}, \texttt{body}, \texttt{body\_decoded}, \texttt{upgrading\_to\_ws}, \texttt{ws\_stream} \\
         \hline
-        \texttt{HttpRequestHeader} & HTTP & Solo header completi & 
+        \texttt{HttpRequestHeader} & HTTP & Solo header completi &
         Come \texttt{HttpRequest} ma \texttt{body} sempre \texttt{None} \\
         \hline
-        \texttt{HttpResponse} & HTTP & Header completi e/o body completo & 
+        \texttt{HttpResponse} & HTTP & Header completi e/o body completo &
         \texttt{url}, \texttt{status\_code}, \texttt{headers}, \texttt{content\_encoding}, \texttt{body}, \texttt{body\_decoded}, \texttt{upgrading\_to\_ws}, \texttt{ws\_stream} \\
         \hline
-        \texttt{HttpResponseHeader} & HTTP & Solo header completi & 
+        \texttt{HttpResponseHeader} & HTTP & Solo header completi &
         Come \texttt{HttpResponse} ma \texttt{body} sempre \texttt{None} \\
         \hline
     \end{tabular}
-    \caption{Modelli di dati disponibili in \texttt{nfproxy} per la definizione dei filtri.}\label{tab:nfproxy_datahandlers}
+    \caption{Modelli di dati disponibili in nfproxy per la definizione dei filtri.}\label{tab:nfproxy_datahandlers}
 \end{table}
 \renewcommand{\arraystretch}{1}
 
@@ -540,7 +548,7 @@ FGEX_FULL_STREAM_ACTION = FullStreamAction.REJECT  # Politica di overflow
 # Connessioni che superano 4KB vengono chiuse preventivamente
 \end{minted}
 \vspace{-1em}
-\caption{Esempio di configurazione di un filtro \texttt{nfproxy} per l'ottimizzazione del consumo di memoria.}\label{lst:nfproxy_memory_limit_example}
+\caption{Esempio di configurazione di un filtro nfproxy per l'ottimizzazione del consumo di memoria.}\label{lst:nfproxy_memory_limit_example}
 \end{listing}
 
 \section{Proxy di simulazione}
@@ -556,7 +564,7 @@ Per validare il corretto funzionamento dei filtri prima del deployment sul firew
 fgex nfproxy test_http.py domy.sh 80 --proto http
 \end{minted}
 \vspace{-1em}
-\caption{Comando per avviare il simulazione di \texttt{nfproxy} integrato nella \gls{cli} di firegex.}\label{lst:nfproxy_sim_cmd}
+\caption{Comando per avviare il simulazione di nfproxy integrato nella CLI di firegex.}\label{lst:nfproxy_sim_cmd}
 \end{listing}
 
 Il comando mostrato nel Codice~\ref{lst:nfproxy_sim_cmd}, avvia un proxy sull'indirizzo specificato (in questo caso domy.sh:80) applicando i filtri definiti in test\_http.py.
@@ -569,5 +577,5 @@ La Figura~\ref{fig:nfproxy_sim} illustra l'output del simulatore durante l'esecu
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.98\textwidth]{images/chapter3/nfproxy_sim.png}
-    \caption{Simulazione di \texttt{\gls{nfproxy}} tramite il comando fgex.}\label{fig:nfproxy_sim}
+    \caption{Simulazione di nfproxy tramite il comando fgex.}\label{fig:nfproxy_sim}
 \end{figure}

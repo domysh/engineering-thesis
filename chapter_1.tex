@@ -84,6 +84,12 @@ Il punteggio attribuito a un singolo store è inizialmente determinato da un val
     \item \textbf{Punteggio di difesa}: tipicamente negativo, poiché quantifica l'inefficacia delle contromisure, è calcolato in base al numero di flag sottratte al team da parte degli avversari. Tale componente tende a controbilanciare, o persino ridurre, il punteggio di attacco relativo allo stesso flag store, potendolo portare anche al di sotto del valore base iniziale. La sua entità è modulata da criteri analoghi a quelli usati per il punteggio di attacco. Per mitigarne gli effetti, risulta essenziale applicare interventi correttivi (\textit{patch}) che impediscano nuovi attacchi, garantendo al contempo la piena operatività del servizio e l'integrità dei dati archiviati (comprese le flag precedenti, la cui perdita comporterebbe un deterioramento del punteggio di \gls{sla}).
 \end{itemize}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.77\textwidth]{images/chapter1/ctfbox_scoreboard.png}
+    \caption{Scoreboard di una simulazione realizzata con CTFBox\footciteref{ctfbox_gh}.}\label{fig:ctfbox_scoreboard}
+\end{figure}
+
 È possibile analizzare come è effettuato il calcolo dal Codice~\ref{lst:scorecalc} e come è visualizzato ai giocatori nella scoreboard in Figura~\ref{fig:ctfbox_scoreboard} nel simulatore \gls{ad} CTFBox\footciteref{ctfbox_gh}.
 
 \begin{listing}[H]
@@ -119,21 +125,9 @@ for service in services:
 \caption{Algoritmo di calcolo del punteggio in CyberChallenge\footciteref{cyberchallenge_ad_rules}.}\label{lst:scorecalc}
 \end{listing}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.98\textwidth]{images/chapter1/ctfbox_scoreboard.png}
-    \caption{Scoreboard di una simulazione realizzata con CTFBox\footciteref{ctfbox_gh}.}\label{fig:ctfbox_scoreboard}
-\end{figure}
-
 \subsection{Rete di gara}
 
 Per questa analisi si prende in considerazione la rete di gara in utilizzo per le competizioni nazionali di Cyberchallenge\footcite{\url{https://ad.cyberchallenge.it/rules/}}{cyberchallenge_ad_rules}, sottolineando come a grandi linee la configurazione di rete è spesso simile, ma potrebbe variare in base alle competizioni e agli organizzatori.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{images/chapter1/ccit_network.png}
-    \caption{Modello della rete di gara di Cyberchallenge\footciteref{cyberchallenge_ad_rules}.}\label{fig:ccit_network}
-\end{figure}
 
 Come si può vedere nella Figura~\ref{fig:ccit_network}, la rete di gara è composta da diversi elementi:
 \begin{itemize}
@@ -145,6 +139,12 @@ Come si può vedere nella Figura~\ref{fig:ccit_network}, la rete di gara è comp
 
     \item Una sottorete (spesso realizzata tramite \gls{vpn}) per ogni team, dove sono connessi gli host dei partecipanti con i quali è possibile interagire direttamente con la rete di gara.
 \end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.98\textwidth]{images/chapter1/ccit_network.png}
+    \caption{Modello della rete di gara di Cyberchallenge\footciteref{cyberchallenge_ad_rules}.}\label{fig:ccit_network}
+\end{figure}
 
 Al centro di tutto ciò troviamo il cloud router, che si occupa di gestire il traffico in base alle regole imposte dagli organizzatori e in base alla fase in cui si trova la competizione, ma che soprattutto si occupa di anonimizzare il traffico, manipolandolo tramite diverse tecniche tra le quali il \gls{nat}. Tramite il \gls{nat} infatti si nascondono gli indirizzi \gls{ip} delle macchine e dei componenti del team, mascherando nelle richieste la vera identità del mittente con quella del router stesso. Questo è un elemento di fondamentale importanza poiché altrimenti sarebbe davvero molto semplice diversificare le connessioni dei checker da quelle degli attaccanti, andando a perdere l'obiettivo che ha la competizione stessa, ovvero: individuare, sfruttare e difendersi dalle vulnerabilità.
 
@@ -176,7 +176,7 @@ Si riporta il logo del progetto nella Figura~\ref{fig:caronte_logo}, e un'immagi
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.2\textwidth]{images/chapter1/CaronteLogo.png}
+    \includegraphics[width=0.25\textwidth]{images/chapter1/CaronteLogo.png}
     \caption{Logo di Caronte\footciteref{caronte}.}\label{fig:caronte_logo}
 \end{figure}
 
@@ -199,7 +199,7 @@ Si riporta il logo del progetto nella Figura~\ref{fig:exploitfarm_logo}, e un'im
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.13\textwidth]{images/chapter1/ExploitFarmLogo.png}
+    \includegraphics[width=0.25\textwidth]{images/chapter1/ExploitFarmLogo.png}
     \caption{Logo di ExploitFarm.}\label{fig:exploitfarm_logo}
 \end{figure}
 
@@ -215,7 +215,7 @@ Questi tool permettono di filtrare il traffico in modo da riconoscere e bloccare
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.13\textwidth]{images/chapter1/FiregexLogo.png}
+    \includegraphics[width=0.25\textwidth]{images/chapter1/FiregexLogo.png}
     \caption{Logo di Firegex.}\label{fig:firegex_logo}
 \end{figure}
 
