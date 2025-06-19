@@ -65,7 +65,7 @@ In caso di servizi con più flag, diremo che questi conterranno diversi flag sto
 
 \subsection{I Flag ID}
 
-Il gameserver potrebbe rilasciare delle informazioni aggiuntive per ogni flag store, come ad esempio un username, che di per se non va direttamente a permettere l'accesso protetto alla flag, ma da un informazione utile agli attaccanti al fine di poterla individuare più facilmente all'interno del servizio stesso.
+Il gameserver potrebbe rilasciare delle informazioni aggiuntive per ogni flag store, come ad esempio un username, che di per se non va direttamente a permettere l'accesso protetto alla flag, ma da un'informazione utile agli attaccanti al fine di poterla individuare più facilmente all'interno del servizio stesso.
 Questa informazione aggiuntiva è chiamata Flag ID e viene rilasciata per ogni team, per ogni flag store, e per ogni flag ancora valida nel momento in cui si visita l'\gls{api} esposta dal gameserver, che le espone pubblicamente per tutti i partecipanti. Non è possibile manomettere i Flag ID, in quanto sono informazioni direttamente rilasciate dagli organizzatori, che comunque in assenza di vulnerabilità nei servizi, risultano insufficienti per ottenere flag.
 
 \subsection{Calcolo del punteggio}

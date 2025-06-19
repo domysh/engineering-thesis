@@ -125,7 +125,7 @@ Una soluzione alternativa potrebbe essere l'uso di processi multipli (con \gls{g
 alla comunicazione inter-processo e alla duplicazione della memoria.
 
 La soluzione adottata sfrutta il \gls{pep} 684\footcite{\url{https://peps.python.org/pep-0684/}}{pep648} introdotto in Python 3.12, che permette l'esecuzione
-di interpreti Python indipendenti nello stesso processo, ciascuno con il proprio \gls{gil}.\@ L'attivazione di questa funzionalità avviene esclusivamente tramite C-\gls{api}, consentendo:
+di interpreti Python indipendenti nello stesso processo, ciascuno con il proprio \gls{gil}.\@ L'attivazione di questa funzionalità avviene esclusivamente tramite C \gls{api}, consentendo:
 \begin{itemize}
     \setlength{\itemsep}{2pt}
     \setlength{\parskip}{2pt}
@@ -136,7 +136,7 @@ di interpreti Python indipendenti nello stesso processo, ciascuno con il proprio
 L'impossibilità di condividere oggetti tra interpreti, uno dei limiti di questo approccio, non costituisce un problema nel nostro caso poiché, grazie al meccanismo di
 smistamento dei pacchetti descritto nel prossimo paragrafo, ciò non sarà necessario.
 
-L'eseguibile C++ una volta avviato, sarà in attesa del codice python da utilizzare come filtro: una volta arrivato il codice, questo viene compilato in bytecode tramite la funzione \texttt{compile} integrata in python e successivamente, al fine di rendere duplicabile il bytecode compilato nei vari interpreti inizializzati, ne eseguiamo il marshaling\footcite{\url{https://docs.python.org/3/library/marshal.html}}{marshal_python}, ottenendone una rappresentazione seria.
+L'eseguibile C++ una volta avviato, sarà in attesa del codice python da utilizzare come filtro: una volta arrivato il codice, questo viene compilato in bytecode tramite la funzione \texttt{compile} integrata in python e successivamente, al fine di rendere duplicabile il bytecode compilato nei vari interpreti inizializzati, ne eseguiamo il marshaling\footcite{\url{https://docs.python.org/3/library/marshal.html}}{marshal_python}, ottenendone una rappresentazione serializzata.
 Come mostrato nel Codice~\ref{lst:no_gil_python_nfproxy}, i thread designati all'analisi e al filtraggio delle connessioni, nella loro inizializzazione eseguiranno le procedure indicate nella documentazione delle C \gls{api} di Python per creare un \gls{gil} indipendente da quello principale, e poi deserializzeranno il bytecode del filtro in python.
 Per nuovi aggiornamenti del filtro i thread si occuperanno deserializzare il nuovo bytecode una volta disponibile.
 \begin{listing}[H]
@@ -179,7 +179,7 @@ Per ogni nuova connessione TCP inoltre, vengono eseguite le seguenti operazioni:
     \item Al termine della connesione, deallochiamo il contesto globale creato.
 \end{itemize}
 
-L'utilizzo delle funzionalità offerte dal \gls{pep} 684\footcite{\url{https://peps.python.org/pep-0684/}}{pep648}, soffre tuttavia anche di forti limitazioni sull'utilizzo di moduli senza multi-phase initialization\footcite{\url{https://peps.python.org/pep-0489/}}{pep489} (includendo tutti quelli scritti in Cython\footcite{\url{https://cython.org/}}{cython}) e moduli con componenti non \textit{thread-safe}. Nel corso dello sviluppo, queste limitazioni sono state oggetto di diverse problematiche, affrontate e approfondite in seguito.
+L'utilizzo delle funzionalità offerte dal \gls{pep} 684\footcite{\url{https://peps.python.org/pep-0684/}}{pep648}, soffre tuttavia di forti limitazioni sull'utilizzo di moduli senza multi-phase initialization\footcite{\url{https://peps.python.org/pep-0489/}}{pep489} (includendo tutti quelli scritti in Cython\footcite{\url{https://cython.org/}}{cython}) e moduli con componenti non \textit{thread-safe}. Nel corso dello sviluppo, queste limitazioni sono state oggetto di diverse problematiche, affrontate e approfondite in seguito.
 
 Un'altra possibilità considerata è stata l'utilizzo dell'interprete in \textit{free-threaded} mode di Python 3.13\footcite{\url{https://docs.python.org/3/whatsnew/3.13.html\#whatsnew313-free-threaded-cpython}}{py13_free_threaded}, attualmente sconsigliato per:
 \begin{itemize}
@@ -261,11 +261,11 @@ All'arrivo dei pacchetti nella \gls{nfqueue}, viene eseguita un'analisi immediat
 4 bit del campo version, valida sia per IPv4 che \gls{ipv6}. Identificata la versione \gls{ip}, il \textit{parsing} multilivello viene delegato a
 libtins\footcite{\url{https://libtins.github.io/}}{libtins}, che ricostruisce ricorsivamente gli header di rete e trasporto.
 
-Anche questa parte come per il bilanciamento del carico, è progettata per essere facilmente utilizzata in futuri moduli di Firegex, e re-integrata anche per il modulo \texttt{nfregex} (che supporta anche i pacchetti UDP, che pertanto vengono considerati in questo paragrafo).
+Anche questa parte, come per il bilanciamento del carico, è stata progettata per essere facilmente utilizzata in futuri moduli di Firegex, e re-integrata anche in questo caso nel modulo \texttt{nfregex} (che supporta anche i pacchetti UDP, che pertanto vengono considerati in questo paragrafo).
 
 La libreria genera automaticamente lo stream\_id, struttura dati univoca per identificare connessioni TCP/UDP attraverso
 una coppia di tuple (\gls{ip}:porta) sorgente/destinazione, che sono ordinate considerando la singola tupla come unica entità, e quindi non slegando mai
-\gls{ip} e porta tra loro. Questo approccio permette di identificare univocamente una connessione, indipendentemente dalla direzione del traffico (ingresso/uscita). La fase di analisi del pacchetto tramite libtins\footcite{\url{https://libtins.github.io/}}{libtins} è eseguita dal costruttore della classe \texttt{PktRequest} mostrata nel Codice~\ref{lst:pktrequest_constructor}.
+\gls{ip} e porta tra loro. Questo approccio permette di identificare univocamente una connessione, indipendentemente dalla direzione del traffico (ingresso/uscita). La fase di analisi del pacchetto tramite libtins\footcite{\url{https://libtins.github.io/}}{libtins} è eseguita dal costruttore della classe \texttt{PktRequest} mostrato nel Codice~\ref{lst:pktrequest_constructor}.
 
 \begin{listing}[H]
 \begin{minted}[

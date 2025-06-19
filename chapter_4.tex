@@ -84,7 +84,7 @@ Dal confronto di \gls{nfproxy} e \gls{nfregex} in Figura~\ref{fig:wisker_nfproxy
 
 Il passaggio alla configurazione multi-thread (8 thread) mostra miglioramenti significativi per entrambi i moduli, ma soprattutto per \gls{nfproxy} avendo più carico di base da sostenere: \gls{nfregex} sale a 3716.94 (+4.55\% rispetto al single-thread) mantenendo una variabilità simile (300 MB/s circa), mentre \gls{nfproxy} raggiunge 1816.05 MB/s (+25.27\% rispetto al single-thread), dimostrando una maggiore capacità di beneficiare della parallelizzazione grazie al superamento delle limitazioni del \gls{gil} tramite il \gls{pep} 684.
 
-Nonostante il calo prestazionale del 51.14\% rispetto a \gls{nfregex} nella configurazione multi-thread, \gls{nfproxy} mantiene un throughput abbondantemente sufficiente per scenari \gls{ctf} \gls{ad}, dove i carichi di rete tipici raramente superano qualche MB/s.
+Nonostante il calo prestazionale del 51.14\% rispetto a \gls{nfregex} nella configurazione multi-thread, \gls{nfproxy} mantiene un throughput abbondantemente sufficiente per scenari \gls{ctf} \gls{ad}.
 
 \section{Benchmark sul sistema di balancing}\label{balancing_benchmark}
 
