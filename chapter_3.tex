@@ -513,11 +513,17 @@ La Tabella~\ref{tab:nfproxy_datahandlers} riassume tutti i modelli di dati (\tex
         \texttt{HttpRequestHeader} & HTTP & Solo header completi &
         Come \texttt{HttpRequest} ma \texttt{body} sempre \texttt{None} \\
         \hline
+        \texttt{HttpFullRequest} & HTTP & Solo richieste completi &
+        Come \texttt{HttpRequest}\\
+        \hline
         \texttt{HttpResponse} & HTTP & Header completi e/o body completo &
         \texttt{url}, \texttt{status\_code}, \texttt{headers}, \texttt{content\_encoding}, \texttt{body}, \texttt{body\_decoded}, \texttt{upgrading\_to\_ws}, \texttt{ws\_stream} \\
         \hline
         \texttt{HttpResponseHeader} & HTTP & Solo header completi &
         Come \texttt{HttpResponse} ma \texttt{body} sempre \texttt{None} \\
+        \hline
+        \texttt{HttpFullResponse} & HTTP & Solo risposte completi &
+        Come \texttt{HttpResponse}\\
         \hline
     \end{tabular}
     \caption{Modelli di dati disponibili in nfproxy per la definizione dei filtri.}\label{tab:nfproxy_datahandlers}
