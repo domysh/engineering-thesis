@@ -1,7 +1,5 @@
 # Tesi di Laurea - Difesa di Sistemi Informativi tramite Firewall in Competizioni Attacco/Difesa
 
-# LA TESI È ANCORA IN FASE DI SVILUPPO
-
 Questo repository contiene il codice sorgente della tesi di laurea di **Domingo Dirutigliano** dal titolo:
 
 **"Difesa di sistemi informativi tramite firewall per competizioni attacco/difesa"**
@@ -18,6 +16,7 @@ La tesi tratta della progettazione e dello sviluppo di una feature per il firewa
 - **Relatore:** Chiar.mo Prof. Gennaro Boggia
 - **Correlatore:** Dott. Ing. Daniele Pugliese
 - **Anno Accademico:** 2024 - 2025
+- È permesso utilizzare questo repository per riprodurre lo stesso meccanismo automatico per la compilazione della tesi
 
 ## 📄 PDF della tesi
 
