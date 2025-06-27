@@ -16,7 +16,7 @@ La tesi tratta della progettazione e dello sviluppo di una feature per il firewa
 - **Relatore:** Chiar.mo Prof. Gennaro Boggia
 - **Correlatore:** Dott. Ing. Daniele Pugliese
 - **Anno Accademico:** 2024 - 2025
-- È permesso utilizzare questo repository per riprodurre lo stesso meccanismo automatico per la compilazione della tesi
+- È permesso utilizzare questo repository per replicare lo stesso meccanismo automatico per la compilazione della tesi
 
 ## 📄 PDF della tesi
 
