@@ -22,6 +22,7 @@ La tesi tratta della progettazione e dello sviluppo di una feature per il firewa
 
 - [Licenza Template](LICENSE-TEMPLATE.md) (MIT)
 - [Licenza Contenuto](LICENSE-CONTENT.md) (CC BY-NC-ND)
+- I crediti dei sorgenti per fronte della tesi (nella cartella [vendor](vendor)) vanno a Claudio Beccari con licenza riportata negli stessi file
 
 ## 📄 PDF della tesi
 
