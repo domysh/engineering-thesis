@@ -18,7 +18,7 @@ La tesi tratta della progettazione e dello sviluppo di una feature per il firewa
 - **Anno Accademico:** 2024 - 2025
 
 ## ⚖️ Licenze
-È permesso utilizzare questo repository per replicare lo stesso meccanismo automatico per la compilazione della tesi: per questo il progetto utilizza una **doppia licenza** per separare il codice e gli script utili alla compilazione dal contenuto intellettuale della tesi (inteso come contenuto stesso della tesi, i layout grafici seguono la stessa licenza del template).
+È permesso utilizzare questo repository per replicare lo stesso meccanismo automatico per la compilazione della tesi: per questo il progetto utilizza una **doppia licenza** per separare il codice e gli script utili alla compilazione automatica, dal contenuto intellettuale della tesi (inteso come contenuto stesso della tesi, i layout grafici seguono la stessa licenza del template).
 
 - [Licenza Template](LICENSE-TEMPLATE.md) (MIT)
 - [Licenza Contenuto](LICENSE-CONTENT.md) (CC BY-NC-ND)
