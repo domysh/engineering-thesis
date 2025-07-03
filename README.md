@@ -1,8 +1,8 @@
-# Tesi di Laurea - Difesa di Sistemi Informativi tramite Firewall in Competizioni Attacco/Difesa
+# Tesi di Laurea - Progettazione di un Firewall per Competizioni CTF A/D
 
 Questo repository contiene il codice sorgente della tesi di laurea di **Domingo Dirutigliano** dal titolo:
 
-**"Difesa di sistemi informativi tramite firewall per competizioni attacco/difesa"**
+**"Progettazione e Analisi delle Prestazioni di un Software Defined Firewall per Competizioni Attacco/Difesa"**
 
 ## 🧠 Descrizione
 
