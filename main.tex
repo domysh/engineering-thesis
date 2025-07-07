@@ -22,6 +22,7 @@
 \usepackage{afterpage}
 \usepackage{emptypage}
 \usepackage{svg}
+\usepackage{pdfpages}
 
 \pgfplotsset{compat=1.18}
 \SetupFloatingEnvironment{listing}{name=Codice}
@@ -80,6 +81,13 @@
 
 \input{front}
 \input{acronyms}
+
+% optional modules
+\cleardoublepage
+%\includepdf[pages=-]{modules/tesi_liberatoria.pdf}
+\cleardoublepage
+%\includepdf[pages=-]{modules/tesi_conforme.pdf}
+\cleardoublepage
 
 % \cleardoublepage
 % \input{dedica}
